@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 668" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555555"/>
+    </marker>
+    <marker id="arrowred" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c0504d"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1080" height="668" fill="#ffffff"/>
+  <text x="540" y="42" text-anchor="middle" font-size="19" font-weight="bold" fill="#222222">Separating the observation plane from the allocation plane</text>
+
+  <!-- ================= PANEL A ================= -->
+  <rect x="20" y="60" width="505" height="560" fill="#fafafa" stroke="#cccccc"/>
+  <text x="272" y="90" text-anchor="middle" font-size="16" font-weight="bold" fill="#222222">A. As commonly deployed</text>
+  <text x="272" y="110" text-anchor="middle" font-size="12.5" fill="#555555">analytics and the scheduler&#8217;s control loop share one database</text>
+
+  <!-- client boxes -->
+  <g stroke="#e08050" fill="#fbe3d5">
+    <rect x="38"  y="135" width="110" height="42"/>
+    <rect x="156" y="135" width="110" height="42"/>
+    <rect x="274" y="135" width="110" height="42"/>
+    <rect x="392" y="135" width="110" height="42"/>
+  </g>
+  <g text-anchor="middle" fill="#222222">
+    <text x="93"  y="152" font-size="12" font-weight="bold">Users</text>          <text x="93"  y="167" font-size="10" fill="#555555">sacct &#183; sreport</text>
+    <text x="211" y="152" font-size="12" font-weight="bold">Dashboards</text>     <text x="211" y="167" font-size="10" fill="#555555">portals &#183; reports</text>
+    <text x="329" y="152" font-size="12" font-weight="bold">Workflow mgrs</text>  <text x="329" y="167" font-size="10" fill="#555555">concurrent polls</text>
+    <text x="447" y="152" font-size="12" font-weight="bold">AI agents</text>      <text x="447" y="167" font-size="10" fill="#555555">scans + polling</text>
+  </g>
+
+  <!-- client arrows into slurmdbd -->
+  <g stroke="#555555" fill="none" marker-end="url(#arrow)">
+    <line x1="93"  y1="177" x2="232" y2="248"/>
+    <line x1="211" y1="177" x2="258" y2="248"/>
+    <line x1="329" y1="177" x2="286" y2="248"/>
+    <line x1="447" y1="177" x2="312" y2="248"/>
+  </g>
+
+  <!-- slurmctld and slurmdbd -->
+  <rect x="38" y="250" width="120" height="44" fill="#e4efdc" stroke="#4e9a06"/>
+  <text x="98" y="268" text-anchor="middle" font-size="13" font-weight="bold" fill="#222222">slurmctld</text>
+  <text x="98" y="284" text-anchor="middle" font-size="10" fill="#555555">scheduler</text>
+
+  <rect x="207" y="250" width="130" height="44" fill="#e2eaf4" stroke="#4f81bd"/>
+  <text x="272" y="276" text-anchor="middle" font-size="13" font-weight="bold" fill="#222222">slurmdbd</text>
+
+  <line x1="158" y1="272" x2="205" y2="272" stroke="#555555" marker-end="url(#arrow)"/>
+  <text x="181" y="262" text-anchor="middle" font-size="10" fill="#555555">writes</text>
+
+  <!-- shared database -->
+  <line x1="272" y1="294" x2="272" y2="348" stroke="#555555" marker-end="url(#arrow)"/>
+  <rect x="182" y="350" width="180" height="50" fill="#ffffff" stroke="#666666"/>
+  <text x="272" y="371" text-anchor="middle" font-size="13" font-weight="bold" fill="#222222">MariaDB</text>
+  <text x="272" y="388" text-anchor="middle" font-size="10.5" fill="#555555">one shared database</text>
+
+  <!-- crash propagation -->
+  <polyline points="182,380 98,380 98,296" fill="none" stroke="#c0504d" stroke-dasharray="5,4" marker-end="url(#arrowred)"/>
+  <text x="104" y="368" font-size="10.5" fill="#c0504d">crash propagates</text>
+
+  <g text-anchor="middle">
+    <text x="272" y="432" font-size="13" fill="#c0504d" font-weight="bold">One unbounded query exhausts the database host&#8217;s memory</text>
+    <text x="272" y="450" font-size="13" fill="#c0504d" font-weight="bold">&#8212; and the scheduler goes down with it.</text>
+    <text x="272" y="472" font-size="10.5" fill="#777777">Harvard FASRC, May 2026 &#183; Cactus/Toil, 2019 &#183; SchedMD bugs 2346, 2845 (2016)</text>
+  </g>
+
+  <!-- execution plane strip -->
+  <rect x="38" y="530" width="464" height="52" fill="#f4f4f4" stroke="#999999" stroke-dasharray="4,3"/>
+  <text x="270" y="552" text-anchor="middle" font-size="12" font-weight="bold" fill="#444444">Execution plane &#8212; GPU nodes</text>
+  <text x="270" y="570" text-anchor="middle" font-size="10.5" fill="#777777">healthy throughout, idle while the control plane is down</text>
+
+  <!-- ================= PANEL B ================= -->
+  <rect x="555" y="60" width="505" height="560" fill="#fafafa" stroke="#cccccc"/>
+  <text x="807" y="90" text-anchor="middle" font-size="16" font-weight="bold" fill="#222222">B. Separated and governed (Patterns 1&#8211;2)</text>
+  <text x="807" y="110" text-anchor="middle" font-size="12.5" fill="#555555">the write path owns the primary; reads go to a replica, behind policy</text>
+
+  <!-- write column -->
+  <rect x="585" y="135" width="140" height="42" fill="#e4efdc" stroke="#4e9a06"/>
+  <text x="655" y="152" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#222222">slurmctld</text>
+  <text x="655" y="167" text-anchor="middle" font-size="10" fill="#555555">scheduler</text>
+
+  <line x1="655" y1="177" x2="655" y2="248" stroke="#555555" marker-end="url(#arrow)"/>
+  <text x="662" y="216" font-size="10" fill="#555555">job state &#183; accounting</text>
+
+  <rect x="585" y="250" width="140" height="44" fill="#e2eaf4" stroke="#4f81bd"/>
+  <text x="655" y="276" text-anchor="middle" font-size="13" font-weight="bold" fill="#222222">slurmdbd</text>
+
+  <line x1="655" y1="294" x2="655" y2="348" stroke="#555555" marker-end="url(#arrow)"/>
+  <text x="662" y="325" font-size="10" fill="#555555">writes only</text>
+
+  <rect x="575" y="350" width="160" height="50" fill="#eef6e8" stroke="#4e9a06"/>
+  <text x="655" y="371" text-anchor="middle" font-size="13" font-weight="bold" fill="#222222">Primary DB</text>
+  <text x="655" y="388" text-anchor="middle" font-size="10.5" fill="#555555">write path only</text>
+
+  <!-- read column -->
+  <rect x="815" y="135" width="210" height="50" fill="#fbe3d5" stroke="#e08050"/>
+  <text x="920" y="155" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#222222">Analytics clients</text>
+  <text x="920" y="172" text-anchor="middle" font-size="10" fill="#555555">users &#183; dashboards &#183; pipelines &#183; AI agents</text>
+
+  <line x1="920" y1="185" x2="920" y2="233" stroke="#555555" marker-end="url(#arrow)"/>
+
+  <rect x="800" y="235" width="240" height="60" fill="#fdf3d1" stroke="#bf9000"/>
+  <text x="920" y="253" text-anchor="middle" font-size="12" font-weight="bold" fill="#222222">Policy gate &#8212; enforced</text>
+  <text x="920" y="269" text-anchor="middle" font-size="10" fill="#555555">timeouts &#183; range ceilings &#183; rate budgets</text>
+  <text x="920" y="285" text-anchor="middle" font-size="10" font-style="italic" fill="#555555">Tool Guard-class firewall in front of agents</text>
+
+  <line x1="920" y1="295" x2="920" y2="348" stroke="#555555" marker-end="url(#arrow)"/>
+
+  <rect x="835" y="350" width="170" height="50" fill="#e8eef7" stroke="#4f81bd"/>
+  <text x="920" y="371" text-anchor="middle" font-size="13" font-weight="bold" fill="#222222">Read replica</text>
+  <text x="920" y="388" text-anchor="middle" font-size="10.5" fill="#555555">asynchronous copy</text>
+
+  <!-- replication link -->
+  <line x1="735" y1="375" x2="833" y2="375" stroke="#555555" marker-end="url(#arrow)"/>
+  <text x="784" y="366" text-anchor="middle" font-size="10" fill="#555555">async replication</text>
+
+  <g text-anchor="middle">
+    <text x="807" y="432" font-size="13" fill="#3a7d0a" font-weight="bold">A replica OOM is an analytics outage.</text>
+    <text x="807" y="450" font-size="13" fill="#3a7d0a" font-weight="bold">The scheduler never notices.</text>
+    <text x="807" y="472" font-size="10.5" fill="#777777">OLTP/OLAP separation (Pattern 1) + query governance (Pattern 2)</text>
+  </g>
+
+  <!-- execution plane strip -->
+  <rect x="573" y="530" width="464" height="52" fill="#f4f4f4" stroke="#999999" stroke-dasharray="4,3"/>
+  <text x="805" y="552" text-anchor="middle" font-size="12" font-weight="bold" fill="#444444">Execution plane &#8212; GPU nodes</text>
+  <text x="805" y="570" text-anchor="middle" font-size="10.5" fill="#777777">unaffected; jobs keep running and completing</text>
+
+  <text x="540" y="650" text-anchor="middle" font-size="10.5" fill="#999999">Incident and default-configuration citations: REFERENCES.md [1, 6&#8211;13] &#183; mechanism detail: patterns/README.md, Patterns 1&#8211;2</text>
+</svg>
