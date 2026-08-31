@@ -6,6 +6,8 @@
 
 *Sequel to [network-vs-more-gpus](https://github.com/dimaggi-ai/network-vs-more-gpus) ("Network Capacity Is Compute Capacity"). All factual claims trace to [REFERENCES.md](REFERENCES.md).*
 
+*The whole argument in one document — model, results, validation, and the limits — is the whitepaper: [paper/paper.md](paper/paper.md).*
+
 ---
 
 ## 1. Capacity accounting: usable = nominal × A × E × P

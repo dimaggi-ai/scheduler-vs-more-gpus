@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "scheduler-vs-more-gpus: the allocation layer decides how much of a GPU fleet is real"
+authors:
+  - family-names: Nanyonga
+    given-names: Margaret
+date-released: 2026-08-31
+version: 1.0.0
+license: MIT
+repository-code: "https://github.com/dimaggi-ai/scheduler-vs-more-gpus"
+keywords:
+  - GPU cluster scheduling
+  - allocation efficiency
+  - Slurm
+  - Kubernetes
+  - intent-based allocation
+  - capacity realization
+  - discrete-event simulation

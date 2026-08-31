@@ -1,0 +1,74 @@
+# Scheduled Capacity: The Allocation Layer Decides How Much of a GPU Fleet Is Real
+
+**Margaret Nanyonga**, DIMAGGI AI
+
+> Staged whitepaper. Every number, table, and figure below is reproduced by the accompanying open-source repository (`dimaggi-ai/scheduler-vs-more-gpus`, MIT). `cd sim && python3 run.py` regenerates the results table byte-identically; `python3 validation.py` re-runs the nine-point registry that holds the model to the public record. All bracketed citations resolve to `REFERENCES.md`.
+
+## Abstract
+
+The AI-infrastructure market prices accelerators, power, and interconnect. It does not price the layer that converts them into usable capacity: allocation. This work makes that layer measurable in two steps. First, a capacity accounting that decomposes a fleet-month into three multiplicative discounts — scheduler availability *A*, allocation efficiency *E*, and productive ratio *P* — and applies it to verified public incidents. The result inverts the usual attention: the scheduler outage that gets a postmortem is the smallest of the three losses, and the allocation gap that gets none is the largest. Second, a discrete-event simulation of a 1,024-GPU cluster over 30 days, in which three allocation policies face an identical Meta-calibrated job stream [34] through power contraction, node failures, and inference surges. An intent-based closed-loop policy realizes **85.8%** of the capacity envelope where a rigid FIFO-plus-backfill configuration realizes **77.8%** — about 56,000 GPU-hours a month, the equivalent of ~78 GPUs, recovered without buying anything — while *raising* inference SLO attainment from 0.968 to 0.998. The dividend is 7.6–9.1 points in every scenario, including steady state with no failures and no power contraction, and its largest single source is mundane: sizing inference to tracked demand plus headroom rather than to peak plus margin. The costs are real and reported: ~1,230 resizes, ~440 graceful preemptions, one to two points of training ETTR, and longer waits under power pressure. Priority tiers alone recover almost nothing (0.779), because the losses were never in the kills.
+
+## 1. Introduction
+
+A GPU fleet's advertised size is an upper bound that nothing guarantees. Between nominal accelerator-hours and forward progress sit three independent discounts: whether the allocation plane can admit and place work at all (*A*), what share of schedulable accelerator-hours is actually assigned (*E*), and what share of assigned hours produces useful work (*P*). Usable capacity is `nominal × A × E × P`. Each factor belongs to the scheduler, and none of them is priced when a fleet is procured.
+
+The industry's attention is allocated in inverse proportion to the losses. Control-plane outages produce postmortems; standing allocation inefficiency produces nothing. Normalizing two verified public data points to a common denominator makes the asymmetry visible: Harvard FASRC's August 2026 emergency Slurm patch paused a ~1,000-GPU cluster for ~3.7 hours [4a, 4b] — about **3.7 stranded GPU-hours per GPU per month**. Alibaba's ASI fleet reports a 68% allocation ratio before scheduler-side optimization on 155,410 GPUs [37] — about **230 stranded GPU-hours per GPU per month**, roughly 60× more. These are different fleets in different regimes, and the comparison is not a controlled one; it is a statement about which layer is worth an engineer's month. The same paper reports raising allocation from 68% to 93% by scheduler-side work alone — recovering, at that scale, on the order of 28 million GPU-hours a month that no hardware purchase could have delivered per dollar.
+
+Three metrics are routinely conflated in "GPUs are idle" claims and must be kept apart, because they multiply rather than substitute: **allocation ratio** (share of GPUs assigned to anyone; 68%→93% at Alibaba [37]), **hardware utilization** (busy fraction of *allocated* GPUs; ~52% average in Microsoft's Philly trace [35], median 4.2% in Alibaba's PAI trace [36], the latter a secondary-source figure pending primary re-verification), and **goodput/ETTR** (useful fraction of busy time; ~0.9 on multi-day 2–4k-GPU Meta runs [34]). A fleet can report "full" while producing a fraction of its potential.
+
+## 2. The allocation plane is where clusters break
+
+The recurring failure point in published incident records is the scheduler control plane, not the accelerators. SchedMD's own tracker warned in 2016 that user queries "can DoS the box" (bugs 2346, 2845 [8, 9]); a workflow manager issuing ~1,000 concurrent `sacct` polls "crashed our SLURM db" at one site in 2019 [11]; Harvard FASRC recorded ~6.5 days of scheduler degradation in June 2023 with no publicly identified root cause [2, 3], a sub-hour hard outage plus multi-day degradation in May 2026 from a single oversized accounting query [1], and the August 2026 emergency patch above [4a]. At Meta, one node failure caused a 1,024-GPU job to be requeued 35 times, inflicting 548 preemptions on other jobs [34] — one hardware fault amplified into fleet-scale churn entirely by allocation policy.
+
+In none of these did failing hardware carry the story. The allocation plane either originated the loss or multiplied it. A new load class makes the exposure structural rather than incidental: Harvard's May 2026 postmortem closes by asking users to ensure that any AI agents they run limit their queries appropriately [1]. Autonomous agents combine both dangerous load shapes — large scans and high-frequency polling — and a request for judiciousness does not bind a requester that never reads it. The observation plane must be separable from the allocation plane, with enforced bounds at the interface.
+
+## 3. Model
+
+A discrete-event simulator steps a 1,024-GPU cluster in 5-minute increments for 30 days. The workload generator is calibrated to Meta's published job-size findings — most jobs tiny, most GPU-time in large jobs [34] — and produces a deterministic stream per seed. Four scenarios escalate: **S1** steady state; **S2** adds a daily 4-hour power contraction to 75% of the envelope; **S3** adds node failures at Meta's published RSC-1 rate [34]; **S4** adds inference demand surges on top of all of it. Three policies face the *identical* job stream and the identical events:
+
+- **rigid-fifo** — FIFO plus backfill, rigid job sizes, no preemption, an inference reservation provisioned to the diurnal peak plus 5%; sheds power by emergency-killing the newest jobs. A conservative Slurm configuration.
+- **tiered-preemption** — adds Borg-style priority tiers and graceful checkpoint-preemption [25]. Sizes remain rigid; the reservation remains peak-provisioned.
+- **intent-closed-loop** — the carrier-network pattern of §5: a 15-minute controller tracks inference demand with 10% headroom instead of peak-provisioning, shrinks elastic training jobs before escalating to graceful preemption, and degrades in a declared class hierarchy under scarcity.
+
+Conservation of GPU-hours, determinism per seed, and per-policy behavioral contracts are enforced as test invariants (`sim/test_sim.py`).
+
+## 4. Results
+
+Means over seeds 42–44; the full grid is in `results/summary.md`.
+
+| Scenario S4 (power + failures + surges) | rigid-fifo | tiered-preemption | intent-closed-loop |
+|---|---|---|---|
+| Capacity realization | 0.778 | 0.779 | **0.858** |
+| Inference SLO attainment | 0.968 | 0.968 | **0.998** |
+| Training ETTR | 0.908 | **0.916** | 0.898 |
+| Stranded GPU-h / month | 156,452 | 155,892 | **100,354** |
+| — of which reservation waste | 67,416 | 67,416 | **21,154** |
+| Kills / preemptions / resizes | 359 / 0 / 0 | 28 / 263 / 0 | 28 / 438 / 1,232 |
+
+**(1) The dividend survives the removal of every excuse.** Intent beats rigid by 8.6 points in steady state, 7.6 under power contraction, 9.1 under failures, and 8.0 with everything at once (differences of the three-seed means, taken before rounding). A capacity gain that persists in S1 — no failures, no contraction, no surges — is not a disaster-recovery story; it is a standing property of the allocation policy.
+
+**(2) Most of it comes from not peak-provisioning inference.** Reservation waste falls from 67,416 to 21,154 GPU-hours a month — ~46,000 GPU-hours recovered from one decision that looks irresponsible on a slide and is not.
+
+**(3) Demand-tracking also wins at inference's own game.** The static policies size to the diurnal peak plus 5%, which surges exceed by construction, so they miss (SLO 0.968); sizing statically to *cover* surges would deepen the standing waste instead. That is the structural bind of static sizing — waste or misses, choose one. The tracking controller absorbs the same surges at 0.998.
+
+**(4) The dividend is not free, and the price is itemized.** The intent policy pays ~1,232 resizes, ~438 graceful preemptions (more than tiered's 263 — running the cluster hotter leaves less slack, so contraction displaces more work), one to two points of ETTR against the rigid and tiered baselines respectively, and longer mean waits under power pressure (4.5 h vs 2.5 h in S2). Bounded, priced churn in exchange for a fleet-level dividend is the correct trade, but it is a trade.
+
+**(5) Tiers alone are not enough, and failures do not differentiate policies.** Graceful preemption converts lossy kills into clean ones (28 vs 359 in S4) while recovering almost no capacity (0.779 vs 0.778), because the large losses were in standing reservations and rigidity, not in the kills. Meta-rate failures cost every policy roughly equally: the scheduler's job is not to prevent failures but to stop wasting the capacity that survives them.
+
+## 5. The pattern is older than AI
+
+Telecommunications networks allocated a scarce, shared, congestible resource under SLOs a generation before GPU clusters, and their end state is in the patent record: application-aware congestion management identifies *heavy users* and *suffering users* and shapes the heavy until the suffering recover [40]; intent-based traffic management has the operator declare outcomes while an allocation module sets per-class floors and targets, measures quality continuously, and re-allocates in a closed loop, degrading a strict class hierarchy first-things-first under scarcity [41]. The mapping to AI compute is direct: training jobs are the heavy users (elastic, throughput-hungry, checkpointable), inference is the suffering user (latency-bound, SLO-visible), intent is training-throughput targets plus inference SLOs plus power envelopes, and the feedback signal is goodput rather than link QoE. The simulated intent policy is that pattern transplanted.
+
+Google is the existence proof that the end state works, because it co-designed the scheduler with the fabric: Borg has run priority bands, quota-priced admission, and cascade-suppressed preemption since before 2015 [25]; TPU v4's optical circuit switches removed the contiguity constraint outright, so a 256-chip slice no longer requires 256 *contiguous* idle chips, and goodput survives at 99.0–99.5% host availability where a static fabric needs 99.9% [28]; and the productized stack — Multislice, queued resources, Spot, Dynamic Workload Scheduler ("built on Google Borg technology") and default-on ICI resiliency [31, 32, 33] — is intent-based allocation shipped as a cloud product. The hypothesis this supports is that vertically integrated accelerator ventures win on *allocation efficiency*, not only on silicon. The merchant-GPU world's counter-move is visible in real time: NVIDIA acquired the Run:ai scheduler (open-sourced as KAI in 2025) and then SchedMD — Slurm itself — in December 2025 [16, 21].
+
+## 6. Validation
+
+A nine-point registry (`sim/validation.py`) runs in CI, split into three kinds that are labeled rather than blended. **Calibrated** points pin constants that were tuned to, or share an input with, published figures, so they cannot drift silently: Meta's job-size shape and RSC-1 failure rate [34], and training ETTR, which lands at ~0.915 against Meta's published ~0.9 [34] — labeled calibrated, *not* emergent, because Meta computed that figure at an assumed 1-hour checkpoint interval, the same constant this model uses, so the agreement is a shared input rather than evidence. **Emergent** points assert behaviors nothing in the code was tuned to produce, across four seeds: large jobs queue more than 2× longer than small ones under rigid gang scheduling in every seed — the direction of the Philly trace's queueing finding [35], though this saturated simulation produces far larger ratios than that trace's minutes-scale tail; and the intent policy realizes ≈5–8 points more of the envelope than rigid FIFO in every seed, directionally anchored to the adjacent (not identical) allocation-ratio result at Alibaba [37]. **Sanity** points pin the model's own arithmetic and cite nothing: emergency kills lose work that graceful checkpoint-preemption preserves by construction, queueing grows with offered load below saturation in every seed, and demand-tracking cuts reservation stranding 3.44× at equal SLO.
+
+## 7. What a skeptic should attack
+
+The simulator measures *policy structure*, not vendor performance; absolute numbers will differ per site and the ordering is the finding. Time advances in 5-minute steps. Elastic scaling is linear, which is optimistic, though resizes pay an explicit overhead step. Graceful preemption checkpoints at zero marginal cost at the moment of preemption — optimistic for both preempting policies, while emergency kills do lose uncheckpointed work. The static policies' reservation is deliberately sized to the diurnal peak, mirroring common practice; sizing to rare surges would trade the SLO misses for deeper standing waste, which is the bind being demonstrated rather than an oversight. Inference is modeled as aggregate demand rather than per-request latency, node placement is abstracted, and the cluster is single-tenant. On the evidence side: the Philly comparison is directional only, the Alibaba anchor measures an adjacent metric on a fleet three orders of magnitude larger, and the ETTR agreement is a shared assumption, as §6 states in the registry itself rather than in a footnote.
+
+## 8. Conclusion
+
+The layer that decides how much of a GPU fleet is real is the one nobody buys. Measured on an identical job stream through identical events, the difference between a conservative queue configuration and a closed-loop intent policy is eight points of capacity realization — ~78 GPUs' worth on a 1,024-GPU cluster — obtained while inference SLO attainment improves, and paid for in bounded, itemized churn. The largest single component is not a sophisticated mechanism but the refusal to peak-provision. Before buying the next tranche of accelerators, price the scheduler: on the numbers here, and on the public record the model is held to, it is the cheaper GPU.
