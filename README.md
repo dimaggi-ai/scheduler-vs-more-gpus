@@ -122,7 +122,43 @@ Google is the existence proof that the end state works, because it co-designed t
 
 "Multi-cloud AI cluster" today means federation at the **control plane**: SkyPilot and dstack place and queue jobs across hyperscalers, neoclouds, Kubernetes, and Slurm [23, 24]; CoreWeave's SUNK Anywhere extends one Slurm-on-K8s control plane across clouds [17]. Nothing verified federates the **data plane** — no RDMA fabric spans providers, and a distributed training job still lands inside one interconnect domain. "One logical cluster" means one logical *queue*. That is genuinely valuable — it is allocation-layer consolidation, this repo's whole subject — but claims beyond it are marketing.
 
-## 8. Reproduce everything
+## 8. The validation project
+
+The simulator carries a nine-point validation registry
+([sim/validation.py](sim/validation.py)) run in CI, honestly split into
+three kinds. **Calibrated** points pin constants tuned to — or sharing an
+input with — published figures, so they cannot drift silently: Meta's
+job-size shape and RSC-1 failure rate [34], and training ETTR, which
+lands at ~0.91-0.92 against Meta's published ~0.9 [34] but is labeled
+calibrated, not emergent, because Meta computed that figure at an assumed
+1-hour checkpoint interval — the same constant this model uses — so the
+agreement is a shared input, not evidence. **Emergent** points are
+behaviors nothing in the code was tuned to produce, asserted across four
+seeds: large jobs queue >2× longer than small ones under rigid gang
+scheduling in every seed — the direction of the Philly trace's queueing
+finding, where >4-GPU jobs show a longer delay tail (25% wait ≥10 min vs
+10% of 1-GPU jobs) and fragmentation drives ~78% of large-job delay
+occurrences [35], though this saturated simulation produces far larger
+ratios than the trace's minutes-scale tail; and the intent policy
+realizes ≈5-8 points more of the capacity envelope than rigid FIFO in
+every seed, directionally anchored to Alibaba raising the (different but
+adjacent) allocation-ratio metric 68%→93% by scheduler-side work alone
+[37]. **Sanity** points pin the model's own arithmetic and cite no
+external evidence: emergency kills under power contraction lose
+~1,350-2,100 GPU-h per two weeks that graceful checkpoint-preemption
+preserves by construction (real Borg-style preemption warns and kills,
+so it is harsher than the graceful branch here [25]); queueing grows
+with offered load below saturation in every seed; and demand-tracking
+cuts reservation stranding 3.4× at equal SLO — deterministic constant
+arithmetic whose mechanism, not magnitude, comes from the carrier
+pattern [41]. Synthetic data is the seeded workload generator itself,
+deterministic per seed.
+
+```
+cd sim && python3 validation.py     # the registry, model vs public record
+```
+
+## 9. Reproduce everything
 
 ```
 pip install -r sim/requirements.txt
@@ -132,7 +168,7 @@ python3 calculator/stranded_capacity.py --preset harvard-aug2026
 python3 calculator/test_stranded_capacity.py
 
 # policy simulation: full grid (4 scenarios x 3 policies x 3 seeds, ~6 s)
-cd sim && python3 test_sim.py && python3 run.py
+cd sim && python3 test_sim.py && python3 test_validation.py && python3 run.py
 ```
 
 Python 3.11+, `numpy`, `matplotlib`. Every run is seeded and deterministic.
