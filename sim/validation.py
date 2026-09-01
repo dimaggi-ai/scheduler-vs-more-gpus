@@ -65,10 +65,21 @@ DECLINED: tuple[tuple[str, str], ...] = (
      "no public source reports capacity realization under a named allocation "
      "policy on a named fleet, so the levels (0.778, 0.858) are the model's "
      "and only their ORDERING is claimed"),
-    ("the ETTR band as a failure-model check",
-     "meta-ettr-band cannot tell failures-on from failures-off: checkpoint "
-     "arithmetic alone puts the model at ~0.92, inside the +/-0.03 band. It "
-     "pins the checkpoint constant, nothing about the failure model"),
+    ("the failure model, at any point in this registry",
+     "meta-ettr-band cannot tell failures-off from 10x Meta's rate: "
+     "checkpoint arithmetic alone puts the model at ~0.92 and the band is "
+     "+/-0.03, so 0x (0.9212) and 10x (0.8763) both sit inside it; it only "
+     "exits near 20x. rsc1-failure-rate-constant reads the constant back "
+     "and compares it to itself. Between them they pin an input and a "
+     "checkpoint constant — the rate at which this model loses and redoes "
+     "work is unconstrained by roughly an order of magnitude"),
+    ("the SIZE of the scheduling dividend, and elastic resize",
+     "scheduler-work-reclaims-capacity asserts only a SIGN — that intent "
+     "beats rigid in every seed. Delete elasticity outright and the "
+     "dividend falls from 6.63 to 2.52 points while every point stays "
+     "green; delete the restore path and it falls to 5.61, also green. The "
+     "'~5-8 points' and the resize counts the paper itemises are reported, "
+     "not validated"),
     ("Philly wait-ratio magnitudes",
      "only the direction is anchored; this 95%-load simulation produces "
      "ratios far larger than the trace's minutes-scale tail, and no point "
@@ -149,10 +160,15 @@ def points(horizon_days: int = HORIZON_DAYS,
              "finding that large jobs dominate GPU-time.",
     ))
     pts.append(Point(
-        "rsc1-failure-rate", "calibrated", "[34]",
+        "rsc1-failure-rate-constant", "calibrated", "[34]",
         expected=6.5, tolerance=0.0,
         actual=Config().failures_per_1000_node_days,
-        note="Meta RSC-1: 6.50 failures per 1,000 node-days, used verbatim.",
+        note="Meta RSC-1: 6.50 failures per 1,000 node-days, used verbatim. "
+             "This reads the constant back and compares it to itself; no "
+             "simulation runs. It pins the input against silent drift and "
+             "is named for what it does. Nothing here checks the failure "
+             "MODEL — see DECLINED: the registry stays green at 10x this "
+             "rate.",
     ))
 
     ettr = statistics.mean(

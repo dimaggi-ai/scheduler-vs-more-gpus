@@ -120,12 +120,18 @@ def test_a_flattened_job_size_distribution_is_noticed():
     red = _registry((simulator, "SIZE_PROBS", flat),
                     (validation, "SIZE_PROBS", flat))
     assert "meta-most-jobs-small" in red, red
+    assert "meta-most-gpu-time-large" in red, red
 
 
-def test_a_wrong_rsc1_failure_rate_is_noticed():
+def test_the_pinned_rsc1_constant_cannot_drift():
+    # Scope note: this is a read-back, not a model check. It proves the
+    # published input has not been edited, and nothing more. Injecting a
+    # wrong rate into the MODEL while leaving this constant at 6.5 keeps the
+    # whole registry green up to ~10x — disclosed in DECLINED rather than
+    # dressed up by this test's name.
     red = _registry((validation, "Config",
                      _config_with(failures_per_1000_node_days=13.0)))
-    assert "rsc1-failure-rate" in red, red
+    assert "rsc1-failure-rate-constant" in red, red
 
 
 def test_a_broken_checkpoint_interval_is_noticed():

@@ -158,16 +158,22 @@ deterministic per seed.
 
 Two things keep that table from being a highlight reel. The registry
 prints a **DECLINED** list on every run, naming what it does *not* check —
-that the ETTR band cannot distinguish failures-on from failures-off, that
-the Philly and Alibaba anchors are direction-only, that no real scheduler
-binary is exercised, and that nothing here validates tail latency,
-placement, or multi-tenancy. And
+that no point constrains the failure model, which stays green at 10× Meta's
+rate; that the *size* of the scheduling dividend and the elastic-resize
+mechanism are reported but never validated; that the Philly and Alibaba
+anchors are direction-only; that no real scheduler binary is exercised; and
+that nothing here validates tail latency, placement, or multi-tenancy. And
 [sim/test_validation.py](sim/test_validation.py) **breaks the model on
-purpose** — eight mutations, one mechanism each: the intent policy
-replaced by rigid FIFO, graceful preemption replaced by killing, the
-job-size distribution flattened, the RSC-1 rate falsified, the checkpoint
-interval collapsed, the two offered loads set equal, the large-job band
-compared against itself. Each is required to turn a *named* point red, and
+purpose** — eight mutations of three different strengths, because the
+difference matters. Two delete simulator machinery: the job-size
+distribution flattened, the checkpoint interval collapsed. Three swap in a
+weaker policy: the intent policy replaced by rigid FIFO, graceful
+preemption replaced by killing, the intent policy replaced by
+peak-provisioning tiered preemption. Two collapse a comparison to guard
+against tautology: the two offered loads set equal, the large-job band
+compared against itself. One falsifies a pinned constant: the RSC-1 rate.
+Only the first two remove a mechanism, and the last one moves no model
+behavior at all. Each is required to turn a *named* point red, and
 a control proves the reduced configuration used for the mutations is green
 when nothing is broken. A registry nobody has watched fail is evidence
 that the registry is easy, not that the model is right.
