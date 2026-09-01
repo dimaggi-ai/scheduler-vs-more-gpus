@@ -156,6 +156,22 @@ arithmetic whose mechanism, not magnitude, comes from the carrier
 pattern [41]. Synthetic data is the seeded workload generator itself,
 deterministic per seed.
 
+Two things keep that table from being a highlight reel. The registry
+prints a **DECLINED** list on every run, naming what it does *not* check —
+that the ETTR band cannot distinguish failures-on from failures-off, that
+the Philly and Alibaba anchors are direction-only, that no real scheduler
+binary is exercised, and that nothing here validates tail latency,
+placement, or multi-tenancy. And
+[sim/test_validation.py](sim/test_validation.py) **breaks the model on
+purpose** — eight mutations, one mechanism each: the intent policy
+replaced by rigid FIFO, graceful preemption replaced by killing, the
+job-size distribution flattened, the RSC-1 rate falsified, the checkpoint
+interval collapsed, the two offered loads set equal, the large-job band
+compared against itself. Each is required to turn a *named* point red, and
+a control proves the reduced configuration used for the mutations is green
+when nothing is broken. A registry nobody has watched fail is evidence
+that the registry is easy, not that the model is right.
+
 ```
 cd sim && python3 validation.py     # the registry, model vs public record
 ```

@@ -17,6 +17,12 @@ All bracketed references are to REFERENCES.md. Synthetic data is the
 seeded workload generator in simulator.py; stochastic points are
 asserted across SEEDS so the mechanism, not the seed, carries them.
 
+A registry that lists only the anchors it passes is a highlight reel, so
+DECLINED below names the checks this registry does NOT make, and main()
+prints them on every run. test_validation.py mutates the model on purpose
+and requires the registry to go red, which is the only evidence that a
+green run means anything.
+
 Run: python3 validation.py   (exit 1 if any point fails)
 """
 
@@ -39,6 +45,47 @@ from simulator import (
 HORIZON_DAYS = 14
 SEEDS = (0, 1, 2, 3)
 
+# Hoisted so a mutation test can swap one and watch the registry go red.
+# Nothing here is fitted: the policy names are the simulator's own, and the
+# comparison constants are round numbers chosen before the runs.
+RIGID = "rigid-fifo"
+TIERED = "tiered-preemption"
+INTENT = "intent-closed-loop"
+SMALL_RANGE = (1, 8)            # "small job" band for the queueing comparison
+LARGE_RANGE = (64, 512)         # "large job" band
+WAIT_RATIO = 2.0                # large jobs must wait more than this x small
+LOAD_LO, LOAD_HI = 0.85, 0.95   # offered loads for the queueing smoke test
+RESV_RATIO, RESV_TOL = 3.44, 0.10
+SLO_FLOOR = 0.99                # the reservation ratio only counts at equal SLO
+
+# What this registry does NOT check. Printed on every run: a validation
+# section that lists only its passes invites the reader to assume the rest.
+DECLINED: tuple[tuple[str, str], ...] = (
+    ("absolute capacity realization",
+     "no public source reports capacity realization under a named allocation "
+     "policy on a named fleet, so the levels (0.778, 0.858) are the model's "
+     "and only their ORDERING is claimed"),
+    ("the ETTR band as a failure-model check",
+     "meta-ettr-band cannot tell failures-on from failures-off: checkpoint "
+     "arithmetic alone puts the model at ~0.92, inside the +/-0.03 band. It "
+     "pins the checkpoint constant, nothing about the failure model"),
+    ("Philly wait-ratio magnitudes",
+     "only the direction is anchored; this 95%-load simulation produces "
+     "ratios far larger than the trace's minutes-scale tail, and no point "
+     "asserts a magnitude against [35]"),
+    ("the Alibaba anchor as a like-for-like comparison",
+     "[37] measures ALLOCATION ratio on a 155,410-GPU fleet; this model "
+     "measures capacity REALIZATION on 1,024 GPUs. Adjacent metric, "
+     "different scale — direction only"),
+    ("inference latency, placement, and multi-tenancy",
+     "inference is an aggregate demand curve, node placement is abstracted, "
+     "and the cluster is single-tenant, so nothing here validates tail "
+     "latency, topology-aware packing, or inter-tenant fairness"),
+    ("real scheduler software",
+     "no Slurm, Kubernetes, or Borg binary is exercised; rigid-fifo is a "
+     "model of a conservative configuration, not a measurement of one"),
+)
+
 
 @dataclasses.dataclass(frozen=True)
 class Point:
@@ -55,8 +102,9 @@ class Point:
         return abs(self.actual - self.expected) <= self.tolerance
 
 
-def _run(policy: str, seed: int, **kw) -> tuple[Simulation, dict]:
-    sim = Simulation(Config(horizon_days=HORIZON_DAYS, seed=seed, **kw), policy)
+def _run(policy: str, seed: int, horizon_days: int = HORIZON_DAYS,
+         **kw) -> tuple[Simulation, dict]:
+    sim = Simulation(Config(horizon_days=horizon_days, seed=seed, **kw), policy)
     return sim, sim.run()
 
 
@@ -73,8 +121,13 @@ def _mean_wait_h(sim: Simulation, lo: int, hi: int) -> float:
     return statistics.mean(ws)
 
 
-@functools.lru_cache(maxsize=1)
-def points() -> tuple[Point, ...]:
+@functools.lru_cache(maxsize=None)
+def points(horizon_days: int = HORIZON_DAYS,
+           seeds: tuple[int, ...] = SEEDS) -> tuple[Point, ...]:
+    """Build the registry. Parameterized so a mutation test can re-evaluate it
+    at a reduced horizon; the published run always uses the defaults."""
+    SEEDS = seeds                       # noqa: N806 - shadowed on purpose
+    run = functools.partial(_run, horizon_days=horizon_days)
     pts: list[Point] = []
 
     # ---------------------------------------------------------- calibrated
@@ -103,7 +156,7 @@ def points() -> tuple[Point, ...]:
     ))
 
     ettr = statistics.mean(
-        _run("rigid-fifo", s, failures=True)[1]["train_ettr"] for s in SEEDS
+        run(RIGID, s, failures=True)[1]["train_ettr"] for s in SEEDS
     )
     pts.append(Point(
         "meta-ettr-band", "calibrated", "[34]",
@@ -121,11 +174,11 @@ def points() -> tuple[Point, ...]:
     ))
 
     # ------------------------------------------------------------ emergent
-    rigid = {s: _run("rigid-fifo", s) for s in SEEDS}
+    rigid = {s: run(RIGID, s) for s in SEEDS}
     waits_ordered = sum(
         1 for s in SEEDS
-        if _mean_wait_h(rigid[s][0], 64, 512)
-        > 2.0 * _mean_wait_h(rigid[s][0], 1, 8)
+        if _mean_wait_h(rigid[s][0], *LARGE_RANGE)
+        > WAIT_RATIO * _mean_wait_h(rigid[s][0], *SMALL_RANGE)
     )
     pts.append(Point(
         "philly-large-jobs-wait-longer", "emergent", "[35]",
@@ -141,7 +194,7 @@ def points() -> tuple[Point, ...]:
              "out of gang admission of rigid sizes.",
     ))
 
-    intent = {s: _run("intent-closed-loop", s) for s in SEEDS}
+    intent = {s: run(INTENT, s) for s in SEEDS}
     ordering = sum(
         1 for s in SEEDS
         if intent[s][1]["capacity_realization"]
@@ -163,8 +216,8 @@ def points() -> tuple[Point, ...]:
     power_ok = 0
     losses = []
     for s in SEEDS:
-        a = _run("rigid-fifo", s, power_envelope=True)[1]
-        b = _run("tiered-preemption", s, power_envelope=True)[1]
+        a = run(RIGID, s, power_envelope=True)[1]
+        b = run(TIERED, s, power_envelope=True)[1]
         losses.append(a["work_lost_gpu_h"])
         if a["work_lost_gpu_h"] > 0 and b["work_lost_gpu_h"] == 0.0:
             power_ok += 1
@@ -185,8 +238,8 @@ def points() -> tuple[Point, ...]:
 
     grows = sum(
         1 for s in SEEDS
-        if _run("rigid-fifo", s, offered_load=0.95)[1]["mean_wait_h"]
-        > _run("rigid-fifo", s, offered_load=0.85)[1]["mean_wait_h"]
+        if run(RIGID, s, offered_load=LOAD_HI)[1]["mean_wait_h"]
+        > run(RIGID, s, offered_load=LOAD_LO)[1]["mean_wait_h"]
     )
     pts.append(Point(
         "queueing-grows-with-load", "sanity", "-",
@@ -198,15 +251,19 @@ def points() -> tuple[Point, ...]:
              "claim is made past 0.95.",
     ))
 
-    resv_ratio = (
-        rigid[0][1]["stranded_reservation_gpu_h"]
-        / intent[0][1]["stranded_reservation_gpu_h"]
+    # Mean over seeds, not seed 0: the reservation schedule is deterministic
+    # so every seed gives the same ratio, but a single-seed figure would be
+    # indistinguishable from a lucky one to anyone reading the code.
+    resv_ratio = statistics.mean(
+        rigid[s][1]["stranded_reservation_gpu_h"]
+        / intent[s][1]["stranded_reservation_gpu_h"]
+        for s in SEEDS
     )
     slo_all = min(intent[s][1]["slo_attainment"] for s in SEEDS)
     pts.append(Point(
         "demand-tracking-cuts-reservation-waste", "sanity", "-",
-        expected=3.44, tolerance=0.10,
-        actual=resv_ratio if slo_all >= 0.99 else 0.0,
+        expected=RESV_RATIO, tolerance=RESV_TOL,
+        actual=resv_ratio if slo_all >= SLO_FLOOR else 0.0,
         note="Deterministic constant arithmetic, pinned so it cannot "
              "drift: peak-provisioning at 1.05x peak vs demand-tracking "
              "at 1.10x demand yields a 3.44x reservation-stranding ratio "
@@ -234,10 +291,18 @@ def main() -> int:
               f"{p.actual:>8.3f}  {abs(p.actual - p.expected):>6.3f}  "
               f"{'PASS' if p.ok else 'FAIL'}")
     print()
+    print("NOT CHECKED HERE — a registry that prints only its passes is a "
+          "highlight reel:")
+    for name, why in DECLINED:
+        print(f"  - {name}: {why}")
+    print()
     if ok:
         print("all points reproduced — calibrated points prove consistency, "
               "emergent points carry the findings, sanity points pin the "
-              "model's own arithmetic (see results/summary.md)")
+              "model's own arithmetic (see results/summary.md). "
+              "test_validation.py breaks the model on purpose and requires "
+              "these points to fail; that, not this table, is why a green "
+              "run is worth anything.")
     else:
         print("VALIDATION FAILED")
     return 0 if ok else 1
