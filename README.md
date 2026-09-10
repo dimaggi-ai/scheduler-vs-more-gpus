@@ -1,8 +1,12 @@
 # Scheduled Capacity: Turning Scattered GPUs into Working AI Clusters
 
+For offline JSON replay, workload-specific capacity projections and adapters to
+the existing torus/admission packages, see [capacity interfaces](capacity/README.md).
+These extend the simulator; they are not production scheduler bindings.
+
 **The AI-infrastructure market prices GPUs, power, and interconnect. It does not price the layer that converts them into usable capacity: allocation.** This repository makes that layer measurable — and shows, with a reproducible simulator and verified public evidence, that scheduling maturity is worth more than the next tranche of GPUs.
 
-**TL;DR, from the experiments below:** on a simulated 1,024-GPU cluster carrying a Meta-calibrated workload through power constraints, failures, and demand surges, an intent-based closed-loop allocation policy realizes **85.8%** of available capacity where a rigid quota policy realizes **77.8%** — recovering **~56,000 GPU-hours per month, the equivalent of ~78 GPUs, without buying anything**. The recovered capacity comes mostly from a mundane place: not peak-provisioning inference. The repo name is the conclusion: before buying more GPUs, fix the scheduler.
+**Corrected experiment, 2026-09-10:** on a simulated 1,024-GPU cluster with a public-research-informed synthetic workload, power constraints, failures and demand surges, the intent policy realizes **83.7%** of the available envelope versus **74.6%** for rigid FIFO. The difference is **~64,268 modeled productive GPU-hours over 30 days (~89.3 continuously productive GPU equivalents)**, not GPUs purchased or production savings. Arrival rates now use the expected duration of the actual capped lognormal generator. This supersedes the earlier 85.8%/77.8% and ~56,000 GPU-hour results. The comparison bundles reservation tracking and elasticity; it does not isolate their causal contributions.
 
 *Sequel to [network-vs-more-gpus](https://github.com/dimaggi-ai/network-vs-more-gpus) ("Network Capacity Is Compute Capacity"). All factual claims trace to [REFERENCES.md](REFERENCES.md).*
 
@@ -76,12 +80,12 @@ Results (means over 3 seeds; full grid in [results/](results/), reproduce with `
 
 | Scenario S4 (power + failures + surges) | rigid-fifo | tiered-preemption | intent-closed-loop |
 |---|---|---|---|
-| **Capacity realization** | 0.778 | 0.779 | **0.858** |
+| **Capacity realization** | 0.746 | 0.747 | **0.837** |
 | Inference SLO attainment | 0.968 | 0.968 | **0.998** |
-| Training ETTR | 0.908 | **0.916** | 0.898 |
-| Stranded GPU-h / month | 156,452 | 155,892 | **100,354** |
+| Training ETTR | 0.906 | **0.915** | 0.895 |
+| Stranded GPU-h / month | 179,424 | 178,375 | **115,156** |
 | — of which reservation waste | 67,416 | 67,416 | **21,154** |
-| Emergency kills / preemptions / resizes | 359 / 0 / 0 | 28 / 263 / 0 | 28 / 438 / 1,232 |
+| Emergency kills / preemptions / resizes | 289 / 0 / 0 | 28 / 203 / 0 | 28 / 219 / 1,083 |
 
 ![Stranded capacity breakdown](figures/stranded_breakdown.png)
 
@@ -91,10 +95,10 @@ Results (means over 3 seeds; full grid in [results/](results/), reproduce with `
 
 What the numbers say:
 
-1. **The intent policy's 7–9-point capacity dividend over the rigid baseline holds in every scenario, including steady state.** Most of it comes from one mundane decision: allocating inference to *demand plus headroom* instead of *peak plus margin*. Peak-provisioning looks responsible and quietly strands ~46,000 GPU-hours a month here.
+1. **The intent policy has a 7.8–9.2-percentage-point advantage in the scenario means.** Tracking demand reduces reservation waste by ~46,262 GPU-hours in S4. That accounting difference alone is not an ablation of elasticity or admission behavior.
 2. **Demand-tracking also wins at inference's own game.** The static policies size their reservation to the diurnal peak plus 5% — which surges exceed by construction, so under surges they miss (SLO 0.968); sizing statically to *cover* surges would instead deepen the standing waste. That is the structural bind of static sizing: it must choose between waste and misses. The tracking controller absorbs the same surges at 0.998.
-3. **The dividend is not free — and the costs are visible.** The intent policy pays ~1,230 resizes, ~440 graceful preemptions (more than tiered's ~260: running the cluster hotter leaves scarcity less slack, so more work is displaced when the envelope contracts), one to two ETTR points of churn overhead (vs the rigid and tiered baselines respectively), and longer waits under power pressure (4.5 h vs 2.5 h mean in S2). This is the correct engineering trade: bounded, priced churn in exchange for a fleet-level dividend.
-4. **Tiers alone are not enough.** Graceful preemption converts lossy kills into clean ones (28 vs 359 in S4) but recovers almost no capacity — because the big losses were never in the kills; they were in the standing reservations and the rigidity.
+3. **The advantage has costs.** In S4 the intent policy pays ~1,083 resizes and ~219 graceful preemptions, versus ~203 preemptions for tiered. Training ETTR is 0.895 versus 0.906/0.915, and mean started-job wait is 1.5 h versus 1.3/1.2 h. These are scenario outcomes, not universal policy guarantees.
+4. **Tiers alone recover little capacity in this workload.** Graceful preemption reduces emergency kills from 289 to 28 in S4, while fixed inference reservations remain unchanged.
 5. **Failures barely differentiate policies; allocation does.** Meta-rate failures cost every policy roughly equally. The scheduler's job is not to prevent failures — it is to stop wasting the capacity that survives them.
 
 **Honest limitations:** 5-minute steps; linear elastic scaling (optimistic — resize also pays an explicit overhead step); graceful preemption checkpoints at zero marginal cost at the moment of preemption (optimistic for both preempting policies; emergency kills do lose uncheckpointed work); the static policies' reservation is deliberately sized to the diurnal peak rather than to rare surges, mirroring common practice — sizing to surges would trade the SLO misses for deeper reservation waste; aggregate inference demand rather than per-request latency; abstracted node placement; single tenant. The simulator measures *policy structure*, not vendor performance; absolute numbers will differ per site, the ordering is the finding. Invariants are enforced by [tests](sim/test_sim.py) (conservation of GPU-hours, determinism per seed, policy behavioral contracts).
@@ -142,7 +146,7 @@ finding, where >4-GPU jobs show a longer delay tail (25% wait ≥10 min vs
 10% of 1-GPU jobs) and fragmentation drives ~78% of large-job delay
 occurrences [35], though this saturated simulation produces far larger
 ratios than the trace's minutes-scale tail; and the intent policy
-realizes ≈5-8 points more of the capacity envelope than rigid FIFO in
+realizes more of the capacity envelope than rigid FIFO in
 every seed, directionally anchored to Alibaba raising the (different but
 adjacent) allocation-ratio metric 68%→93% by scheduler-side work alone
 [37]. **Sanity** points pin the model's own arithmetic and cite no

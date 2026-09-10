@@ -24,7 +24,7 @@ Falsifiable expectations, stated in 2026:
 
 1. **Scheduling consolidates under accelerator vendors.** Already observable: NVIDIA acquired Run:ai (engine open-sourced as KAI, CNCF Sandbox, 2025) and then SchedMD — Slurm itself — in December 2025 [16, 21]. If allocation were a commodity sideshow, the chip vendor would not be buying the schedulers.
 2. **"GPUs-as-cattle" fabrics emerge.** Reconfigurable or rail-flexible fabrics (optical switching, disaggregated NVLink domains) will migrate into merchant GPU systems specifically to relax scheduler contiguity constraints, replicating the TPU v4 move.
-3. **Allocation efficiency becomes a quoted metric.** Vendors already inch there — CoreWeave quotes goodput and ETTR figures for SUNK [17]; expect capacity-realization-style numbers to appear in cloud SLAs and financings, because the difference between 78% and 86% realization (this repo's simulated dividend) is worth more than a hardware-generation refresh cycle at fleet scale.
+3. **Allocation efficiency is a distinct planning metric.** CoreWeave quotes goodput and ETTR figures for SUNK [17]. This repository's corrected S4 scenario reports 74.6% versus 83.7% capacity realization, with a different denominator and no claim of equivalence to vendor goodput or hardware-generation gains.
 4. **Power-flexibility becomes an allocation feature.** A scheduler that degrades by declared intent can sell that capability upward as grid flexibility (demonstrated at 256-GPU scale by NVIDIA/Emerald: −25% power during grid peak via orchestration alone [43]; formalized for clusters by Google's carbon-intelligent capacity curves [42]). Siting advantages then accrue to operators whose *allocation layer* can promise curtailment.
 
 ## What the hypothesis does not claim

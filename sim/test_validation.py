@@ -23,7 +23,9 @@ import simulator
 import validation
 from validation import DECLINED, points, validate
 
-FAST_HORIZON, FAST_SEEDS = 4, (0, 1)
+# Use the declared validation workload. After correcting offered load, four
+# days/two seeds may contain too few large jobs to test these comparisons.
+FAST_HORIZON, FAST_SEEDS = validation.HORIZON_DAYS, validation.SEEDS
 
 _POINTS = points()
 

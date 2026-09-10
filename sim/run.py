@@ -67,7 +67,7 @@ def aggregate(rows: list[dict]) -> dict[tuple[str, str], dict]:
 
 def write_csv(rows: list[dict], path: Path) -> None:
     with path.open("w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()), lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
 

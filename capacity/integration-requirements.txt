@@ -1,0 +1,3 @@
+# Existing domain packages pinned to the inspected revisions.
+slice-packer-torus @ git+https://github.com/dimaggi-ai/slice-packer-torus@b758791c5bce05f28b946438534513f0a578c0e1
+span-contract @ git+https://github.com/dimaggi-ai/span-contract@8400ada63e20e87f297003a78c6229e65c57c251

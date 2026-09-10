@@ -16,6 +16,10 @@ jobs:
       - run: pip install -r sim/requirements.txt
       - name: Calculator tests
         run: python3 calculator/test_stranded_capacity.py
+      - name: Capacity interface and existing placement contracts
+        run: |
+          pip install -r capacity/requirements.txt -r capacity/integration-requirements.txt pytest
+          python -m pytest capacity/tests -q
       - name: Simulator invariants
         run: cd sim && python3 test_sim.py
       - name: Validation registry (model vs public record)

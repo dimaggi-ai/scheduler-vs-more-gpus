@@ -8,6 +8,7 @@ from simulator import (
     expected_gpu_hours_per_job,
     SIZE_PROBS,
     MEAN_DURATION_H,
+    capped_lognormal_mean, DURATION_LOG_SIGMA, MAX_DURATION_H,
 )
 
 
@@ -15,18 +16,43 @@ def test_size_distribution_meta_shaped():
     """Job mix must reproduce Meta's shape: most jobs small, most GPU-time large."""
     assert math.isclose(sum(p for _, p in SIZE_PROBS), 1.0, abs_tol=1e-9)
     total = expected_gpu_hours_per_job()
-    small_time = sum(p * s * MEAN_DURATION_H[s] for s, p in SIZE_PROBS if s < 8)
-    big_time = sum(p * s * MEAN_DURATION_H[s] for s, p in SIZE_PROBS if s >= 256)
+    small_time = sum(p * s * capped_lognormal_mean(MEAN_DURATION_H[s], DURATION_LOG_SIGMA, MAX_DURATION_H) for s, p in SIZE_PROBS if s < 8)
+    big_time = sum(p * s * capped_lognormal_mean(MEAN_DURATION_H[s], DURATION_LOG_SIGMA, MAX_DURATION_H) for s, p in SIZE_PROBS if s >= 256)
     small_jobs = sum(p for s, p in SIZE_PROBS if s < 8)
     assert small_jobs > 0.6            # most jobs are tiny...
     assert small_time / total < 0.10   # ...but under 10% of GPU-time (arXiv:2410.21680)
     assert big_time / total > 0.50     # 256+ jobs dominate GPU-time (arXiv:2410.21680)
 
 
+def test_offered_load_expectation():
+    import numpy as np
+    assert capped_lognormal_mean(2, 0, 168) == 2
+    assert capped_lognormal_mean(200, 0, 168) == 168
+    assert math.isclose(expected_gpu_hours_per_job(), 268.31712871483074, rel_tol=1e-12)
+    rng = np.random.default_rng(20260910)
+    for median in (2, 6, 16, 36):
+        measured = np.minimum(rng.lognormal(math.log(median), .8, 500000), 168).mean()
+        assert math.isclose(measured, capped_lognormal_mean(median, .8, 168), rel_tol=.006)
+    cfg = Config()
+    target = cfg.offered_load * (cfg.gpus - cfg.inf_base - cfg.inf_diurnal_amp)
+    arrivals_per_hour = target / expected_gpu_hours_per_job()
+    assert math.isclose(arrivals_per_hour * expected_gpu_hours_per_job(), target)
+
+
 def test_determinism():
     a = Simulation(Config(horizon_days=3, seed=7), "intent-closed-loop").run()
     b = Simulation(Config(horizon_days=3, seed=7), "intent-closed-loop").run()
     assert a == b
+
+
+def test_factorial_controls_preserve_work_and_disable_resize():
+    cfg=Config(horizon_days=4,seed=5,power_envelope=True)
+    a=Simulation(cfg,'intent-closed-loop')
+    b=Simulation(cfg,'intent-closed-loop',track_demand=False,elasticity=False)
+    assert [(j.work,j.size,j.submit_step) for j in a.jobs] == [(j.work,j.size,j.submit_step) for j in b.jobs]
+    b._intent_controller(cfg.gpus,0,0)
+    assert b.inf_alloc == b.inf_reservation
+    assert b.run()['resizes'] == 0
 
 
 def test_seed_changes_results():

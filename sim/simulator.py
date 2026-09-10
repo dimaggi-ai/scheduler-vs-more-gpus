@@ -63,7 +63,10 @@ SIZE_PROBS = [
     (1, 0.42), (2, 0.13), (4, 0.13), (8, 0.18), (16, 0.05),
     (32, 0.04), (64, 0.025), (128, 0.015), (256, 0.007), (512, 0.003),
 ]
-MEAN_DURATION_H = {1: 2, 2: 2, 4: 2, 8: 6, 16: 6, 32: 6, 64: 16, 128: 16, 256: 36, 512: 36}
+MEDIAN_DURATION_H = {1: 2, 2: 2, 4: 2, 8: 6, 16: 6, 32: 6, 64: 16, 128: 16, 256: 36, 512: 36}
+# Compatibility alias: these parameters have always been lognormal medians.
+MEAN_DURATION_H = MEDIAN_DURATION_H
+DURATION_LOG_SIGMA = 0.8
 MAX_DURATION_H = 168            # 7-day lifetime cap (Meta policy)
 BEST_EFFORT_FRACTION = 0.20
 ELASTIC_MIN_SIZE = 16           # jobs >= this size are elastic (intent policy)
@@ -174,8 +177,21 @@ class Metrics:
 # ---------------------------------------------------------------- workload
 
 
+def capped_lognormal_mean(median: float, sigma: float, cap: float) -> float:
+    """E[min(X, cap)], not E[X | X <= cap]; the generator clips its tail."""
+    if not all(math.isfinite(x) for x in (median, sigma, cap)) or min(median, cap) <= 0 or sigma < 0:
+        raise ValueError("finite positive median/cap and nonnegative sigma required")
+    if sigma == 0:
+        return min(median, cap)
+    mu = math.log(median)
+    cdf = lambda z: 0.5 * math.erfc(-z / math.sqrt(2))
+    return (math.exp(mu + sigma * sigma / 2) * cdf((math.log(cap) - mu - sigma * sigma) / sigma)
+            + cap * cdf((mu - math.log(cap)) / sigma))
+
+
 def expected_gpu_hours_per_job() -> float:
-    return sum(p * s * MEAN_DURATION_H[s] for s, p in SIZE_PROBS)
+    return sum(p * s * capped_lognormal_mean(MEDIAN_DURATION_H[s], DURATION_LOG_SIGMA, MAX_DURATION_H)
+               for s, p in SIZE_PROBS)
 
 
 def make_workload(cfg: Config, rng: np.random.Generator) -> list[Job]:
@@ -194,9 +210,9 @@ def make_workload(cfg: Config, rng: np.random.Generator) -> list[Job]:
     for t in range(cfg.steps):
         for _ in range(rng.poisson(lam)):
             size = int(rng.choice(sizes, p=probs))
-            mean_h = MEAN_DURATION_H[size]
-            # lognormal with median ~ mean_h, sigma 0.8; truncate to 7 days
-            dur = float(min(rng.lognormal(math.log(mean_h), 0.8), MAX_DURATION_H))
+            median_h = MEDIAN_DURATION_H[size]
+            # Capped (not conditionally truncated) lognormal, in hours.
+            dur = float(min(rng.lognormal(math.log(median_h), DURATION_LOG_SIGMA), MAX_DURATION_H))
             elastic = size >= ELASTIC_MIN_SIZE
             jobs.append(
                 Job(
@@ -232,10 +248,11 @@ def power_cap_fraction(cfg: Config, t: int) -> float:
 
 
 class Simulation:
-    def __init__(self, cfg: Config, policy: str):
+    def __init__(self, cfg: Config, policy: str, *, track_demand=True, elasticity=True):
         assert policy in ("rigid-fifo", "tiered-preemption", "intent-closed-loop")
         self.cfg = cfg
         self.policy = policy
+        self.track_demand = track_demand
         self.rng = np.random.default_rng(cfg.seed)
         # Events (failure and surge timing) use a dedicated RNG so that every
         # policy faces an identical event timeline by construction — the main
@@ -243,6 +260,9 @@ class Simulation:
         # would otherwise desynchronize timelines across policies.
         self.event_rng = np.random.default_rng(cfg.seed + 20_000)
         self.jobs = make_workload(cfg, np.random.default_rng(cfg.seed + 10_000))
+        if not elasticity:
+            for job in self.jobs:
+                job.elastic = False
         self.metrics = Metrics(jobs_submitted=len(self.jobs))
         self.queue: list[Job] = []
         self.running: list[Job] = []
@@ -375,7 +395,8 @@ class Simulation:
 
     def _intent_controller(self, cap: int, t: int, demand: float) -> None:
         """Every 15 min: track inference demand + 10% headroom."""
-        self.inf_alloc = min(float(cap), math.ceil(demand * 1.10))
+        reservation = math.ceil(demand * 1.10) if self.track_demand else self.inf_reservation
+        self.inf_alloc = min(float(cap), reservation)
 
     RESIZE_COOLDOWN_STEPS = 12  # a job is resized at most once per hour
 

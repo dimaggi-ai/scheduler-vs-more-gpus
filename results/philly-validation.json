@@ -1,0 +1,68 @@
+{
+  "schema_version": "philly-workload-validation/v1",
+  "evidence_class": "external-observed",
+  "source": "https://media.githubusercontent.com/media/msr-fiddle/philly-traces/29a1b87fa2d9ed80b83c9e3a37f3a88d382b031d/trace-data.tar.gz",
+  "source_revision": "29a1b87fa2d9ed80b83c9e3a37f3a88d382b031d",
+  "source_sha256": "2037ccf63a725a02be718b0e1aeee6142c90b7f62d0d849295120e9f6ba13d2c",
+  "license": "CC-BY-4.0",
+  "attribution": "Microsoft Research Project Fiddle, ATC 2019 Philly trace",
+  "calibration_before": "2017-11-20",
+  "validation_on_or_after": "2017-11-20",
+  "excluded": {
+    "incomplete_or_invalid_attempt": 7546,
+    "no_attempts": 5236,
+    "cross_cutoff_attempts": 373
+  },
+  "calibration": {
+    "attempts": 124612,
+    "mean_allocated_gpu_hours": 20.454029705985157,
+    "small_attempt_share": 0.9171428112862324,
+    "large_allocated_time_share": 0.0,
+    "size_probability": {
+      "1": 0.8213815683882773,
+      "2": 0.020391294578371265,
+      "4": 0.07532982377299137,
+      "6": 1.6049818637049403e-05,
+      "7": 2.4074727955574103e-05,
+      "8": 0.07052290309119506,
+      "12": 0.00013642345841491992,
+      "14": 2.4074727955574103e-05,
+      "16": 0.01015953519725227,
+      "20": 8.024909318524701e-06,
+      "24": 0.00020062273296311752,
+      "28": 8.024909318524701e-06,
+      "32": 0.0016049818637049401,
+      "48": 2.4074727955574103e-05,
+      "64": 0.0001524732770519693,
+      "128": 1.6049818637049403e-05
+    }
+  },
+  "validation": {
+    "attempts": 26820,
+    "mean_allocated_gpu_hours": 20.78834232330765,
+    "small_attempt_share": 0.8617076808351977,
+    "large_allocated_time_share": 0.0,
+    "size_probability": {
+      "1": 0.7351976137211037,
+      "2": 0.03333333333333333,
+      "4": 0.09317673378076062,
+      "8": 0.10458612975391499,
+      "16": 0.02348993288590604,
+      "24": 0.0035048471290082027,
+      "32": 0.004921700223713647,
+      "64": 0.0014168530947054436,
+      "128": 0.0003728560775540641
+    }
+  },
+  "held_out_size_total_variation": 0.08642470194672928,
+  "assumptions": [
+    "Training jobs submitted AND attempts ended before cutoff; validation jobs submitted after cutoff.",
+    "Cross-cutoff attempts excluded, so future completion data cannot leak into calibration.",
+    "Timestamps are used as recorded; timezone is not inferred.",
+    "Attempts, not unique jobs; retries remain observed allocation demand.",
+    "Incomplete/censored attempts excluded and counted; survivorship bias remains.",
+    "Allocated GPU-hours include stalls/lost work; not scheduler-productive GPU-hours.",
+    "2017 hardware/workload is not a calibration of modern accelerator performance.",
+    "Held-out comparison tests workload-shape stability, not scheduler goodput accuracy."
+  ]
+}

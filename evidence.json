@@ -1,0 +1,315 @@
+{
+  "schema_version": "dimaggi-evidence/v1",
+  "sources": {
+    "model": {
+      "source_type": "model-assumption",
+      "location": "sim/simulator.py",
+      "version_date": "2026-09-10 corrected offered load",
+      "license_or_reuse": "Original MIT-licensed repository implementation",
+      "scope": "Synthetic allocation workload; no measured fleet outcomes"
+    },
+    "rsc": {
+      "source_type": "primary-publication",
+      "location": "https://arxiv.org/abs/2410.21680",
+      "version_date": "2024 paper; accessed 2026-09-10",
+      "license_or_reuse": "Numerical fact with attribution; no paper text or dataset redistributed",
+      "scope": "6.5 failures per 1000 node-days on RSC-1; not a universal modern fleet rate"
+    },
+    "run": {
+      "source_type": "experiment-output",
+      "location": "results/results.csv",
+      "version_date": "2026-09-10 corrected generator",
+      "license_or_reuse": "Original simulation outputs",
+      "scope": "1024 GPUs, 30 days, seeds 42-44; S4 power/failure/surge scenario"
+    },
+    "trace": {
+      "source_type": "experiment-output",
+      "location": "results/philly-validation.json",
+      "version_date": "2026-09-10 closure",
+      "license_or_reuse": "Microsoft Research Philly CC-BY-4.0 aggregate workload-shape output; no modern goodput calibration",
+      "scope": "Microsoft Research Philly CC-BY-4.0 aggregate workload-shape output; no modern goodput calibration"
+    },
+    "inference": {
+      "source_type": "experiment-output",
+      "location": "results/inference-scenarios.json",
+      "version_date": "2026-09-10 closure",
+      "license_or_reuse": "Synthetic roofline service scenarios; no real serving-engine measurement",
+      "scope": "Synthetic roofline service scenarios; no real serving-engine measurement"
+    },
+    "sensitivity": {
+      "source_type": "experiment-output",
+      "location": "results/sensitivity.json",
+      "version_date": "2026-09-10 closure",
+      "license_or_reuse": "432 factorial scenario runs, not empirical parameter intervals",
+      "scope": "432 factorial scenario runs, not empirical parameter intervals"
+    }
+  },
+  "inputs": [
+    {
+      "name": "offered_load",
+      "value": 0.95,
+      "unit": "fraction of gpus minus peak diurnal inference",
+      "evidence_class": "scenario",
+      "sources": [
+        "model"
+      ],
+      "transformation": "arrival rate times capped-lognormal expected GPU-hours",
+      "uncertainty": "Scenario, not measured demand; sweep 0.7-1.2",
+      "affected_outputs": [
+        "queue wait",
+        "capacity realization"
+      ],
+      "valid_bounds": [
+        0,
+        100
+      ]
+    },
+    {
+      "name": "duration_log_sigma",
+      "value": 0.8,
+      "unit": "dimensionless",
+      "evidence_class": "scenario",
+      "sources": [
+        "model"
+      ],
+      "transformation": "lognormal(log(median), sigma), clipped at 168h",
+      "uncertainty": "Not fitted to a duration trace",
+      "affected_outputs": [
+        "expected work",
+        "queue wait"
+      ],
+      "valid_bounds": [
+        0,
+        10
+      ]
+    },
+    {
+      "name": "expected_job_work",
+      "value": 268.31712871483074,
+      "unit": "GPU-hour/job",
+      "evidence_class": "derived",
+      "sources": [
+        "model"
+      ],
+      "transformation": "sum(size probability * size * E[min(lognormal,168h)])",
+      "uncertainty": "Exact expectation conditional on synthetic distribution",
+      "affected_outputs": [
+        "arrival rate"
+      ],
+      "valid_bounds": [
+        0,
+        1000000
+      ]
+    },
+    {
+      "name": "failure_rate",
+      "value": 6.5,
+      "unit": "failures/1000 node-days",
+      "evidence_class": "calibrated",
+      "sources": [
+        "rsc"
+      ],
+      "transformation": "divide by 1000 and steps/day for per-step node hazard",
+      "uncertainty": "External rate transferred to synthetic independent node model",
+      "affected_outputs": [
+        "available envelope",
+        "lost work"
+      ],
+      "valid_bounds": [
+        0,
+        288000
+      ]
+    },
+    {
+      "name": "power_fraction",
+      "range": [
+        0.6,
+        1
+      ],
+      "range_basis": "Deliberate contraction stress scenarios; not an empirical range",
+      "unit": "fraction of nominal GPUs",
+      "evidence_class": "scenario",
+      "sources": [
+        "model"
+      ],
+      "transformation": "floor(nominal GPUs * power fraction)",
+      "uncertainty": "No watts or measured site telemetry in this simulator",
+      "affected_outputs": [
+        "available envelope",
+        "preemption"
+      ],
+      "valid_bounds": [
+        0,
+        1
+      ]
+    }
+  ],
+  "results": [
+    {
+      "name": "S4 rigid realization",
+      "value": 0.746,
+      "unit": "productive GPU-hours/envelope GPU-hours",
+      "evidence_class": "simulated",
+      "sources": [
+        "run"
+      ],
+      "transformation": "mean over three seeds, rounded to 0.001",
+      "uncertainty": "Finite synthetic scenarios; not population confidence interval",
+      "affected_outputs": [
+        "README headline"
+      ],
+      "valid_bounds": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "S4 intent realization",
+      "value": 0.837,
+      "unit": "productive GPU-hours/envelope GPU-hours",
+      "evidence_class": "simulated",
+      "sources": [
+        "run"
+      ],
+      "transformation": "mean over three seeds, rounded to 0.001",
+      "uncertainty": "Bundled policy; see factorial sensitivity for separated controls",
+      "affected_outputs": [
+        "README headline"
+      ],
+      "valid_bounds": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "trace scope",
+      "statement": "Microsoft Research Philly CC-BY-4.0 aggregate workload-shape output; no modern goodput calibration",
+      "unit": "claim",
+      "evidence_class": "external-observed",
+      "sources": [
+        "trace"
+      ],
+      "transformation": "Per-scenario inputs, seeds and units retained in linked artifact",
+      "uncertainty": "No unreported production validation",
+      "affected_outputs": [
+        "research conclusions"
+      ]
+    },
+    {
+      "name": "inference scope",
+      "statement": "Synthetic roofline service scenarios; no real serving-engine measurement",
+      "unit": "claim",
+      "evidence_class": "simulated",
+      "sources": [
+        "inference"
+      ],
+      "transformation": "Per-scenario inputs, seeds and units retained in linked artifact",
+      "uncertainty": "No unreported production validation",
+      "affected_outputs": [
+        "research conclusions"
+      ]
+    },
+    {
+      "name": "sensitivity scope",
+      "statement": "432 factorial scenario runs, not empirical parameter intervals",
+      "unit": "claim",
+      "evidence_class": "simulated",
+      "sources": [
+        "sensitivity"
+      ],
+      "transformation": "Per-scenario inputs, seeds and units retained in linked artifact",
+      "uncertainty": "No unreported production validation",
+      "affected_outputs": [
+        "research conclusions"
+      ]
+    },
+    {
+      "name": "S4 tiered realization",
+      "value": 0.747,
+      "unit": "fraction",
+      "evidence_class": "simulated",
+      "sources": [
+        "run"
+      ],
+      "transformation": "Three-seed mean, rounded",
+      "uncertainty": "Rounded published model output; conditional scenario, not production benefit",
+      "affected_outputs": [
+        "published headline"
+      ],
+      "valid_bounds": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "S4 productive difference",
+      "value": 64268,
+      "unit": "GPU-hours",
+      "evidence_class": "simulated",
+      "sources": [
+        "run"
+      ],
+      "transformation": "Intent minus rigid mean over 30-day scenario",
+      "uncertainty": "Rounded published model output; conditional scenario, not production benefit",
+      "affected_outputs": [
+        "published headline"
+      ],
+      "valid_bounds": [
+        0,
+        737280
+      ]
+    },
+    {
+      "name": "S4 continuous GPU equivalent",
+      "value": 89.3,
+      "unit": "GPUs",
+      "evidence_class": "derived",
+      "sources": [
+        "run"
+      ],
+      "transformation": "64268 GPU-hours /720 hours, rounded; no purchase avoided",
+      "uncertainty": "Rounded published model output; conditional scenario, not production benefit",
+      "affected_outputs": [
+        "published headline"
+      ],
+      "valid_bounds": [
+        0,
+        1024
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "sha256": "e28a25f17bdbfa49bb934bc7da2ced5841790ed6903a7eb5f1c16e314311f072",
+      "path": "sim/simulator.py"
+    },
+    {
+      "sha256": "1af8d464bb46225b54f45d5bb209c7d1d5475fb0f6e48419c147d584925245ef",
+      "path": "sim/sensitivity.py"
+    },
+    {
+      "sha256": "ac6e14c505f0f58d85bb85aa7651e968ce4f956632e70d46ef917fdf82fee414",
+      "path": "capacity/inference.py"
+    },
+    {
+      "sha256": "865f826b66c3d8808675d408bc928db7618915f33ad6e4885de0655dc80fbd77",
+      "path": "capacity/philly.py"
+    },
+    {
+      "sha256": "1d7e69617ca20e82a84693306e31b8441f7daad26519d35542479d86da491f6f",
+      "path": "results/results.csv"
+    },
+    {
+      "sha256": "c6e26de8aa9a935883f7191a85de20b327cbc791a621c310700db6893747d6e6",
+      "path": "results/philly-validation.json"
+    },
+    {
+      "sha256": "7b66a4fd37c458dab996ac6f9056a44bec1cf10b7cf998ec4591932fe641a0d6",
+      "path": "results/inference-scenarios.json"
+    },
+    {
+      "sha256": "5594a87c81c2aa55aaa7430f1d1186aeffb1611bd9dad73d6544912aa1c45b97",
+      "path": "results/sensitivity.json"
+    }
+  ]
+}

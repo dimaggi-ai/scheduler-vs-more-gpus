@@ -1,0 +1,27 @@
+{
+  "config": {
+    "gpus": 1024,
+    "horizon_days": 2,
+    "seed": 42,
+    "failures": true,
+    "inf_surges": true,
+    "power_envelope": true
+  },
+  "policy": "intent-closed-loop",
+  "workloads": {
+    "inference": {
+      "workload_id": "synthetic-inference-demo",
+      "hardware_id": "abstract-scheduler-gpu",
+      "model_id": "no-real-model-calibrated",
+      "protocol_id": "aggregate-demand-no-latency-slo",
+      "unit": "tokens",
+      "units_per_productive_gpu_h": 3600,
+      "evidence_kind": "synthetic",
+      "source": "Illustrative rate only; not a measured serving benchmark",
+      "assumptions": [
+        "One token per second per credited GPU is an invented demonstration input.",
+        "Constant rate and linear scaling; no cache, queueing, TTFT or TPOT model."
+      ]
+    }
+  }
+}

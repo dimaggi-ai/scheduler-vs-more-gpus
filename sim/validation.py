@@ -39,7 +39,9 @@ from simulator import (
     SIZE_PROBS,
     Config,
     Simulation,
+    Job,
     expected_gpu_hours_per_job,
+    capped_lognormal_mean, DURATION_LOG_SIGMA, MAX_DURATION_H,
 )
 
 HORIZON_DAYS = 14
@@ -63,7 +65,7 @@ SLO_FLOOR = 0.99                # the reservation ratio only counts at equal SLO
 DECLINED: tuple[tuple[str, str], ...] = (
     ("absolute capacity realization",
      "no public source reports capacity realization under a named allocation "
-     "policy on a named fleet, so the levels (0.778, 0.858) are the model's "
+     "policy on a named fleet, so the levels (0.746, 0.837 in corrected S4) are the model's "
      "and only their ORDERING is claimed"),
     ("the failure model, at any point in this registry",
      "meta-ettr-band cannot tell failures-off from 10x Meta's rate: "
@@ -75,11 +77,10 @@ DECLINED: tuple[tuple[str, str], ...] = (
      "work is unconstrained by roughly an order of magnitude"),
     ("the SIZE of the scheduling dividend, and elastic resize",
      "scheduler-work-reclaims-capacity asserts only a SIGN — that intent "
-     "beats rigid in every seed. Delete elasticity outright and the "
-     "dividend falls from 6.63 to 2.52 points while every point stays "
-     "green; delete the restore path and it falls to 5.61, also green. The "
-     "'~5-8 points' and the resize counts the paper itemises are reported, "
-     "not validated"),
+     "beats rigid in the validation seeds. That cannot establish causal "
+     "contributions or production magnitude. The separate sensitivity.py "
+     "factorial experiment now distinguishes tracking and elasticity, but "
+     "its magnitudes remain synthetic scenario results"),
     ("Philly wait-ratio magnitudes",
      "only the direction is anchored; this 95%-load simulation produces "
      "ratios far larger than the trace's minutes-scale tail, and no point "
@@ -144,7 +145,7 @@ def points(horizon_days: int = HORIZON_DAYS,
     # ---------------------------------------------------------- calibrated
     small_count = sum(p for s, p in SIZE_PROBS if s < 8)
     big_time = (
-        sum(p * s * MEAN_DURATION_H[s] for s, p in SIZE_PROBS if s >= 256)
+        sum(p * s * capped_lognormal_mean(MEAN_DURATION_H[s], DURATION_LOG_SIGMA, MAX_DURATION_H) for s, p in SIZE_PROBS if s >= 256)
         / expected_gpu_hours_per_job()
     )
     pts.append(Point(
@@ -154,10 +155,11 @@ def points(horizon_days: int = HORIZON_DAYS,
              "(most jobs small); pinned so the workload cannot drift.",
     ))
     pts.append(Point(
-        "meta-most-gpu-time-large", "calibrated", "[34]",
-        expected=0.60, tolerance=0.005, actual=big_time,
-        note="Expected GPU-hour share of 256+ GPU jobs. Tuned to Meta's "
-             "finding that large jobs dominate GPU-time.",
+        "meta-most-gpu-time-large", "sanity", "-",
+        expected=0.5912907331300896, tolerance=1e-12, actual=big_time,
+        note="Analytical share for the capped lognormal generator, not an external "
+             "calibration score. The earlier median-based calculation incorrectly "
+             "reported 0.60; the qualitative large-job dominance still holds.",
     ))
     pts.append(Point(
         "rsc1-failure-rate-constant", "calibrated", "[34]",
@@ -220,7 +222,7 @@ def points(horizon_days: int = HORIZON_DAYS,
         "scheduler-work-reclaims-capacity", "emergent", "[37]",
         expected=float(len(SEEDS)), tolerance=0.0, actual=float(ordering),
         note="Seeds where the intent policy realizes more of the envelope "
-             "than rigid FIFO (delta ~5-8 points here). Direction anchor "
+             "than rigid FIFO. Direction anchor "
              "on a different metric: Alibaba (OSDI 2026) raised the "
              "ALLOCATION ratio 68%->93% by scheduler-side work alone; this "
              "model's capacity REALIZATION moves the same way for the same "
@@ -252,19 +254,23 @@ def points(horizon_days: int = HORIZON_DAYS,
              f"the last checkpoint is lost even in the 'graceful' case.",
     ))
 
-    grows = sum(
-        1 for s in SEEDS
-        if run(RIGID, s, offered_load=LOAD_HI)[1]["mean_wait_h"]
-        > run(RIGID, s, offered_load=LOAD_LO)[1]["mean_wait_h"]
-    )
+    def controlled_wait(load):
+        # Common work, different deterministic inter-arrival interval. Changing
+        # Poisson lambda also changes sampled jobs; per-seed monotonicity of
+        # that unrelated finite workload is not a valid queue invariant.
+        cfg = Config(horizon_days=14, inf_base=0, inf_diurnal_amp=0)
+        sim = Simulation(cfg, RIGID)
+        sim.jobs = [Job(i, cfg.gpus, cfg.gpus * 2., int(i * 2 / load / DT_H),
+                        'batch', False, cfg.gpus) for i in range(60)]
+        return sim.run()['mean_wait_h']
+    grows = controlled_wait(LOAD_HI) > controlled_wait(LOAD_LO)
     pts.append(Point(
         "queueing-grows-with-load", "sanity", "-",
-        expected=float(len(SEEDS)), tolerance=0.0, actual=float(grows),
-        note="Mean wait rises from 0.85 to 0.95 offered load in every "
-             "seed — a smoke test on the queue, claiming no external "
-             "evidence. Above saturation the started-jobs-only wait "
-             "metric censors never-started jobs and flattens, so no "
-             "claim is made past 0.95.",
+        expected=1., tolerance=0.0, actual=float(grows),
+        note="Controlled FIFO queue sanity case: the SAME sixty full-cluster "
+             "two-hour jobs arrive at 0.85 versus 0.95 load, and all fit the "
+             "horizon. This replaces an invalid per-seed monotonicity claim "
+             "over different Poisson workloads; no external calibration.",
     ))
 
     # Mean over seeds, not seed 0: the reservation schedule is deterministic

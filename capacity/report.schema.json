@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Scheduler capacity report v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "scheduler-capacity/v1"
+    },
+    "evidence_kind": {
+      "const": "simulation"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "simulator_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "interface_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "config": {
+          "type": "object"
+        },
+        "policy": {
+          "enum": [
+            "rigid-fifo",
+            "tiered-preemption",
+            "intent-closed-loop"
+          ]
+        },
+        "runtime": {
+          "type": "object",
+          "properties": {
+            "python": {
+              "type": "string",
+              "minLength": 1
+            },
+            "numpy": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "python",
+            "numpy"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "simulator_sha256",
+        "interface_sha256",
+        "config",
+        "policy",
+        "runtime"
+      ],
+      "additionalProperties": false
+    },
+    "unit": {
+      "const": "GPU-hour"
+    },
+    "window_hours": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "nominal_gpu_h": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "envelope_gpu_h": {
+      "type": "number",
+      "minimum": 0
+    },
+    "buckets_gpu_h": {
+      "type": "object",
+      "properties": {
+        "productive": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unavailable": {
+          "type": "number",
+          "minimum": 0
+        },
+        "idle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "inference_reservation": {
+          "type": "number",
+          "minimum": 0
+        },
+        "training_overhead_and_discarded": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "productive",
+        "unavailable",
+        "idle",
+        "inference_reservation",
+        "training_overhead_and_discarded"
+      ],
+      "additionalProperties": false
+    },
+    "productive_fraction_of_nominal": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "productive_fraction_of_envelope": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "workloads": {
+      "type": "object",
+      "properties": {
+        "training": {
+          "type": "object",
+          "properties": {
+            "calibration": {
+              "type": "object",
+              "properties": {
+                "workload_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "hardware_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "model_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "protocol_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "unit": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "units_per_productive_gpu_h": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "evidence_kind": {
+                  "enum": [
+                    "synthetic",
+                    "benchmark",
+                    "observed"
+                  ]
+                },
+                "assumptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "workload_id",
+                "hardware_id",
+                "model_id",
+                "protocol_id",
+                "unit",
+                "source",
+                "units_per_productive_gpu_h",
+                "evidence_kind",
+                "assumptions"
+              ],
+              "additionalProperties": false
+            },
+            "calibration_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "projected_units": {
+              "type": "number",
+              "minimum": 0
+            },
+            "evidence_kind": {
+              "const": "simulation"
+            }
+          },
+          "required": [
+            "calibration",
+            "calibration_id",
+            "projected_units",
+            "evidence_kind"
+          ],
+          "additionalProperties": false
+        },
+        "inference": {
+          "type": "object",
+          "properties": {
+            "calibration": {
+              "type": "object",
+              "properties": {
+                "workload_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "hardware_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "model_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "protocol_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "unit": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "units_per_productive_gpu_h": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "evidence_kind": {
+                  "enum": [
+                    "synthetic",
+                    "benchmark",
+                    "observed"
+                  ]
+                },
+                "assumptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "workload_id",
+                "hardware_id",
+                "model_id",
+                "protocol_id",
+                "unit",
+                "source",
+                "units_per_productive_gpu_h",
+                "evidence_kind",
+                "assumptions"
+              ],
+              "additionalProperties": false
+            },
+            "calibration_id": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "projected_units": {
+              "type": "number",
+              "minimum": 0
+            },
+            "evidence_kind": {
+              "const": "simulation"
+            }
+          },
+          "required": [
+            "calibration",
+            "calibration_id",
+            "projected_units",
+            "evidence_kind"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "productive_by_workload_gpu_h": {
+      "type": "object",
+      "properties": {
+        "training": {
+          "type": "number",
+          "minimum": 0
+        },
+        "inference": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "training",
+        "inference"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "evidence_kind",
+    "run_id",
+    "provenance",
+    "unit",
+    "window_hours",
+    "nominal_gpu_h",
+    "envelope_gpu_h",
+    "buckets_gpu_h",
+    "productive_fraction_of_nominal",
+    "productive_fraction_of_envelope",
+    "workloads",
+    "assumptions",
+    "productive_by_workload_gpu_h"
+  ],
+  "additionalProperties": false
+}
