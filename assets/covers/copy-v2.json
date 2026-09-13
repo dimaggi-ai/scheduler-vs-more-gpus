@@ -1,0 +1,18 @@
+[
+  {
+    "repo": "scheduler-vs-more-gpus",
+    "label": "AI INFRASTRUCTURE RESEARCH",
+    "title": [
+      "From scattered GPUs",
+      "to usable capacity"
+    ],
+    "subtitle": [
+      "Simulation of scheduling policies",
+      "and productive GPU-hours."
+    ],
+    "fontSize": 58,
+    "background": "illustration-v2.png",
+    "output": ".",
+    "source_readme_commit": "4b5384a9ce2f0426a0e05524364abfa4c98a9d81"
+  }
+]
