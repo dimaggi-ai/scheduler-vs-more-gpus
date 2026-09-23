@@ -329,3 +329,20 @@ def test_history_cannot_mix_nominal_fleets(bundle):
     history=copy.deepcopy(history);history[0]['nominal_gpu_h']*=2
     with pytest.raises(ValueError,match='history schema or nominal'):
         build_plan(p['config'],history,72)
+
+
+def test_original_published_36_run_grid_is_unchanged():
+    import csv
+    from pathlib import Path
+    scenarios={'S1-steady':{},'S2-power':{'power_envelope':True},
+               'S3-failures':{'failures':True},
+               'S4-full':{'power_envelope':True,'failures':True,'inf_surges':True}}
+    path=Path(__file__).resolve().parents[2]/'results/results.csv'
+    with path.open() as stream:
+        rows=list(csv.DictReader(stream))
+    assert len(rows)==36
+    for row in rows:
+        result=Simulation(Config(horizon_days=30,seed=int(row['seed']),**scenarios[row['scenario']]),row['policy']).run()
+        for key,value in result.items():
+            expected=row[key] if isinstance(value,str) else float(row[key])
+            assert value==expected,(row['scenario'],row['seed'],row['policy'],key)

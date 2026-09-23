@@ -4,7 +4,7 @@
     "model": {
       "source_type": "model-assumption",
       "location": "sim/simulator.py",
-      "version_date": "2026-09-10 corrected offered load",
+      "version_date": "2026-09-22 optional replay hooks; all 36 original published rows reproduced unchanged",
       "license_or_reuse": "Original MIT-licensed repository implementation",
       "scope": "Synthetic allocation workload; no measured fleet outcomes"
     },
@@ -280,7 +280,7 @@
   ],
   "artifacts": [
     {
-      "sha256": "e28a25f17bdbfa49bb934bc7da2ced5841790ed6903a7eb5f1c16e314311f072",
+      "sha256": "bb0f56db6f6c17ed90e08ccb2884d738a5d42cfe7548408c5820356b64e1cc5a",
       "path": "sim/simulator.py"
     },
     {
@@ -310,6 +310,50 @@
     {
       "sha256": "5594a87c81c2aa55aaa7430f1d1186aeffb1611bd9dad73d6544912aa1c45b97",
       "path": "results/sensitivity.json"
+    },
+    {
+      "path": "capacity/planning/__init__.py",
+      "sha256": "e0eb6e3f9402403357389e65333a3ad4b3f0cd8509f72ac7a2dac0391eceb49a"
+    },
+    {
+      "path": "capacity/planning/__main__.py",
+      "sha256": "81356be040e1cb8cc9607092ce5e4121c499dd43fd96f92ebf158a0e6ff64ef5"
+    },
+    {
+      "path": "capacity/planning/benchmark.py",
+      "sha256": "d434aa42ed8433a810482312325778b8030f6d3acd1c7ffcef6e3091f61257e0"
+    },
+    {
+      "path": "capacity/planning/ledger.py",
+      "sha256": "470f16eff1923f133e4e7b1520dc0f0be04d8d080c8341af90f5bcf6fb957330"
+    },
+    {
+      "path": "capacity/planning/model.py",
+      "sha256": "418f765a17511336b0fce06fa4b837bac225f795581d1204f0d149fa087435fd"
+    },
+    {
+      "path": "capacity/planning/schema.py",
+      "sha256": "0a18395abb1f53f74226624b63dfbcf65ff46ac65cedd10a04327394dd53c422"
+    },
+    {
+      "path": "capacity/planning/schemas/actual.schema.json",
+      "sha256": "443c5836627295f81d9a318892fe5693cef4d9c7acf0bffdc46155f719a86c65"
+    },
+    {
+      "path": "capacity/planning/schemas/plan.schema.json",
+      "sha256": "3ecdf44e1394b717e2c3edb2100b2dedc468c1d9436aaa3c6bba80cf1007a786"
+    },
+    {
+      "path": "capacity/planning/sql/quality.sql",
+      "sha256": "4a9d1e2bdec68faca57ebcaed8dd3d74a61c1996c0c48832402dd3ed1b1bc84f"
+    },
+    {
+      "path": "capacity/planning/sql/schema.sql",
+      "sha256": "1b59a15ec825a79fee75c95bb988e903a41c38e86c6fb4be99fd8be70c4bfdf6"
+    },
+    {
+      "path": "capacity/planning/sql/variance.sql",
+      "sha256": "8ef534f2433117f1e674eda593fe30b6c3ed3170778d8d01a39ab1a6a9610b02"
     }
   ]
 }
