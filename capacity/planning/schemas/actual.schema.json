@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "capacity-actual/v1"
+    },
+    "actual_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "evidence_kind": {
+      "const": "synthetic"
+    },
+    "workload_id": {
+      "const": "aggregate-inference-and-training/v1"
+    },
+    "hardware_id": {
+      "const": "abstract-homogeneous-gpu/v1"
+    },
+    "unit": {
+      "const": "GPU-hour"
+    },
+    "clock": {
+      "const": "elapsed simulation hours; half-open hourly windows"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "python": {
+          "type": "string",
+          "minLength": 1
+        },
+        "numpy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_hashes": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "required": [
+        "python",
+        "numpy",
+        "source_hashes"
+      ],
+      "additionalProperties": false
+    },
+    "scenario": {
+      "enum": [
+        "baseline",
+        "demand_surge",
+        "capacity_outage",
+        "price_spike",
+        "combined"
+      ]
+    },
+    "interventions": {
+      "type": "object",
+      "properties": {
+        "demand_factor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "demand_window_after_cutoff": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "capacity_factor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "capacity_window_after_cutoff": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "rate_factor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rate_window_after_cutoff": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "demand_factor",
+        "demand_window_after_cutoff",
+        "capacity_factor",
+        "capacity_window_after_cutoff",
+        "rate_factor",
+        "rate_window_after_cutoff"
+      ],
+      "additionalProperties": false
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nominal_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "envelope_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "inf_alloc_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "inf_productive_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "inf_demand_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "train_alloc_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "train_productive_gpu_h": {
+            "type": "number"
+          },
+          "work_lost_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "rate_usd_per_allocated_gpu_h": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "hour",
+          "nominal_gpu_h",
+          "envelope_gpu_h",
+          "inf_alloc_gpu_h",
+          "inf_productive_gpu_h",
+          "inf_demand_gpu_h",
+          "train_alloc_gpu_h",
+          "train_productive_gpu_h",
+          "work_lost_gpu_h",
+          "rate_usd_per_allocated_gpu_h"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "actual_id",
+    "plan_id",
+    "evidence_kind",
+    "workload_id",
+    "hardware_id",
+    "unit",
+    "clock",
+    "provenance",
+    "scenario",
+    "interventions",
+    "rows"
+  ],
+  "additionalProperties": false
+}

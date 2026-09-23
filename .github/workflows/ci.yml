@@ -24,3 +24,9 @@ jobs:
         run: cd sim && python3 test_sim.py
       - name: Validation registry (model vs public record)
         run: cd sim && python3 test_validation.py && python3 validation.py
+
+      - name: Forecast, allocation and SQL reconciliation acceptance
+        run: |
+          pip install -r capacity/planning/requirements.txt
+          python -m pytest capacity/planning/test_planning.py -q
+          python -m capacity.planning demo --output /tmp/capacity-plan-30d

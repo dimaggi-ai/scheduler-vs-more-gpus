@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "capacity-plan/v1"
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "evidence_kind": {
+      "const": "synthetic"
+    },
+    "workload_id": {
+      "const": "aggregate-inference-and-training/v1"
+    },
+    "hardware_id": {
+      "const": "abstract-homogeneous-gpu/v1"
+    },
+    "unit": {
+      "const": "GPU-hour"
+    },
+    "clock": {
+      "const": "elapsed simulation hours; half-open hourly windows"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "python": {
+          "type": "string",
+          "minLength": 1
+        },
+        "numpy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_hashes": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "required": [
+        "python",
+        "numpy",
+        "source_hashes"
+      ],
+      "additionalProperties": false
+    },
+    "config": {
+      "type": "object"
+    },
+    "policy": {
+      "enum": [
+        "rigid-fifo",
+        "tiered-preemption",
+        "intent-closed-loop"
+      ]
+    },
+    "cutoff_hour": {
+      "type": "integer",
+      "minimum": 72
+    },
+    "forecast": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "enum": [
+            "seasonal",
+            "last_value"
+          ]
+        },
+        "bias": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "issued_at_hour": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "history_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "hour": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "demand_gpu_h": {
+                "type": "number",
+                "minimum": 0
+              },
+              "lower_gpu_h": {
+                "type": "number",
+                "minimum": 0
+              },
+              "upper_gpu_h": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "hour",
+              "demand_gpu_h",
+              "lower_gpu_h",
+              "upper_gpu_h"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "backtest": {
+          "type": "object",
+          "properties": {
+            "seasonal": {
+              "type": "object",
+              "properties": {
+                "mae_gpu_h": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "observations": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "mae_gpu_h",
+                "observations"
+              ],
+              "additionalProperties": false
+            },
+            "last_value": {
+              "type": "object",
+              "properties": {
+                "mae_gpu_h": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "observations": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "mae_gpu_h",
+                "observations"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "seasonal",
+            "last_value"
+          ],
+          "additionalProperties": false
+        },
+        "interval_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backtest_scope": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "method",
+        "bias",
+        "issued_at_hour",
+        "history_id",
+        "rows",
+        "backtest",
+        "interval_kind",
+        "backtest_scope"
+      ],
+      "additionalProperties": false
+    },
+    "headroom": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "training_fill_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "training_retention_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "cost_basis": {
+      "const": "synthetic USD per allocated GPU-hour; not energy or TCO"
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nominal_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "envelope_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "inf_alloc_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "inf_productive_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "inf_demand_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "train_alloc_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "train_productive_gpu_h": {
+            "type": "number"
+          },
+          "work_lost_gpu_h": {
+            "type": "number",
+            "minimum": -1e-06
+          },
+          "rate_usd_per_allocated_gpu_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "reservation_gpus": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "training_budget_gpu_h": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "hour",
+          "nominal_gpu_h",
+          "envelope_gpu_h",
+          "inf_alloc_gpu_h",
+          "inf_productive_gpu_h",
+          "inf_demand_gpu_h",
+          "train_alloc_gpu_h",
+          "train_productive_gpu_h",
+          "work_lost_gpu_h",
+          "rate_usd_per_allocated_gpu_h",
+          "reservation_gpus",
+          "training_budget_gpu_h"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "plan_id",
+    "evidence_kind",
+    "workload_id",
+    "hardware_id",
+    "unit",
+    "clock",
+    "provenance",
+    "config",
+    "policy",
+    "cutoff_hour",
+    "forecast",
+    "headroom",
+    "training_fill_ratio",
+    "training_retention_ratio",
+    "cost_basis",
+    "rows"
+  ],
+  "additionalProperties": false
+}

@@ -39,7 +39,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
-from typing import Optional
+from typing import Optional, Callable
 
 import numpy as np
 
@@ -157,7 +157,8 @@ class Metrics:
             "stranded_idle_gpu_h": round(idle, 1),
             "stranded_reservation_gpu_h": round(reservation_waste, 1),
             "stranded_train_overhead_gpu_h": round(train_unproductive, 1),
-            "capacity_realization": round(productive / self.envelope_gpu_h, 4),
+            "capacity_realization": (round(productive / self.envelope_gpu_h, 4)
+                                     if self.envelope_gpu_h > 0 else None),
             "slo_attainment": round(self.slo_ok_steps / max(1, self.total_steps), 4),
             "train_ettr": round(
                 self.train_productive_gpu_h / max(1e-9, self.train_alloc_gpu_h), 4
@@ -418,8 +419,31 @@ class Simulation:
 
     # ------------------------------------------------------------ main loop
 
-    def run(self) -> dict:
+    def run(self, *, observer: Optional[Callable[[dict], None]] = None,
+            reservations=None, demand_factors=None, capacity_factors=None) -> dict:
+        """Optional offline replay hooks; defaults preserve the original study.
+
+        Arrays have one value per step. A None reservation uses the original
+        policy. Factors perturb observations, not configuration or RNG draws.
+        Observer receives cumulative accounting after each completed step;
+        productivity deltas may be negative when earlier progress is lost.
+        """
         cfg, m = self.cfg, self.metrics
+        for name, values in (("reservations", reservations), ("demand_factors", demand_factors),
+                             ("capacity_factors", capacity_factors)):
+            if values is None:
+                continue
+            if len(values) != cfg.steps:
+                raise ValueError(f"{name}: one value per simulation step required")
+            for value in values:
+                if name == "reservations" and value is None:
+                    continue
+                if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+                    raise ValueError(f"{name}: finite nonnegative values required")
+                if name == "reservations" and (value != int(value) or value > cfg.gpus):
+                    raise ValueError("reservations: whole GPUs within nominal capacity required")
+                if name == "capacity_factors" and value > 1:
+                    raise ValueError("capacity_factors cannot exceed one")
         for t in range(cfg.steps):
             # --- events -------------------------------------------------
             if cfg.failures:
@@ -441,11 +465,18 @@ class Simulation:
             demand = inference_demand(cfg, t, self.surge_add)
             cap = min(self.gpus_up(t), int(self.cfg.gpus * power_cap_fraction(cfg, t)))
 
+            if demand_factors is not None:
+                demand *= demand_factors[t]
+            if capacity_factors is not None:
+                cap = int(cap * capacity_factors[t])
+
             # --- policy control ----------------------------------------
             if self.policy == "intent-closed-loop" and t % 3 == 0:
                 self._intent_controller(cap, t, demand)
             if self.policy != "intent-closed-loop":
                 self.inf_alloc = float(min(self.inf_reservation, cap))
+            if reservations is not None and reservations[t] is not None:
+                self.inf_alloc = float(reservations[t])
             self._enforce_cap(cap, t)
 
             # --- arrivals & admission ----------------------------------
@@ -490,6 +521,9 @@ class Simulation:
             for j in done:
                 self.running.remove(j)
                 m.jobs_completed += 1
+
+            if observer is not None:
+                observer({"step": t, **dataclasses.asdict(m)})
 
         result = m.finalize()
         result["policy"] = self.policy

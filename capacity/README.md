@@ -94,3 +94,9 @@ Not implemented: live fleet synchronization, Kubernetes/Slurm bindings,
 prefix-cache routing, topology inside the simulation loop, cross-repository
 failure replay, multi-tenant scheduling or automatic actions. This is an offline
 foundation for a capacity twin, not a live digital twin.
+
+## Forecast, frozen plan and variance review
+
+See [planning/README.md](planning/README.md) for the synthetic planning lifecycle,
+DuckDB queries, fault scenarios and reproducible acceptance commands. It reuses
+the simulator and retains the domain boundaries documented above.

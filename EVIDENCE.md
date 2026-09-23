@@ -21,3 +21,17 @@ check tests copy parity. Synchronize copies when changing the convention.
 
 Qualitative contracts use a statement rather than manufacturing numerical results.
 Numeric valid_bounds are basic sanity limits, not empirically supported ranges.
+
+## Forecast → frozen allocation → variance example
+
+The [planning lifecycle](capacity/planning/README.md) adds synthetic hourly
+observations, transparent inference-demand baselines, frozen reservations and SQL
+accounting. `python -m capacity.planning demo --output /tmp/capacity-plan-review`
+creates source-hashed plans, actuals, variance reports and a completion manifest.
+
+Forecast residual bands are descriptive; rolling one-step errors do not validate
+a multi-day fixed-origin forecast. Training uses historical fill and retention
+ratios, not a job-arrival forecast. Costs use a declared synthetic allocated-GPU-hour
+tariff. Scenario differences and accounting decompositions are not production
+savings, causal attribution, operator acceptance or authorization. Local benchmark
+results must retain their source/runtime record and tested hourly record counts.

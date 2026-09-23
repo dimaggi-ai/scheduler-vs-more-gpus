@@ -1,5 +1,15 @@
 # Scheduled Capacity: Turning Scattered GPUs into Working AI Clusters
 
+## From capacity assumptions to an accountable plan
+
+The [capacity planning loop](capacity/planning/README.md) now connects a historical
+demand forecast, frozen inference reservations, the existing training scheduler,
+and a DuckDB variance ledger. Reproduce a 30-day experiment, challenge it with
+demand, outage and price scenarios, and trace differences back to explicit loss
+and cost accounts. Missing evidence remains unknown. This is an offline synthetic
+engineering capability, not a claim of production forecasting or fleet operation.
+
+
 For offline JSON replay, workload-specific capacity projections and adapters to
 the existing torus/admission packages, see [capacity interfaces](capacity/README.md).
 These extend the simulator; they are not production scheduler bindings.
