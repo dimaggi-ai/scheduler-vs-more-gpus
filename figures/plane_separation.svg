@@ -72,7 +72,7 @@
 
   <!-- ================= PANEL B ================= -->
   <rect x="555" y="60" width="505" height="560" fill="#fafafa" stroke="#cccccc"/>
-  <text x="807" y="90" text-anchor="middle" font-size="16" font-weight="bold" fill="#222222">B. Separated and governed (Patterns 1&#8211;2)</text>
+  <text x="807" y="90" text-anchor="middle" font-size="16" font-weight="bold" fill="#222222">B. Proposed separation (Patterns 1&#8211;2)</text>
   <text x="807" y="110" text-anchor="middle" font-size="12.5" fill="#555555">the write path owns the primary; reads go to a replica, behind policy</text>
 
   <!-- write column -->
@@ -103,7 +103,7 @@
   <rect x="800" y="235" width="240" height="60" fill="#fdf3d1" stroke="#bf9000"/>
   <text x="920" y="253" text-anchor="middle" font-size="12" font-weight="bold" fill="#222222">Policy gate &#8212; enforced</text>
   <text x="920" y="269" text-anchor="middle" font-size="10" fill="#555555">timeouts &#183; range ceilings &#183; rate budgets</text>
-  <text x="920" y="285" text-anchor="middle" font-size="10" font-style="italic" fill="#555555">Tool Guard-class firewall in front of agents</text>
+  <text x="920" y="285" text-anchor="middle" font-size="10" font-style="italic" fill="#555555">Policy checks before agent tool execution</text>
 
   <line x1="920" y1="295" x2="920" y2="348" stroke="#555555" marker-end="url(#arrow)"/>
 
@@ -116,15 +116,15 @@
   <text x="784" y="366" text-anchor="middle" font-size="10" fill="#555555">async replication</text>
 
   <g text-anchor="middle">
-    <text x="807" y="432" font-size="13" fill="#3a7d0a" font-weight="bold">A replica OOM is an analytics outage.</text>
-    <text x="807" y="450" font-size="13" fill="#3a7d0a" font-weight="bold">The scheduler never notices.</text>
+    <text x="807" y="432" font-size="13" fill="#3a7d0a" font-weight="bold">Design goal: contain a replica OOM to analytics.</text>
+    <text x="807" y="450" font-size="13" fill="#3a7d0a" font-weight="bold">Scheduler isolation requires deployment validation.</text>
     <text x="807" y="472" font-size="10.5" fill="#777777">OLTP/OLAP separation (Pattern 1) + query governance (Pattern 2)</text>
   </g>
 
   <!-- execution plane strip -->
   <rect x="573" y="530" width="464" height="52" fill="#f4f4f4" stroke="#999999" stroke-dasharray="4,3"/>
   <text x="805" y="552" text-anchor="middle" font-size="12" font-weight="bold" fill="#444444">Execution plane &#8212; GPU nodes</text>
-  <text x="805" y="570" text-anchor="middle" font-size="10.5" fill="#777777">unaffected; jobs keep running and completing</text>
+  <text x="805" y="570" text-anchor="middle" font-size="10.5" fill="#777777">intended outcome: jobs keep running and completing</text>
 
   <text x="540" y="650" text-anchor="middle" font-size="10.5" fill="#999999">Incident and default-configuration citations: REFERENCES.md [1, 6&#8211;13] &#183; mechanism detail: patterns/README.md, Patterns 1&#8211;2</text>
 </svg>

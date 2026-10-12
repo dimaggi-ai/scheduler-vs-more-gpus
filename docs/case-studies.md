@@ -1,6 +1,6 @@
 # Control-plane incident case studies
 
-Reference numbers point to [REFERENCES.md](../REFERENCES.md). These incidents are a plural evidence set for one claim: **the allocation plane, not the hardware, is where AI clusters lose capacity.** No single incident is the story; the recurrence is.
+Reference numbers point to [REFERENCES.md](../REFERENCES.md). These incidents are a plural evidence set for one claim: **the allocation plane can originate capacity loss or amplify a hardware fault.** No single incident is the story; the recurrence is.
 
 | # | Incident | Site | Year | Class | Refs |
 |---|---|---|---|---|---|
@@ -8,7 +8,7 @@ Reference numbers point to [REFERENCES.md](../REFERENCES.md). These incidents ar
 | 2 | Scheduler oscillation, ~6.5 days degraded, cause never public | Harvard FASRC | 2023 | Control-plane opacity, human-speed recovery | [2, 3] |
 | 3 | ~1,000 concurrent `sacct` polls "crashed our SLURM db" | unnamed Slurm site (Cactus/Toil) | 2019 | Concurrency swamping by workflow automation | [11] |
 | 4 | "agent queue is full (20140), discarding DBD_STEP_COMPLETE" | unnamed site (slurm-users list) | 2019 | Accounting-queue saturation during database loss | [10] |
-| 5 | 1024-GPU job requeued 35× after a node failure, causing 548 preemptions of other jobs | Meta RSC | 2024 | Allocation-policy cascade (one fault, amplified by policy) | [34] |
+| 5 | 1,024-GPU job encountered `NODE_FAIL`, then requeued 35×, causing 548 preemptions of other jobs | Meta RSC | 2024 | Scheduling cascade following a reported node failure | [34] |
 | 6 | "badly envisioned queries run by users can DoS the box" | SchedMD tracker (bugs 2346, 2845) | 2016 | Vendor-known failure class, a decade early | [8, 9] |
 | 7 | Emergency cluster-wide pause to patch scheduler memory leak (~3.7 h); upgrade terminated jobs | Harvard FASRC | 2026 | Scheduler defect + control-plane maintenance cost | [4a, 4b] |
 
@@ -44,4 +44,4 @@ Scheduler slowness, failed submissions, and timeouts for ~6.5 days [2]; the comp
 - The same failure class at unrelated sites (cases 3, 4) and inside a hyperscaler's allocation policy itself (case 5).
 - A vendor tracker that called it in 2016 (case 6).
 
-The allocation plane is a system in production serving adversarially-shaped load (including, now, autonomous agents) with database defaults from a gentler era, recovering at human speed. Treating it with the engineering seriousness reserved for the data plane is the cheapest capacity you will ever buy — the quantitative version of that claim is the [simulator](../sim/) and [calculator](../calculator/).
+The allocation plane is a system in production serving adversarially-shaped load (including, now, autonomous agents) with database defaults from a gentler era, recovering at human speed. The [simulator](../sim/) and [calculator](../calculator/) quantify conditional capacity losses and policy differences. They do not price implementation or establish that scheduler work is cheaper than every hardware alternative; that comparison requires site-specific costs and workloads.

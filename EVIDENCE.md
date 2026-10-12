@@ -21,3 +21,12 @@ check tests copy parity. Synchronize copies when changing the convention.
 
 Qualitative contracts use a statement rather than manufacturing numerical results.
 Numeric valid_bounds are basic sanity limits, not empirically supported ranges.
+
+The publication gate (`python tools/sync_research.py --check --verify-run`) requires
+SHA bindings for the three published experiment PNGs and their generator. An
+independent peer review demonstrated that the prior gate accepted a substituted
+pre-correction plot or a missing plot even while numerical regeneration passed.
+Missing, replaced, unbound or duplicate figure bindings now fail. PNG pixels are
+not compared across Matplotlib/font versions: regenerate, inspect the plots,
+then explicitly review their hashes before resealing. Neither the numerical
+refresh command nor CI automatically updates provenance.
