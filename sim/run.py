@@ -77,9 +77,11 @@ def write_summary(agg: dict, path: Path, days: int, seeds: list[int]) -> None:
         "# Simulation results summary",
         "",
         f"1,024-GPU cluster, {days} days, seeds {seeds} (values are means across seeds).",
-        "Full per-run data in results.csv. Reproduce: `python3 sim/run.py`.",
+        "Full per-run data in results.csv. Reproduce: `python3 sim/run.py`. "
+        "Legacy `train_ettr` means productive/allocated training GPU-hours; "
+        "eligible queue waiting is excluded, unlike Meta ETTR.",
         "",
-        "| Scenario | Policy | Capacity realization | Inference SLO | Train ETTR | "
+        "| Scenario | Policy | Capacity realization | Inference SLO | Train productive/allocated | "
         "Stranded GPU-h | ...idle | ...reservation | ...overhead+lost | Preempts | Kills | Resizes | Mean wait h |",
         "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]

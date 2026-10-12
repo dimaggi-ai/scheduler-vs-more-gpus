@@ -138,9 +138,9 @@ def test_the_pinned_rsc1_constant_cannot_drift():
 
 def test_a_broken_checkpoint_interval_is_noticed():
     # Checkpoint every step: the overhead step then eats most of the run and
-    # training ETTR falls out of Meta's band.
+    # Training productive/allocated time falls outside the internal sanity band.
     red = _registry((simulator, "CKPT_INTERVAL_STEPS", 1))
-    assert "meta-ettr-band" in red, red
+    assert "training-productivity-band" in red, red
 
 
 def test_comparing_the_two_offered_loads_at_the_same_load_is_noticed():

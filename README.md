@@ -4,9 +4,11 @@ For offline JSON replay, workload-specific capacity projections and adapters to
 the existing torus/admission packages, see [capacity interfaces](capacity/README.md).
 These extend the simulator; they are not production scheduler bindings.
 
-**The AI-infrastructure market prices GPUs, power, and interconnect. It does not price the layer that converts them into usable capacity: allocation.** This repository makes that layer measurable — and shows, with a reproducible simulator and verified public evidence, that scheduling maturity is worth more than the next tranche of GPUs.
+**The AI-infrastructure market prices GPUs, power, and interconnect. It does not price the layer that converts them into usable capacity: allocation.** This repository examines how allocation policies change modeled usable capacity, using a reproducible simulator and public research. The results are scenario comparisons, not a universal return-on-investment ranking.
 
-**Corrected experiment, 2026-09-10:** on a simulated 1,024-GPU cluster with a public-research-informed synthetic workload, power constraints, failures and demand surges, the intent policy realizes **83.7%** of the available envelope versus **74.6%** for rigid FIFO. The difference is **~64,268 modeled productive GPU-hours over 30 days (~89.3 continuously productive GPU equivalents)**, not GPUs purchased or production savings. Arrival rates now use the expected duration of the actual capped lognormal generator. This supersedes the earlier 85.8%/77.8% and ~56,000 GPU-hour results. The comparison bundles reservation tracking and elasticity; it does not isolate their causal contributions.
+<!-- research:headline:begin -->
+**Corrected experiment (offered-load correction: 2026-09-10):** on a simulated 1,024-GPU cluster over 30 days, with a public-research-informed synthetic workload, power constraints, failures and demand surges (S4), the intent policy realizes **83.7%** of the available envelope versus **74.6%** for rigid FIFO. The difference is **~64,267 modeled productive GPU-hours (~89.3 continuously productive GPU equivalents)**. These are modeled output differences, not GPUs purchased or production savings. The comparison bundles reservation tracking and elasticity; it does not isolate their causal contributions.
+<!-- research:headline:end -->
 
 *Sequel to [network-vs-more-gpus](https://github.com/dimaggi-ai/network-vs-more-gpus) ("Network Capacity Is Compute Capacity"). All factual claims trace to [REFERENCES.md](REFERENCES.md).*
 
@@ -20,36 +22,44 @@ Over a window of H hours on N accelerators, usable capacity is nominal capacity 
 
 - **A — scheduler availability**: can the allocation plane admit and place work?
 - **E — allocation efficiency**: of schedulable accelerator-hours, how many are allocated?
-- **P — productive ratio**: of allocated hours, how many produce forward progress? (Meta's ETTR is this quantity for training [34].)
+- **P — productive ratio**: of allocated accelerator-hours, how many produce forward progress? Meta's ETTR uses a different denominator: scheduled time plus time eligible for scheduling while waiting in the queue [34, §II-D]. It cannot be substituted for P.
 
-The [calculator](calculator/) computes the three loss layers for any fleet, with worked examples from verified public incidents. What it shows is an inversion of attention:
+The [calculator](calculator/) computes the three loss layers. The following arithmetic examples use a 720-hour window; their assumed fleet sizes and rates are explicit, and they are not measurements of recovered productive capacity:
 
 | Worked example (30-day window) | Layer | Stranded GPU-hours |
 |---|---|---|
 | Harvard emergency scheduler patch, Aug 2026 — whole fleet paused ~3.7 h [4, 4a] | scheduler (A) | **3,700** |
-| Meta-style 16k fleet at ETTR 0.90 [34] | productivity (P) | **1,152,000** |
-| Alibaba-scale fleet at 68% allocation ratio, pre-optimization [37] | allocation (E) | **35,806,464** |
+| Illustrative 16k fleet with **assumed P = 0.90** (not Meta ETTR) | productivity (P) | **1,152,000** |
+| 155,410-GPU fleet using Alibaba's 68% **high-priority-only** allocation ratio [37] | allocation (E) | **35,806,464** |
 
-The layer that makes the news (outages) is the smallest. The layer nobody sees (allocation) is the largest — the raw totals above differ by four orders of magnitude, but the fleets differ in size too, so normalize per GPU: the allocation gap strands ~230 GPU-hours per GPU per month against the headline outage's 3.7 — roughly **60× more**, per GPU, every month. Alibaba's own OSDI'26 paper reports raising allocation from 68% to 93% by scheduler-side work on a 155,410-GPU fleet [37] — a recovered ~28M GPU-hours per month that no amount of additional hardware purchasing could have delivered per dollar.
+These examples compare different fleets and assumptions, so they do not establish a
+universal ranking of losses. Alibaba reports 68% allocation for high-priority (HP)
+jobs alone and 93% when lower-priority, interruptible (LP) jobs are included [37,
+§3.3, Fig. 9]. Applying that 25-point difference to 155,410 GPUs for an **assumed
+720 hours** gives 27,973,800 additional *allocated* GPU-hours, not measured
+productive hours, extra HP guarantees or a before/after controlled intervention.
+LP capacity can be reclaimed for HP work; its service terms differ [37, §4.2].
 
 ```
 python3 calculator/stranded_capacity.py --list-presets
 python3 calculator/stranded_capacity.py --preset typical-composite
 ```
 
-A composite mid-size cluster (one 4 h control-plane event, 80% allocation, 0.90 productive ratio) realizes **71.6%** of its nominal month. The control-plane event — the thing that gets a postmortem — contributes 2% of that loss.
+An illustrative composite cluster (all assumptions: one 4 h control-plane event, 80% allocation, 0.90 productive ratio) realizes **71.6%** of its nominal month. The control-plane event — the thing that gets a postmortem — contributes 2% of that loss.
 
-## 2. "Utilization" is three different numbers
+## 2. Different measures of utilization
 
 Most "GPUs are idle" claims mix incommensurable metrics. Keep them apart:
 
 | Metric | What it measures | Cited values |
 |---|---|---|
-| **Allocation ratio** | share of GPUs assigned to anyone | 68% pre- / 93% post-optimization, Alibaba ASI, 155k GPUs [37] |
-| **Hardware utilization** | busy fraction of *allocated* GPUs | ~52% average, Microsoft Philly training cluster [35]; median 4.2%, Alibaba PAI mixed cluster [36] (secondary-source figure, primary re-verification pending) |
-| **MFU / goodput / ETTR** | useful fraction of busy time | ETTR ~0.9 on multi-day 2–4k-GPU runs, Meta [34] |
+| **Allocation ratio** | share of fleet accelerator-hours assigned to a stated workload population | Alibaba ASI: 68% HP-only; 93% HP + interruptible LP on the same 155,410-GPU fleet [37] |
+| **Hardware utilization** | busy fraction of *allocated* GPUs | ~52% average, Microsoft Philly training cluster [35] |
+| **Instance SM usage** | accelerator-equivalent SM usage per task instance; a different population and unit from fleet utilization | Median 0.042 GPU-equivalents, Alibaba PAI [36, §3.3/Fig. 5(b)] |
+| **Productive ratio P (this model)** | productive / allocated accelerator-hours; queue time excluded | Synthetic training ratios in the experiment table below |
+| **ETTR (Meta)** | useful training time / (scheduled time + eligible queue waiting); includes failure/restart effects | Near 0.9 for multi-day 2–4k-GPU jobs under the paper's checkpoint/restart assumptions [34] |
 
-These multiply. A fleet can report "full" while producing a fraction of its potential — every layer belongs to the allocation-and-scheduling problem, not to hardware.
+Only A, E and P with the aligned denominators defined above form this accounting identity. Hardware utilization, MFU, goodput and Meta ETTR are distinct measurements; they cannot be multiplied or substituted indiscriminately. A high allocation ratio alone does not demonstrate productive progress.
 
 ## 3. The allocation plane is also where clusters break
 
@@ -60,11 +70,16 @@ The scheduler control plane, not the GPUs, is the recurring point of failure —
 - Harvard FASRC, **June 2023**: ~6.5 days of scheduler degradation; root cause never publicly identified [2, 3].
 - Harvard FASRC, **May 2026**: one oversized `sacct` query OOM'd the accounting database host and crashed the scheduler — sub-hour hard outage, multi-day degraded operation, permanent query caps [1].
 - Harvard FASRC, **Aug 2026**: emergency cluster-wide pause (~3.7 h) to patch a scheduler memory leak; the upgrade itself terminated jobs [4a, 4b].
-- Meta, **2024**: after one node failure, a single 1024-GPU job was requeued 35 times, inflicting **548 preemptions** on other jobs — one hardware fault, amplified into fleet-scale churn entirely by allocation policy [34].
+- Meta, **2024**: a 1,024-GPU job encountered `NODE_FAIL` and was subsequently requeued 35 times, causing **548 preemptions** of other jobs — a reported node failure followed by scheduling cascades [34].
 
-In none of these events was failing hardware the story — the allocation plane either originated the loss or multiplied it.
+These incidents illustrate two roles for the allocation plane: it can originate a disruption or amplify a hardware fault, as in Meta's example.
 
-**And a new load class has arrived.** Harvard's May 2026 postmortem closes with: *"Please also ensure any AI agents you have running limit their queries appropriately"* [1]. Autonomous agents combine both dangerous load shapes — large scans and high-frequency polling — and asking them to be judicious does not scale. The bound has to be enforced at the interface: a runtime policy firewall such as DIMAGGI's own [Tool Guard](https://dimaggi.ai) intercepts an agent's tool calls before execution and applies allow / deny / redact / escalate decisions against declared policy (query-range ceilings, scoping, rate budgets), with a tamper-evident audit trail. A postmortem can only ask; an enforcement point makes the bound hold for requesters that will never read the postmortem.
+**Agent requests also need bounds.** Harvard's May 2026 postmortem asks users to
+limit agent queries [1]. A vendor-neutral policy gate can enforce query ranges,
+field scope, concurrency and request budgets before tools reach the accounting
+service, with recorded decisions and escalation for exceptions. These are proposed
+architecture controls; this simulator does not implement or evaluate a policy-gate
+product, and its research results do not depend on one.
 
 ![Separating the observation plane from the allocation plane](figures/plane_separation.svg)
 
@@ -78,14 +93,17 @@ The [simulator](sim/) runs a 1,024-GPU cluster for 30 days under four scenarios 
 
 Results (means over 3 seeds; full grid in [results/](results/), reproduce with `python3 sim/run.py`):
 
+<!-- research:s4-table:begin -->
 | Scenario S4 (power + failures + surges) | rigid-fifo | tiered-preemption | intent-closed-loop |
 |---|---|---|---|
-| **Capacity realization** | 0.746 | 0.747 | **0.837** |
-| Inference SLO attainment | 0.968 | 0.968 | **0.998** |
-| Training ETTR | 0.906 | **0.915** | 0.895 |
-| Stranded GPU-h / month | 179,424 | 178,375 | **115,156** |
-| — of which reservation waste | 67,416 | 67,416 | **21,154** |
-| Emergency kills / preemptions / resizes | 289 / 0 / 0 | 28 / 203 / 0 | 28 / 219 / 1,083 |
+| Capacity realization | 0.746 | 0.747 | 0.837 |
+| Inference SLO attainment | 0.968 | 0.968 | 0.998 |
+| Training productive / allocated GPU-h (legacy `train_ettr` field) | 0.906 | 0.915 | 0.895 |
+| Stranded GPU-h / month | 179,424 | 178,375 | 115,156 |
+| — of which reservation waste | 67,416 | 67,416 | 21,154 |
+| Kills / preemptions / resizes | 289 / 0 / 0 | 28 / 203 / 0 | 28 / 219 / 1083 |
+| Mean started-job wait (h) | 1.3 | 1.2 | 1.5 |
+<!-- research:s4-table:end -->
 
 ![Stranded capacity breakdown](figures/stranded_breakdown.png)
 
@@ -95,13 +113,15 @@ Results (means over 3 seeds; full grid in [results/](results/), reproduce with `
 
 What the numbers say:
 
-1. **The intent policy has a 7.8–9.2-percentage-point advantage in the scenario means.** Tracking demand reduces reservation waste by ~46,262 GPU-hours in S4. That accounting difference alone is not an ablation of elasticity or admission behavior.
-2. **Demand-tracking also wins at inference's own game.** The static policies size their reservation to the diurnal peak plus 5% — which surges exceed by construction, so under surges they miss (SLO 0.968); sizing statically to *cover* surges would instead deepen the standing waste. That is the structural bind of static sizing: it must choose between waste and misses. The tracking controller absorbs the same surges at 0.998.
-3. **The advantage has costs.** In S4 the intent policy pays ~1,083 resizes and ~219 graceful preemptions, versus ~203 preemptions for tiered. Training ETTR is 0.895 versus 0.906/0.915, and mean started-job wait is 1.5 h versus 1.3/1.2 h. These are scenario outcomes, not universal policy guarantees.
-4. **Tiers alone recover little capacity in this workload.** Graceful preemption reduces emergency kills from 289 to 28 in S4, while fixed inference reservations remain unchanged.
-5. **Failures barely differentiate policies; allocation does.** Meta-rate failures cost every policy roughly equally. The scheduler's job is not to prevent failures — it is to stop wasting the capacity that survives them.
+<!-- research:readme-findings:begin -->
+1. **Scenario means:** intent exceeds rigid FIFO by 7.8–9.2 percentage points. S4 reservation waste is lower by ~46,262 GPU-hours; that ledger difference does not isolate the causal contributions of tracking and elasticity.
+2. **Aggregate inference attainment:** 0.998 for intent versus 0.968 for the static policies. The modeled surges exceed the static reservation by construction; this is not request-level latency validation.
+3. **Churn and training:** intent performs ~1,083 resizes and ~219 graceful preemptions versus ~203 preemptions for tiered. Its training productive/allocated ratio is 0.895 versus 0.906/0.915; mean started-job wait is 1.5 h versus 1.3/1.2 h. Never-started jobs are excluded from that wait metric.
+4. **Tiered preemption:** emergency kills fall from ~289 to 28 while realization moves from 0.746 to 0.747; fixed inference reservations remain.
+5. **Scope:** these conditional model results do not establish a production guarantee, universal policy ordering or hardware purchase avoided.
+<!-- research:readme-findings:end -->
 
-**Honest limitations:** 5-minute steps; linear elastic scaling (optimistic — resize also pays an explicit overhead step); graceful preemption checkpoints at zero marginal cost at the moment of preemption (optimistic for both preempting policies; emergency kills do lose uncheckpointed work); the static policies' reservation is deliberately sized to the diurnal peak rather than to rare surges, mirroring common practice — sizing to surges would trade the SLO misses for deeper reservation waste; aggregate inference demand rather than per-request latency; abstracted node placement; single tenant. The simulator measures *policy structure*, not vendor performance; absolute numbers will differ per site, the ordering is the finding. Invariants are enforced by [tests](sim/test_sim.py) (conservation of GPU-hours, determinism per seed, policy behavioral contracts).
+**Honest limitations:** 5-minute steps; linear elastic scaling (optimistic — resize also pays an explicit overhead step); graceful preemption checkpoints at zero marginal cost at the moment of preemption (optimistic for both preempting policies; emergency kills do lose uncheckpointed work); the static policies' reservation is deliberately sized to the diurnal peak rather than to rare surges, mirroring common practice — sizing to surges would trade the SLO misses for deeper reservation waste; aggregate inference demand rather than per-request latency; abstracted node placement; single tenant. The simulator measures *policy structure*, not vendor performance; absolute numbers and policy ordering may differ with workload and site assumptions. The reported ordering is limited to these scenarios. Invariants are enforced by [tests](sim/test_sim.py) (conservation of GPU-hours, determinism per seed, policy behavioral contracts).
 
 ## 5. The pattern is older than AI: what carrier networks already learned
 
@@ -134,11 +154,11 @@ The simulator carries a nine-point validation registry
 ([sim/validation.py](sim/validation.py)) run in CI, honestly split into
 three kinds. **Calibrated** points pin constants tuned to — or sharing an
 input with — published figures, so they cannot drift silently: Meta's
-job-size shape and RSC-1 failure rate [34], and training ETTR, which
-lands at ~0.91-0.92 against Meta's published ~0.9 [34] but is labeled
-calibrated, not emergent, because Meta computed that figure at an assumed
-1-hour checkpoint interval — the same constant this model uses — so the
-agreement is a shared input, not evidence. **Emergent** points are
+job-size shape and RSC-1 failure-rate constant [34]. The training productive/allocated
+ratio band is an **internal sanity check**, dominated by this simulator's fixed
+one-hour checkpoint interval. It is not a Meta ETTR calibration: Meta includes
+eligible queue waiting and uses Daly–Young optimal checkpoint intervals with
+five-minute restart and checkpoint-write overhead for Fig. 9 [34]. **Emergent** points are
 behaviors nothing in the code was tuned to produce, asserted across four
 seeds: large jobs queue >2× longer than small ones under rigid gang
 scheduling in every seed — the direction of the Philly trace's queueing
@@ -147,9 +167,9 @@ finding, where >4-GPU jobs show a longer delay tail (25% wait ≥10 min vs
 occurrences [35], though this saturated simulation produces far larger
 ratios than the trace's minutes-scale tail; and the intent policy
 realizes more of the capacity envelope than rigid FIFO in
-every seed, directionally anchored to Alibaba raising the (different but
-adjacent) allocation-ratio metric 68%→93% by scheduler-side work alone
-[37]. **Sanity** points pin the model's own arithmetic and cite no
+every seed. Alibaba's 68% HP-only versus 93% HP+LP allocation ratios [37]
+illustrate filling idle capacity with interruptible work, but do not validate this
+model's mechanisms, causal effect or productive-capacity gain. **Sanity** points pin the model's own arithmetic and cite no
 external evidence: emergency kills under power contraction lose
 ~1,350-2,100 GPU-h per two weeks that graceful checkpoint-preemption
 preserves by construction (real Borg-style preemption warns and kills,
@@ -196,10 +216,20 @@ python3 calculator/stranded_capacity.py --preset harvard-aug2026
 python3 calculator/test_stranded_capacity.py
 
 # policy simulation: full grid (4 scenarios x 3 policies x 3 seeds, ~6 s)
-cd sim && python3 test_sim.py && python3 test_validation.py && python3 run.py
+(cd sim && python3 test_sim.py && python3 test_validation.py && python3 run.py)
+
+# refresh marked README/paper results from CSV; review the surrounding prose
+python3 tools/sync_research.py --write
+python3 tools/sync_research.py --check --verify-run
+python3 -m unittest discover -s tools -p test_research_sync.py
 ```
 
-Python 3.11+, `numpy`, `matplotlib`. Every run is seeded and deterministic.
+Python 3.11+, `numpy`, `matplotlib`. Every run is seeded. The publication check validates
+the complete 36-run grid, recomputes displayed claims from the unrounded means and
+regenerates CSV/summary in temporary repository storage. The paper prose is hand-maintained;
+its marked numeric blocks and these README blocks are generated. PNG rendering is
+not promised byte-identical across Matplotlib/font versions. See the paper's correction
+provenance for the missed 2026-09-10 paper update and the corrected rounding method.
 
 ## Series
 
@@ -209,4 +239,4 @@ Python 3.11+, `numpy`, `matplotlib`. Every run is seeded and deterministic.
 
 ---
 
-*Margaret (Maggie) Nanyonga — Founder & Principal Architect, [DIMAGGI AI](https://dimaggi.ai). Governed AI infrastructure: the control, reliability, and audit layer for autonomous systems operating production networks and compute.*
+*Margaret (Maggie) Nanyonga — Founder & Principal Architect, [DIMAGGI AI](https://dimaggi.ai). Author affiliation; no product is required to reproduce this study.*

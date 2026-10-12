@@ -1,9 +1,9 @@
 # Simulation results summary
 
 1,024-GPU cluster, 30 days, seeds [42, 43, 44] (values are means across seeds).
-Full per-run data in results.csv. Reproduce: `python3 sim/run.py`.
+Full per-run data in results.csv. Reproduce: `python3 sim/run.py`. Legacy `train_ettr` means productive/allocated training GPU-hours; eligible queue waiting is excluded, unlike Meta ETTR.
 
-| Scenario | Policy | Capacity realization | Inference SLO | Train ETTR | Stranded GPU-h | ...idle | ...reservation | ...overhead+lost | Preempts | Kills | Resizes | Mean wait h |
+| Scenario | Policy | Capacity realization | Inference SLO | Train productive/allocated | Stranded GPU-h | ...idle | ...reservation | ...overhead+lost | Preempts | Kills | Resizes | Mean wait h |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | S1-steady | rigid-fifo | 0.749 | 1.000 | 0.921 | 185,006 | 84,527 | 70,560 | 29,920 | 0 | 0 | 0 | 2.1 |
 | S1-steady | tiered-preemption | 0.749 | 1.000 | 0.921 | 185,006 | 84,527 | 70,560 | 29,920 | 0 | 0 | 0 | 2.1 |

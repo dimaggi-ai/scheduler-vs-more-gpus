@@ -15,8 +15,8 @@ where, over an analysis window of H hours on N accelerators:
        gang-admission stalls, oversized standing reservations).
     P  (productive ratio)        fraction of allocated accelerator-hours that
        produce forward progress (losses: failure rework, checkpoint overhead,
-       restarts). Comparable to Meta's Effective Training Time Ratio (ETTR),
-       arXiv:2410.21680.
+       restarts). Meta's Effective Training Time Ratio (ETTR) also counts
+       eligible queue waiting in its denominator; it is not this P.
 
 Losses attribute layer by layer (they sum exactly to nominal - usable):
 
@@ -125,44 +125,41 @@ PRESETS: dict[str, Scenario] = {
         hard_outage_hours=52.0 / 60.0,
         degraded_hours=65.5,
     ),
-    # [34] Meta RSC-1-shaped fleet: ETTR ~0.9 on large runs. Here productivity
-    # is the only modeled loss: what does the last 10% cost at 16k GPUs?
-    "meta-ettr": Scenario(
-        name="meta-ettr",
-        description="16k-GPU fleet at ETTR ~0.90 (Meta, arXiv:2410.21680): the "
-        "productivity layer alone, per 30 days.",
+    # Assumed productivity illustration, not an estimate of P from Meta ETTR.
+    "assumed-productivity-90": Scenario(
+        name="assumed-productivity-90",
+        description="Illustrative 16,000-GPU fleet with assumed productive/allocated "
+        "ratio P=0.90 over an assumed 720 hours; not a Meta ETTR conversion.",
         gpus=16000,
         window_hours=720.0,
         productive_ratio=0.90,
     ),
-    # [37] Alibaba ASI: allocation ratio 68% before optimization. What the
-    # allocation layer strands on a 155,410-GPU fleet in 30 days.
-    "alibaba-allocation-before": Scenario(
-        name="alibaba-allocation-before",
-        description="155,410 GPUs at 68% allocation ratio (Alibaba OSDI'26, "
-        "pre-optimization): the allocation layer alone, per 30 days.",
+    # [37] Fig. 9: high-priority (HP) population only, not a pre-optimization fleet.
+    "alibaba-high-priority": Scenario(
+        name="alibaba-high-priority",
+        description="Illustrative 155,410-GPU fleet at the reported 68% HP-only "
+        "allocation ratio, held constant for an assumed 720 hours with A=P=1. This does not "
+        "measure productive work or capacity unavailable to lower-priority jobs.",
         gpus=155410,
         window_hours=720.0,
         allocation_efficiency=0.68,
     ),
-    # [37] Same fleet after scheduler-side optimization raised allocation to 93%.
-    "alibaba-allocation-after": Scenario(
-        name="alibaba-allocation-after",
-        description="Same fleet at 93% allocation ratio (post-optimization). "
-        "Compare with alibaba-allocation-before: the delta is what better "
-        "scheduling recovered without buying a single GPU.",
+    # [37] Same Fig. 9: HP plus reclaimable low-priority (LP) work.
+    "alibaba-with-interruptible": Scenario(
+        name="alibaba-with-interruptible",
+        description="Same illustrative fleet at 93% HP+interruptible-LP allocation "
+        "for an assumed 720 hours with A=P=1. The extra allocation is reclaimable LP work, "
+        "not equivalent HP guarantees or measured productive GPU-hours.",
         gpus=155410,
         window_hours=720.0,
         allocation_efficiency=0.93,
     ),
-    # Composite: a realistic mid-size AI cluster carrying typical values of all
-    # three layers at once. A/E/P chosen from the cited range midpoints:
-    # one Aug-2026-style maintenance event, E=0.80 (between Alibaba's 68% and
-    # 93%), P=0.90 (Meta ETTR).
+    # Composite scenario: A/E/P are authored assumptions, not transferred
+    # measurements, not a midpoint between workload classes, and not Meta ETTR.
     "typical-composite": Scenario(
         name="typical-composite",
         description="Composite 4,096-GPU cluster, 30 days: one 4 h control-plane "
-        "event, allocation 80%, productive ratio 90%.",
+        "event, allocation 80%, productive ratio 90%; all authored assumptions.",
         gpus=4096,
         window_hours=720.0,
         hard_outage_hours=4.0,
@@ -170,6 +167,17 @@ PRESETS: dict[str, Scenario] = {
         productive_ratio=0.90,
     ),
 }
+
+
+# Retain old CLI keys without retaining their misleading before/after or ETTR
+# interpretation. Output uses the canonical scenario name and explicit scope.
+LEGACY_PRESET_ALIASES = {
+    "meta-ettr": "assumed-productivity-90",
+    "alibaba-allocation-before": "alibaba-high-priority",
+    "alibaba-allocation-after": "alibaba-with-interruptible",
+}
+for legacy, canonical in LEGACY_PRESET_ALIASES.items():
+    PRESETS[legacy] = PRESETS[canonical]
 
 
 def format_result(s: Scenario, r: Result) -> str:

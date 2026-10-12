@@ -68,13 +68,11 @@ DECLINED: tuple[tuple[str, str], ...] = (
      "policy on a named fleet, so the levels (0.746, 0.837 in corrected S4) are the model's "
      "and only their ORDERING is claimed"),
     ("the failure model, at any point in this registry",
-     "meta-ettr-band cannot tell failures-off from 10x Meta's rate: "
-     "checkpoint arithmetic alone puts the model at ~0.92 and the band is "
-     "+/-0.03, so 0x (0.9212) and 10x (0.8763) both sit inside it; it only "
-     "exits near 20x. rsc1-failure-rate-constant reads the constant back "
-     "and compares it to itself. Between them they pin an input and a "
-     "checkpoint constant — the rate at which this model loses and redoes "
-     "work is unconstrained by roughly an order of magnitude"),
+     "training-productivity-band is an internal checkpoint sanity band, not "
+     "Meta ETTR validation: it excludes eligible queue waiting, and checkpoint "
+     "arithmetic can dominate its value even with failures disabled. "
+     "rsc1-failure-rate-constant only pins an input. Neither checks the "
+     "failure model against observed output"),
     ("the SIZE of the scheduling dividend, and elastic resize",
      "scheduler-work-reclaims-capacity asserts only a SIGN — that intent "
      "beats rigid in the validation seeds. That cannot establish causal "
@@ -88,7 +86,8 @@ DECLINED: tuple[tuple[str, str], ...] = (
     ("the Alibaba anchor as a like-for-like comparison",
      "[37] measures ALLOCATION ratio on a 155,410-GPU fleet; this model "
      "measures capacity REALIZATION on 1,024 GPUs. Adjacent metric, "
-     "different scale — direction only"),
+     "different scale. Its 68% HP-only and 93% HP+LP figures mix workload "
+     "priorities; LP is interruptible. It does not validate our policy effect"),
     ("inference latency, placement, and multi-tenancy",
      "inference is an aggregate demand curve, node placement is abstracted, "
      "and the cluster is single-tenant, so nothing here validates tail "
@@ -177,18 +176,15 @@ def points(horizon_days: int = HORIZON_DAYS,
         run(RIGID, s, failures=True)[1]["train_ettr"] for s in SEEDS
     )
     pts.append(Point(
-        "meta-ettr-band", "calibrated", "[34]",
+        "training-productivity-band", "sanity", "-",
         expected=0.90, tolerance=0.03, actual=ettr,
-        note="GPU-hour-weighted training ETTR with failures on (mean over "
-             "seeds). Meta reports ETTR ~0.9 for multi-day 2-4k-GPU RSC-1 "
-             "runs — computed at an ASSUMED 1-hour checkpoint interval, "
-             "the same constant this model uses (CKPT_INTERVAL_STEPS=12), "
-             "so agreement is a shared input, not evidence: without any "
-             "failures the model still sits at ~0.92 from checkpoint "
-             "arithmetic alone (12 productive steps in 13). Denominators "
-             "differ too (Meta: productive/available wallclock per run; "
-             "here: productive/allocated GPU-h). Labeled calibrated for "
-             "both reasons.",
+        note="Internal productive/allocated training GPU-hour band with failures "
+             "on (mean over seeds), not a Meta calibration or ETTR measurement. "
+             "This model excludes queue time and uses a fixed hourly checkpoint "
+             "interval; its ratio is dominated by 12 productive steps per "
+             "checkpoint-overhead step. Meta includes eligible queue time and "
+             "uses optimal checkpoint intervals in the cited Fig. 9. The band "
+             "does not validate the failure model.",
     ))
 
     # ------------------------------------------------------------ emergent
@@ -222,12 +218,11 @@ def points(horizon_days: int = HORIZON_DAYS,
         "scheduler-work-reclaims-capacity", "emergent", "[37]",
         expected=float(len(SEEDS)), tolerance=0.0, actual=float(ordering),
         note="Seeds where the intent policy realizes more of the envelope "
-             "than rigid FIFO. Direction anchor "
-             "on a different metric: Alibaba (OSDI 2026) raised the "
-             "ALLOCATION ratio 68%->93% by scheduler-side work alone; this "
-             "model's capacity REALIZATION moves the same way for the same "
-             "reason — capacity is reclaimed at the allocation layer, not "
-             "by buying GPUs.",
+             "than rigid FIFO. Alibaba [37] is qualitative context for filling "
+             "idle capacity: allocation is 68% for HP jobs alone versus 93% "
+             "for HP plus interruptible LP jobs. Different populations, "
+             "service guarantees and denominator; this source does not "
+             "validate the sign, size or cause of this simulator's result.",
     ))
 
     # -------------------------------------------------------------- sanity

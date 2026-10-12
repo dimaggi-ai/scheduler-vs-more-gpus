@@ -2,7 +2,7 @@
 
 import math
 
-from stranded_capacity import PRESETS, Scenario, compute
+from stranded_capacity import LEGACY_PRESET_ALIASES, PRESETS, Scenario, compute
 
 
 def test_conservation():
@@ -50,12 +50,19 @@ def test_layer_ordering():
     assert math.isclose(r.usable_gpu_hours, 1250.0)
 
 
-def test_alibaba_delta_is_large():
-    """The before/after allocation delta on 155k GPUs must be ~28M GPU-h/month."""
-    before = compute(PRESETS["alibaba-allocation-before"])
-    after = compute(PRESETS["alibaba-allocation-after"])
+def test_alibaba_workload_class_arithmetic():
+    """HP-only vs HP+LP at an assumed 720h; not equal guarantees or output."""
+    before = compute(PRESETS["alibaba-high-priority"])
+    after = compute(PRESETS["alibaba-with-interruptible"])
     delta = before.loss_allocation - after.loss_allocation
-    assert 27e6 < delta < 29e6, delta
+    assert math.isclose(delta, 27_973_800.0, abs_tol=1e-6), delta
+
+
+def test_legacy_presets_resolve_to_qualified_canonical_names():
+    for alias, canonical in LEGACY_PRESET_ALIASES.items():
+        assert PRESETS[alias] is PRESETS[canonical]
+        assert compute(PRESETS[alias]) == compute(PRESETS[canonical])
+        assert PRESETS[alias].name == canonical
 
 
 def test_invalid_inputs_raise():

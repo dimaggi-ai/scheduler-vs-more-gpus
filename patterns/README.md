@@ -30,7 +30,11 @@ The industry buys the execution plane by the megawatt and audits it constantly. 
 
 **Pattern.** Defense in depth on every query path: statement execution timeouts; bounded query time-ranges; retention and purge schedules so tables stay operational-sized; admission limits on query concurrency. And a new clause: **agent governance**. Harvard's postmortem closes by asking users to "ensure any AI agents you have running limit their queries appropriately" [1] — a mainstream cluster postmortem naming autonomous agents as a load class on the control plane. Agents combine both dangerous load shapes (large scans *and* high-frequency polling), and "please be judicious" does not scale to non-human requesters; the bound must be enforced at the interface, by policy, not requested in a postmortem.
 
-This is exactly the enforcement class a runtime policy firewall exists for. [Tool Guard](https://dimaggi.ai) — DIMAGGI's policy firewall for AI agents — sits between an agent and its tools, intercepting each tool call *before execution* and applying allow / deny / redact / escalate decisions against declared policy, with a hash-chained audit trail. Applied here: an agent's `sacct` invocation is checked against query-range ceilings, field scoping, and rate/concurrency budgets before it ever reaches the accounting daemon — and an out-of-policy sweep is bounded, escalated to a human, or rejected, rather than discovered in a postmortem. Postmortems ask humans to be judicious; a policy firewall makes judiciousness mechanical for the requesters that never read postmortems.
+A policy gate can check an agent's tool call before execution against query-range,
+field-scope and rate/concurrency limits, record the decision, and reject or escalate
+requests outside those limits. The mechanism is independent of vendor or product.
+This repository proposes the pattern; it does not experimentally establish the
+effectiveness of any particular implementation.
 
 **Limit of this pattern.** Governance was Harvard's actual remedy — a 7-day query cap [1]. That contains the failure but taxes every legitimate user forever. Rate-limiting is what you do when you haven't separated the planes; it is a compensating control, not an architecture.
 
@@ -48,7 +52,7 @@ This is exactly the enforcement class a runtime policy firewall exists for. [Too
 
 ## Pattern 4 — Schedule with topology and gang awareness
 
-**Problem.** AI jobs are gangs: a 512-GPU training job needs all 512 GPUs, placed on the right fabric topology, or it needs none of them. Schedulers that admit partial gangs or ignore topology strand capacity through fragmentation — Alibaba's 155k-GPU study attributes idle allocated capacity to exactly this: fragmentation, CPU/GPU ratio mismatch, and network-locality constraints [37].
+**Problem.** AI jobs are gangs: a 512-GPU training job needs all 512 GPUs, placed on the right fabric topology, or it needs none of them. Schedulers that admit partial gangs or ignore topology strand capacity through fragmentation — Alibaba's 155k-GPU study attributes idle, unallocatable capacity to exactly this: fragmentation, CPU/GPU ratio mismatch, and network-locality constraints [37].
 
 **Pattern.** All-or-nothing admission plus fabric-topology awareness in placement. The Kubernetes-native stack now ships both: Kueue's all-or-nothing admission with beta topology-aware scheduling [19], Volcano's gang-aware preemption and network-topology-aware placement down to InfiniBand fabric discovery [20], NVIDIA's KAI with gang scheduling and fractional-GPU consolidation [21].
 
@@ -58,7 +62,7 @@ This is exactly the enforcement class a runtime policy firewall exists for. [Too
 
 ## Pattern 5 — Allocate by intent, not by quota
 
-**Problem.** Fair-share quotas answer "who deserves capacity," not "what does the business need this hour." They are static in a system whose demand (training vs inference mix), supply (failures, maintenance), and constraints (power price and availability) all move by the hour. The result is the well-documented gap between allocated and productive capacity [34–39] — and the policy machinery itself can strand capacity: Meta documents a single 1024-GPU job requeueing 35 times and inflicting 548 preemptions on other jobs, a cascade generated entirely by scheduling policy with no component failure [34].
+**Problem.** Fair-share quotas answer "who deserves capacity," not "what does the business need this hour." They are static in a system whose demand (training vs inference mix), supply (failures, maintenance), and constraints (power price and availability) all move by the hour. The result is the well-documented gap between allocated and productive capacity [34–39] — and the policy machinery itself can amplify failures: Meta documents a 1,024-GPU job encountering `NODE_FAIL` and subsequently requeueing 35 times, causing 548 preemptions of other jobs [34].
 
 **Pattern.** Carrier networks crossed this bridge a generation ago, and the mechanism is documented in the patent record: identify *heavy users* and *suffering users* and iteratively shape the heavy until the suffering recover (US 2020/0112876 [40]); let the operator declare *outcomes*, assign per-class floors and targets, measure quality continuously, and re-allocate in a closed loop with a strict degradation hierarchy under scarcity (US 11,128,536 [41]). Mapped to AI compute: training jobs are the heavy users — elastic, throughput-hungry, checkpointable, preemptible; inference is the suffering user — latency-bound and SLO-visible; the declared intent is training-throughput targets, inference SLOs, and cost/power envelopes; the feedback signal is goodput and SLO attainment rather than link QoE.
 

@@ -243,13 +243,13 @@
     },
     {
       "name": "S4 productive difference",
-      "value": 64268,
+      "value": 64267,
       "unit": "GPU-hours",
       "evidence_class": "simulated",
       "sources": [
         "run"
       ],
-      "transformation": "Intent minus rigid mean over 30-day scenario",
+      "transformation": "Mean productive GPU-hours: 590678.1666666667 minus 526410.8666666667 = 64267.3; rounded once to 64267. Subtracting separately rounded stranded totals produced the earlier one-GPU-hour discrepancy.",
       "uncertainty": "Rounded published model output; conditional scenario, not production benefit",
       "affected_outputs": [
         "published headline"
@@ -267,7 +267,7 @@
       "sources": [
         "run"
       ],
-      "transformation": "64268 GPU-hours /720 hours, rounded; no purchase avoided",
+      "transformation": "64267.3 modeled productive GPU-hours /720 hours = 89.2601, rounded to 89.3; no purchase avoided",
       "uncertainty": "Rounded published model output; conditional scenario, not production benefit",
       "affected_outputs": [
         "published headline"
