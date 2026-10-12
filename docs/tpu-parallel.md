@@ -10,7 +10,7 @@ Reference numbers point to [REFERENCES.md](../REFERENCES.md).
 
 **2. Then the fabric was redesigned around allocation.** TPU v4 (ISCA 2023) introduced optical circuit switches that *dynamically reconfigure the interconnect topology* — and the paper's own framing is a scheduling argument [28]:
 
-> "The OCS also simplifies scheduling, which increases utilization. For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick 4³ blocks from anywhere in the supercomputer."
+> "The OCS also simplifies scheduling, which increases utilization. For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick four 4³ blocks from anywhere in the supercomputer."
 
 The hardware relaxes a specific fragmentation constraint: complete 64-chip blocks need not be contiguous. It does not eliminate arbitrary fragmentation, slice-shape constraints or all placement requirements. The same mechanism carries availability: a 4,096-chip machine tolerates "1K CPU hosts that are unavailable 0.1%–1.0% of the time," and slice goodput survives at 99.0–99.5% host availability where a static fabric needs 99.9% [28]. OCS hardware costs under 5% of the system [28]. (For a refereed treatment of the underlying datacenter OCS deployment, see Jupiter Evolving, SIGCOMM 2022 [29].)
 

@@ -56,7 +56,7 @@ effectiveness of any particular implementation.
 
 **Pattern.** All-or-nothing admission plus fabric-topology awareness in placement. The Kubernetes-native stack now ships both: Kueue's all-or-nothing admission with beta topology-aware scheduling [19], Volcano's gang-aware preemption and network-topology-aware placement down to InfiniBand fabric discovery [20], NVIDIA's KAI with gang scheduling and fractional-GPU consolidation [21].
 
-**The hardware-level version is the TPU lesson.** Google attacked the same constraint below the scheduler: TPU v4's optical circuit switches let the scheduler compose a slice from *any* free 4³ blocks instead of finding contiguous chips — "The OCS also simplifies scheduling, which increases utilization. For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick 4³ blocks from anywhere in the supercomputer" [28]. This relaxes contiguity between complete 64-chip blocks; partial-block fragmentation, slice shape and remaining placement constraints still matter.
+**The hardware-level version is the TPU lesson.** Google attacked the same constraint below the scheduler: TPU v4's optical circuit switches let the scheduler compose a slice from *any* free 4³ blocks instead of finding contiguous chips — "The OCS also simplifies scheduling, which increases utilization. For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick four 4³ blocks from anywhere in the supercomputer" [28]. This relaxes contiguity between complete 64-chip blocks; partial-block fragmentation, slice shape and remaining placement constraints still matter.
 
 ---
 

@@ -139,7 +139,7 @@ Six architecture patterns for getting there — from plane separation to power-a
 Google is the existence proof that the end state works, because it co-designed the scheduler and the fabric ([full hypothesis](docs/tpu-parallel.md)):
 
 - Borg has run priority bands, quota-priced admission, and cascade-suppressed preemption since before 2015 [25].
-- TPU v4's optical circuit switches relax contiguity between complete 64-chip blocks, while other placement constraints remain: *"For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick 4³ blocks from anywhere in the supercomputer"* — and goodput survives at 99.0–99.5% host availability where a static fabric needs 99.9% [28].
+- TPU v4's optical circuit switches relax contiguity between complete 64-chip blocks, while other placement constraints remain: *"For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick four 4³ blocks from anywhere in the supercomputer"* — and goodput survives at 99.0–99.5% host availability where a static fabric needs 99.9% [28].
 - The productized stack — Multislice, queued resources, Spot, DWS, default-on ICI resiliency [31–33] — is intent-based allocation shipped as a cloud product.
 
 **Hypothesis:** vertically integrated accelerator ventures win on *allocation efficiency*, not only on chips — the scheduling layer is the moat. The merchant-GPU world's counter-move is visible in real time: NVIDIA acquired the Run:ai scheduler (open-sourced as KAI, 2025) and then SchedMD — Slurm itself — in December 2025 [16, 21]. The scheduling layer is consolidating under the accelerator vendor. That is the market agreeing with this repo's thesis.
@@ -162,7 +162,7 @@ five-minute restart and checkpoint-write overhead for Fig. 9 [34]. **Emergent** 
 behaviors nothing in the code was tuned to produce, asserted across four
 seeds: large jobs queue >2× longer than small ones under rigid gang
 scheduling in every seed — the direction of the Philly trace's queueing
-finding, where >4-GPU jobs show a longer delay tail (25% wait ≥10 min vs
+finding in virtual cluster VC2, where >4-GPU jobs show a longer delay tail (25% wait ≥10 min vs
 10% of 1-GPU jobs) and fragmentation drives ~78% of large-job delay
 occurrences [35], though this saturated simulation produces far larger
 ratios than the trace's minutes-scale tail; and the intent policy
