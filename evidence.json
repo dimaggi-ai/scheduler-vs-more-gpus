@@ -310,6 +310,22 @@
     {
       "sha256": "5594a87c81c2aa55aaa7430f1d1186aeffb1611bd9dad73d6544912aa1c45b97",
       "path": "results/sensitivity.json"
+    },
+    {
+      "sha256": "c0ac8993fa80ee0392c2596e647fe60a6e10e3f690ee0bd87c2f15a56c848163",
+      "path": "sim/run.py"
+    },
+    {
+      "sha256": "8d4321c49d07e5cd3f94466363264988fafefaba28a583282bbfe437d614b2e0",
+      "path": "figures/stranded_breakdown.png"
+    },
+    {
+      "sha256": "2a6a41592c0781af0ec1849d79d3de0fce6c878947a5ed933ec734aed9e9a9da",
+      "path": "figures/power_envelope_day.png"
+    },
+    {
+      "sha256": "c428019045cb41488fd325e60d54682b86c687cfb5194c2ba1c86c481944b639",
+      "path": "figures/slo_vs_realization.png"
     }
   ]
 }

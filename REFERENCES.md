@@ -74,3 +74,7 @@ All claims in this repository trace to the sources below. Items were verified ag
 42. Radovanović et al., "Carbon-Aware Computing for Datacenters," arXiv:2106.11750; and Google blog, "Our data centers now work harder when the sun shines and wind blows" (Apr 2020). https://blog.google/inside-google/infrastructure/data-centers-work-harder-sun-shines-wind-blows/
 43. NVIDIA newsroom, "NVIDIA and Emerald AI Join Leading Energy Companies to Pioneer Flexible AI Factories as Grid Assets" (Oct 29, 2025; 96-MW Aurora AI Factory; Phoenix demo: 256 GPUs, −25% power at grid peak). https://nvidianews.nvidia.com/news/nvidia-and-emerald-ai-join-leading-energy-companies-to-pioneer-flexible-ai-factories-as-grid-assets
 44. "A Survey on Task Scheduling in Carbon-Aware Container Orchestration," arXiv:2508.05949 (2025). Related: arXiv:2605.03751 (compute–power co-scheduling, 2026); arXiv:2412.17484 (power- and fragmentation-aware GPU scheduling); arXiv:2605.24569 ("Energy-Aware Computing in the Year 2026").
+
+## Adaptive scheduling prior work
+
+45. Qiao et al., "Pollux: Co-adaptive Cluster Scheduling for Goodput-Optimized Deep Learning," OSDI 2021. Monitors training-job status, models goodput under resource changes and dynamically reallocates resources; implemented in the open AdaptDL Kubernetes scheduler. Prior work for feedback-driven allocation, not a comparison evaluated by this repository. https://www.usenix.org/conference/osdi21/presentation/qiao · https://github.com/petuum/adaptdl

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import os
@@ -24,6 +25,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SCENARIOS = ("S1-steady", "S2-power", "S3-failures", "S4-full")
 POLICIES = ("rigid-fifo", "tiered-preemption", "intent-closed-loop")
 SEEDS = (42, 43, 44)
+REVIEWED_FIGURE_ARTIFACTS = (
+    "sim/run.py", "figures/stranded_breakdown.png",
+    "figures/power_envelope_day.png", "figures/slo_vs_realization.png",
+)
 METRICS = ("nominal_gpu_h", "productive_gpu_h", "stranded_gpu_h",
            "stranded_reservation_gpu_h", "capacity_realization", "slo_attainment",
            "train_ettr", "preemptions", "emergency_kills", "resizes", "mean_wait_h")
@@ -170,6 +175,18 @@ def evidence_errors(root: Path, agg: dict) -> list[str]:
         matches = [r for r in results if r["name"] == name]
         if len(matches) != 1 or matches[0].get("value") != value:
             errors.append(f"evidence.json: {name} must be {value!r} from unrounded aggregates")
+    # A successful numerical rerun must not hide an old or missing published
+    # plot. Require the reviewed generator and each PNG to remain SHA-bound.
+    # Resealing after regeneration requires visual review; renderer versions
+    # can change pixels without changing the underlying numerical experiment.
+    for relative in REVIEWED_FIGURE_ARTIFACTS:
+        matches = [a for a in data.get("artifacts", []) if a.get("path") == relative]
+        if len(matches) != 1:
+            errors.append(f"evidence.json: exactly one reviewed artifact required for {relative}")
+            continue
+        path = root / relative
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != matches[0].get("sha256"):
+            errors.append(f"{relative}: missing or differs from reviewed figure provenance; regenerate and review before resealing")
     return errors
 
 

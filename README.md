@@ -130,7 +130,7 @@ Telecommunications networks allocated a scarce, shared, congestible resource und
 - **US 2020/0112876** (application-aware congestion management): detect congestion, identify *heavy users* and *suffering users*, iteratively shape the heavy until the suffering recover [40].
 - **US 11,128,536** (intent-based traffic management): the operator declares *outcomes*; an allocation module sets per-class floors and targets; quality is measured continuously; shapers re-allocate in a closed loop; under scarcity, a strict class hierarchy degrades first-things-first [41].
 
-Map it to AI compute: **training jobs are the heavy users** (elastic, throughput-hungry, checkpointable); **inference is the suffering user** (latency-bound, SLO-visible); *intent* is training-throughput targets, inference SLOs, and power/cost envelopes; the feedback signal is goodput rather than link QoE. The simulated intent policy above is this patent pattern transplanted — and the ecosystem is already converging on it: Google's Dynamic Workload Scheduler ("built on Google Borg technology," TPUs and GPUs [32]) schedules against declared duration and flexibility; queued resources and Spot tiers price priority [31]; Kueue, Volcano, and KAI ship gang scheduling, topology awareness, and preemption hierarchies on Kubernetes [19–21]. What the open stack still lacks is the *closed loop* — measured workload QoE driving continuous re-allocation. That is the gap, and the opportunity.
+Map it to AI compute: **training jobs are the heavy users** (elastic, throughput-hungry, checkpointable); **inference is the suffering user** (latency-bound, SLO-visible); *intent* is training-throughput targets, inference SLOs, and power/cost envelopes; the feedback signal is goodput rather than link QoE. The simulated intent policy above is this patent pattern transplanted — and the ecosystem is already converging on it: Google's Dynamic Workload Scheduler ("built on Google Borg technology," TPUs and GPUs [32]) schedules against declared duration and flexibility; queued resources and Spot tiers price priority [31]; Kueue, Volcano, and KAI ship gang scheduling, topology awareness, and preemption hierarchies on Kubernetes [19–21]. Closed-loop allocation already exists in prior work: Pollux monitors training jobs and reallocates resources using modeled goodput, with an open implementation in AdaptDL [45]. This repository studies a specific combination of inference reservation tracking, elastic training and constrained capacity; it does not claim to originate feedback-driven scheduling.
 
 Six architecture patterns for getting there — from plane separation to power-as-a-schedulable-resource — are in [patterns/](patterns/README.md).
 
@@ -139,7 +139,7 @@ Six architecture patterns for getting there — from plane separation to power-a
 Google is the existence proof that the end state works, because it co-designed the scheduler and the fabric ([full hypothesis](docs/tpu-parallel.md)):
 
 - Borg has run priority bands, quota-priced admission, and cascade-suppressed preemption since before 2015 [25].
-- TPU v4's optical circuit switches removed the scheduler's contiguity constraint outright: *"For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick 4³ blocks from anywhere in the supercomputer"* — and goodput survives at 99.0–99.5% host availability where a static fabric needs 99.9% [28].
+- TPU v4's optical circuit switches relax contiguity between complete 64-chip blocks, while other placement constraints remain: *"For TPU v3, a 256 chip slice meant the scheduler had to find 256 contiguous chips that were idle. For TPU v4, it can pick 4³ blocks from anywhere in the supercomputer"* — and goodput survives at 99.0–99.5% host availability where a static fabric needs 99.9% [28].
 - The productized stack — Multislice, queued resources, Spot, DWS, default-on ICI resiliency [31–33] — is intent-based allocation shipped as a cloud product.
 
 **Hypothesis:** vertically integrated accelerator ventures win on *allocation efficiency*, not only on chips — the scheduling layer is the moat. The merchant-GPU world's counter-move is visible in real time: NVIDIA acquired the Run:ai scheduler (open-sourced as KAI, 2025) and then SchedMD — Slurm itself — in December 2025 [16, 21]. The scheduling layer is consolidating under the accelerator vendor. That is the market agreeing with this repo's thesis.
@@ -228,7 +228,10 @@ Python 3.11+, `numpy`, `matplotlib`. Every run is seeded. The publication check 
 the complete 36-run grid, recomputes displayed claims from the unrounded means and
 regenerates CSV/summary in temporary repository storage. The paper prose is hand-maintained;
 its marked numeric blocks and these README blocks are generated. PNG rendering is
-not promised byte-identical across Matplotlib/font versions. See the paper's correction
+not promised byte-identical across Matplotlib/font versions. The three reviewed plots and
+figure generator are required SHA-bound artifacts; missing, replaced or unbound plots fail
+the publication check. Regenerate and visually review plots before manually resealing their
+provenance. See the paper's correction
 provenance for the missed 2026-09-10 paper update and the corrected rounding method.
 
 ## Series

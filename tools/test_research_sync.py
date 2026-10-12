@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-from sync_research import ROOT, aggregate, blocks, load_rows, replace_block, synchronize
+from sync_research import ROOT, REVIEWED_FIGURE_ARTIFACTS, aggregate, blocks, load_rows, replace_block, synchronize
 
 
 class PublicationConsistencyTests(unittest.TestCase):
@@ -14,7 +14,7 @@ class PublicationConsistencyTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix=".research-test-", dir=ROOT)
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        for relative in ("README.md", "paper/paper.md", "results/results.csv", "evidence.json"):
+        for relative in ("README.md", "paper/paper.md", "results/results.csv", "evidence.json", *REVIEWED_FIGURE_ARTIFACTS):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
@@ -39,6 +39,41 @@ class PublicationConsistencyTests(unittest.TestCase):
         self.assertIn("~64,267 modeled", rendered["headline"])
         self.assertIn("~89.3 continuously", rendered["headline"])
         self.assertNotIn("64,268", rendered["headline"])
+
+    def test_missing_or_replaced_published_figure_refused(self):
+        for relative in REVIEWED_FIGURE_ARTIFACTS[1:]:
+            path = self.root / relative
+            original = path.read_bytes()
+            for replacement in (None, b"superseded plot"):
+                if replacement is None:
+                    path.unlink()
+                else:
+                    path.write_bytes(replacement)
+                self.assertTrue(any(relative in error for error in synchronize(self.root)))
+            path.write_bytes(original)
+        self.assertEqual(synchronize(self.root), [])
+
+    def test_figure_manifest_entry_cannot_be_removed_or_duplicated(self):
+        path = self.root / "evidence.json"
+        original = path.read_text()
+        for relative in REVIEWED_FIGURE_ARTIFACTS:
+            for duplicate in (False, True):
+                data = json.loads(original)
+                entry = next(a for a in data["artifacts"] if a["path"] == relative)
+                if duplicate:
+                    data["artifacts"].append(entry.copy())
+                else:
+                    data["artifacts"].remove(entry)
+                path.write_text(json.dumps(data))
+                self.assertTrue(any(relative in error for error in synchronize(self.root)))
+        path.write_text(original)
+
+    def test_changed_figure_generator_requires_reviewed_reseal(self):
+        path = self.root / "sim/run.py"
+        path.write_text(path.read_text().replace('"Stranded capacity, thousand GPU-hours / 30 days"', '"Different interpretation"'))
+        manifest = (self.root / "evidence.json").read_bytes()
+        self.assertTrue(any("sim/run.py" in error for error in synchronize(self.root, write=True)))
+        self.assertEqual((self.root / "evidence.json").read_bytes(), manifest)
 
     def test_stale_whitepaper_fails_and_explicit_refresh_repairs(self):
         path = self.root / "paper/paper.md"
