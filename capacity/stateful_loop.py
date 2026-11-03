@@ -51,6 +51,7 @@ class Analysis:
     serial_sum_s: float
     total_serial_sum_s: float
     graph_context_sha256: str
+    input_sha256: str
     stage_slack_seconds: tuple[tuple[str, float], ...]
     iteration_semantics: str
     critical_path: tuple[str, ...]
@@ -66,7 +67,8 @@ class Comparison:
 
 
 def _text(value: object) -> bool:
-    return type(value) is str and 0 < len(value) <= 512 and bool(value.strip())
+    return (type(value) is str and 0 < len(value) <= 512
+            and value == value.strip() and all(ord(c) >= 32 and ord(c) != 127 for c in value))
 
 
 def _finite(value) -> float:
@@ -79,13 +81,15 @@ def _finite(value) -> float:
     return value
 
 
-def _graph_hash(loop: Loop) -> str:
+def _record_hash(loop: Loop, *, include_durations: bool = False) -> str:
     p = loop.provenance
     signature = (sorted((s.id, s.kind, sorted(s.dependencies), s.provenance_class,
                          s.source_id) for s in loop.stages),
                  loop.persisted_completion_id, loop.iterations, loop.workload,
                  loop.quality, loop.protocol,
                  (p.fixture_id, p.source, p.licence, p.date, p.sha256))
+    if include_durations:
+        signature += (sorted((s.id, s.duration_seconds) for s in loop.stages),)
     return hashlib.sha256(json.dumps(signature, ensure_ascii=True, separators=(",", ":")).encode()).hexdigest()
 
 
@@ -95,6 +99,10 @@ def analyze(loop: Loop) -> Analysis:
     Every duration must be explicitly positive; no zero or missing defaults.
     Raises ValueError on invalid/unknown input; never partially evaluates it.
     """
+    return _analyze(loop)[0]
+
+
+def _analyze(loop: Loop) -> tuple[Analysis, Fraction]:
     if type(loop) is not Loop or type(loop.stages) is not tuple:
         raise ValueError("expected immutable Loop and stage tuple")
     if not 1 <= len(loop.stages) <= MAX_STAGES:
@@ -189,18 +197,19 @@ def analyze(loop: Loop) -> Analysis:
         latest_start[n] = latest_finish - durations[n]
         earliest_start = max((finishes[d] for d in nodes[n].dependencies), default=Fraction(0))
         slack[n] = _finite(latest_start[n] - earliest_start)
-    return Analysis(_finite(duration), total, _finite(serial), _finite(serial * loop.iterations),
-                    _graph_hash(loop), tuple(sorted(slack.items())),
+    result = Analysis(_finite(duration), total, _finite(serial), _finite(serial * loop.iterations),
+                    _record_hash(loop), _record_hash(loop, include_durations=True), tuple(sorted(slack.items())),
                     "sequential_persisted_completion_barrier", paths[final],
                     tuple((n, _finite(finishes[n])) for n in sorted(finishes)))
+    return result, duration * loop.iterations
 
 
 def compare(baseline: Loop, candidate: Loop) -> Comparison:
     """Compare matched synthetic declarations differing only in stage durations."""
-    before, after = analyze(baseline), analyze(candidate)
+    (before, before_exact), (after, after_exact) = _analyze(baseline), _analyze(candidate)
     if before.graph_context_sha256 != after.graph_context_sha256:
         raise ValueError("comparison may change durations only")
-    speedup = _finite(before.total_lower_bound_s / after.total_lower_bound_s)
+    speedup = _finite(before_exact / after_exact)
     if speedup <= 0:
         raise ValueError("speedup underflow")
-    return Comparison(before, after, speedup, _finite(before.total_lower_bound_s - after.total_lower_bound_s))
+    return Comparison(before, after, speedup, _finite(before_exact - after_exact))

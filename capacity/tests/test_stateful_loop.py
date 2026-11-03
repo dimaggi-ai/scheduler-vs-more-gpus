@@ -161,6 +161,42 @@ class StatefulLoopTests(unittest.TestCase):
         for permutation in itertools.permutations(stages):
             self.assertEqual(analyze(replace(loop, stages=permutation)), expected)
 
+    def test_full_input_identity_tracks_durations(self):
+        base = fixture()
+        changed = durations(base, compute=1)
+        before, after = analyze(base), analyze(changed)
+        self.assertEqual(before.graph_context_sha256, after.graph_context_sha256)
+        self.assertNotEqual(before.input_sha256, after.input_sha256)
+        self.assertEqual(before.input_sha256, analyze(replace(base, stages=tuple(reversed(base.stages)))).input_sha256)
+        # Supplied numeric representation is retained, not a semantic identity.
+        self.assertNotEqual(before.input_sha256, analyze(durations(base, host=8.0)).input_sha256)
+        self.assertEqual(before.total_lower_bound_s, analyze(durations(base, host=8.0)).total_lower_bound_s)
+
+    def test_trim_and_control_characters_refuse_then_correct(self):
+        base = fixture()
+        for bad in (' host', 'host ', 'h\x00ost', 'h\nost', 'h\x7fost', 'x'*513):
+            for changed in (replace(base, workload=bad),
+                            replace(base, provenance=replace(base.provenance, fixture_id=bad)),
+                            replace(base, stages=(replace(base.stages[0], source_id=bad),)+base.stages[1:]),
+                            replace(base, stages=(replace(base.stages[0], id=bad),)+base.stages[1:])):
+                with self.assertRaises(ValueError): analyze(changed)
+                self.assertEqual(analyze(base).total_lower_bound_s, 48)
+
+    def test_exact_comparison_before_float_boundary(self):
+        from fractions import Fraction
+        kinds = ('host', 'compute', 'memory', 'fabric', 'state')
+        a, b = (.3,.3,1.1,.4,.2), (.1,.3,.1,1.1,.1)
+        def chain(values):
+            stages = tuple(Stage(str(i), kinds[i], d, (str(i-1),) if i else (), source_id='exact')
+                           for i, d in enumerate(values))
+            return replace(fixture(), stages=stages, persisted_completion_id='4')
+        before, after = sum(map(Fraction, a))*3, sum(map(Fraction, b))*3
+        result = compare(chain(a), chain(b))
+        self.assertEqual(result.lower_bound_speedup, float(before/after))
+        self.assertEqual(result.lower_bound_saved_seconds, float(before-after))
+        self.assertNotEqual(result.lower_bound_speedup, float(before)/float(after))
+        self.assertNotEqual(result.lower_bound_saved_seconds, float(before)-float(after))
+
     def test_immutability(self):
         base = fixture()
         snapshot = repr(base)
