@@ -151,7 +151,12 @@ def replay(raw_config, policy, workloads=None):
 
 
 def compare(baseline, candidate):
-    """Compare policy runs on identical input/model/calibration; never mix ledgers."""
+    """Compare compatible reports without independently replaying either run.
+
+    The run_id binds supplied provenance and workload projections, not the full
+    result ledger. A matching digest is not authentication or proof of execution;
+    the nonproductive bucket split remains sender-asserted (see validate_report).
+    """
     for report in (baseline, candidate):
         validate_report(report)
         if report.get("schema_version") != VERSION or report.get("evidence_kind") != "simulation":
@@ -182,7 +187,12 @@ def validate_report(report):
     """Validate the wire schema and accounting identities before comparison.
 
     Source hashes identify inputs/code; they are not signatures or evidence
-    that an external sender actually ran that implementation.
+    that an external sender actually ran that implementation. This function
+    does not replay the simulation. The split among idle, inference_reservation
+    and training_overhead_and_discarded is sender-asserted: redistributions among
+    these buckets may pass. Independently replay the recorded configuration,
+    policy and workload calibrations with the recorded source and runtime, then
+    compare the reproduced buckets before relying on that split.
     """
     import jsonschema
     schema = json.loads(Path(__file__).with_name("report.schema.json").read_text())

@@ -11,7 +11,8 @@
     },
     "run_id": {
       "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of the supplied provenance and workload projections, not the complete result ledger. Identifies the supplied run description; not a signature or proof that the results were produced by execution."
     },
     "provenance": {
       "type": "object",
@@ -108,7 +109,8 @@
         "inference_reservation",
         "training_overhead_and_discarded"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Reported GPU-hour accounting. The split among idle, inference_reservation and training_overhead_and_discarded is sender-asserted: redistributions among these buckets may pass validate_report and compare. Independently replay the recorded configuration, policy and workload calibrations using the recorded source and runtime, and compare the reproduced buckets before relying on this breakdown."
     },
     "productive_fraction_of_nominal": {
       "type": "number",
@@ -338,5 +340,6 @@
     "assumptions",
     "productive_by_workload_gpu_h"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "description": "Simulation report wire format, not proof of execution. Schema validation alone does not check accounting identities or reproduce results; validate_report adds accounting checks and compare adds provenance compatibility checks, but neither replays the simulation."
 }
