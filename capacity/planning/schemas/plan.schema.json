@@ -247,7 +247,8 @@
           },
           "rate_usd_per_allocated_gpu_h": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 1000000
           },
           "reservation_gpus": {
             "type": "integer",

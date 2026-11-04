@@ -182,7 +182,67 @@ def validate_account(row):
         raise ValueError('invalid capacity accounting or unexplained negative productivity')
 
 
-def validate_plan(plan):
+def _shares_one_band(rows):
+    """True when one band b explains every row: upper = demand + b and
+    lower = max(0, demand - b), as forecast() builds them.
+
+    The band is not stored. Each bound comes from one float addition or
+    subtraction, which rounds by at most half an ulp of the result, so a row
+    may differ from an exact b by about one ulp of its own magnitude. Two
+    ulps of max(|upper|, |demand|) is allowed: about 2e-13 GPU-h at 1,000
+    GPU-h, far below any meaningful edit.
+    """
+    tolerance = [2 * math.ulp(max(abs(r['upper_gpu_h']), abs(r['demand_gpu_h']), 1.0)) for r in rows]
+    width = [r['upper_gpu_h'] - r['demand_gpu_h'] for r in rows]
+    low = max(w - t for w, t in zip(width, tolerance))
+    high = min(w + t for w, t in zip(width, tolerance))
+    if low > high or high < 0:
+        return False
+    band = max(0.0, (low + high) / 2)
+    return all(abs(r['lower_gpu_h'] - max(0, r['demand_gpu_h'] - band)) <= 2 * t
+               for r, t in zip(rows, tolerance))
+
+
+def _expected_row(cfg, hour, demand, headroom, fill_ratio, retention_ratio, rate):
+    """The row build_plan derives, using its exact expressions and order."""
+    envelope = sum(int(cfg.gpus * power_cap_fraction(cfg, hour * STEPS_PER_HOUR + t))
+                   for t in range(STEPS_PER_HOUR)) / STEPS_PER_HOUR
+    reservation = min(math.floor(envelope), math.ceil(demand * (1 + headroom)))
+    train_budget = envelope - reservation
+    train_alloc = train_budget * fill_ratio
+    return {'hour': hour, 'reservation_gpus': reservation,
+            'training_budget_gpu_h': train_budget,
+            'nominal_gpu_h': float(cfg.gpus), 'envelope_gpu_h': envelope,
+            'inf_demand_gpu_h': demand,
+            'inf_alloc_gpu_h': float(reservation),
+            'inf_productive_gpu_h': min(demand, reservation),
+            'train_alloc_gpu_h': train_alloc,
+            'train_productive_gpu_h': train_alloc * retention_ratio,
+            'work_lost_gpu_h': 0.0, 'rate_usd_per_allocated_gpu_h': rate}
+
+
+def _history_ratios(history):
+    allocated = sum(r['train_alloc_gpu_h'] for r in history)
+    train_ratio = max(0, min(1, sum(r['train_productive_gpu_h'] for r in history) / max(allocated, 1e-12)))
+    remaining = sum(max(0, r['envelope_gpu_h'] - r['inf_alloc_gpu_h']) for r in history)
+    return min(1, allocated / max(remaining, 1e-12)), train_ratio
+
+
+def validate_plan(plan, history=None):
+    """Check structure, identity digest and internal derivation.
+
+    plan_id is an unkeyed digest: it identifies these bytes, it does not
+    authenticate who produced them, and anyone can edit and reseal a plan.
+    Every row field the plan itself determines (envelope, reservation,
+    allocations, budget, productivity) is recomputed with build_plan's
+    arithmetic and must match exactly; the forecast must carry one band.
+
+    With history, the forecast and the two ratios are also re-derived and
+    must match exactly. That proves consistency with the history supplied,
+    not that the history is true or who produced either: a self-consistent
+    edit to both still passes. Authenticity needs a trusted external anchor,
+    such as a plan_id recorded where the reader trusts it.
+    """
     from .schema import validate_artifact
     validate_artifact(plan, 'plan')
     if plan['plan_id'] != digest({k: v for k, v in plan.items() if k != 'plan_id'}):
@@ -204,6 +264,26 @@ def validate_plan(plan):
             raise ValueError('training allocation exceeds budget')
         if row['reservation_gpus'] != row['inf_alloc_gpu_h'] or abs(row['training_budget_gpu_h'] + row['inf_alloc_gpu_h'] - row['envelope_gpu_h']) > 1e-5:
             raise ValueError('allocation budget mismatch')
+    if not _shares_one_band(f['rows']):
+        raise ValueError('forecast rows do not share one band')
+    rates = {row['rate_usd_per_allocated_gpu_h'] for row in plan['rows']}
+    if len(rates) != 1:
+        raise ValueError('plan rows must share one rate')
+    rate = rates.pop()
+    for row, prediction in zip(plan['rows'], f['rows']):
+        expected = _expected_row(cfg, row['hour'], prediction['demand_gpu_h'], plan['headroom'],
+                                 plan['training_fill_ratio'], plan['training_retention_ratio'], rate)
+        if type(row['reservation_gpus']) is not int:
+            raise ValueError(f"hour {row['hour']}: reservation_gpus must be an integer")
+        changed = sorted(k for k, v in expected.items() if row[k] != v)
+        if changed:
+            raise ValueError(f"hour {row['hour']}: {', '.join(changed)} not derivable from "
+                             'forecast, headroom and ratios')
+    if history is not None:
+        if forecast(history, start, end, method=f['method'], bias=f['bias']) != f:
+            raise ValueError('forecast does not re-derive from the supplied history')
+        if _history_ratios(history) != (plan['training_fill_ratio'], plan['training_retention_ratio']):
+            raise ValueError('training ratios do not re-derive from the supplied history')
 
 
 def actual_artifact(plan, scenario='baseline'):

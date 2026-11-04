@@ -114,7 +114,11 @@ def test_plan_digest_and_rehashed_temporal_mismatch(bundle):
 def test_sql_independent_arithmetic_and_no_change(bundle):
     # Construct hand-worked homogeneous plan: nominal 128, envelope 100,
     # allocated 20 inference + 60 training, productive 15 + 50 = 65.
+    # The plan stays derivable: an all-day cap of 0.78125 x 128 gives envelope
+    # 100; ceil(15 x 1.3) = 20; 80 x 0.75 = 60; 60 x (50/60) = 50.
     p=copy.deepcopy(bundle[1])
+    p['config'].update(power_envelope=True,power_start_hour=0,power_hours=24,power_frac=.78125)
+    p.update(headroom=.3,training_fill_ratio=.75,training_retention_ratio=50/60)
     for r,f in zip(p['rows'],p['forecast']['rows']):
         f.update(demand_gpu_h=15.,lower_gpu_h=15.,upper_gpu_h=15.)
         r.update(envelope_gpu_h=100.,inf_alloc_gpu_h=20.,inf_demand_gpu_h=15.,
@@ -346,3 +350,93 @@ def test_original_published_36_run_grid_is_unchanged():
         for key,value in result.items():
             expected=row[key] if isinstance(value,str) else float(row[key])
             assert value==expected,(row['scenario'],row['seed'],row['policy'],key)
+
+
+# Plan derivation (task103). plan_id identifies bytes; it does not
+# authenticate them, so every edit below is resealed before validation.
+def _shift_band(p, hour_index, delta):
+    f = p['forecast']['rows'][hour_index]
+    f['upper_gpu_h'] += delta
+
+
+def _reserve(p, i, delta):
+    r = p['rows'][i]
+    r['reservation_gpus'] += delta; r['inf_alloc_gpu_h'] += delta
+    r['training_budget_gpu_h'] -= delta
+    r['inf_productive_gpu_h'] = min(r['inf_demand_gpu_h'], r['reservation_gpus'])
+
+
+DERIVATION_EDITS = {
+    'headroom': lambda p: p.update(headroom=.9),
+    'fill_ratio': lambda p: p.update(training_fill_ratio=p['training_fill_ratio'] / 2),
+    'retention_ratio': lambda p: p.update(training_retention_ratio=p['training_retention_ratio'] / 2),
+    'reservation_one_gpu': lambda p: _reserve(p, 5, -1),
+    'train_alloc': lambda p: p['rows'][7].update(train_alloc_gpu_h=p['rows'][7]['train_alloc_gpu_h'] * .9),
+    'train_productive': lambda p: p['rows'][7].update(train_productive_gpu_h=p['rows'][7]['train_productive_gpu_h'] * .5),
+    'train_productive_tiny': lambda p: p['rows'][7].update(train_productive_gpu_h=p['rows'][7]['train_productive_gpu_h'] - 1e-9),
+    'budget_and_envelope': lambda p: p['rows'][3].update(envelope_gpu_h=p['rows'][3]['envelope_gpu_h'] + 1,
+                                                         training_budget_gpu_h=p['rows'][3]['training_budget_gpu_h'] + 1),
+    'reservation_float': lambda p: p['rows'][2].update(reservation_gpus=float(p['rows'][2]['reservation_gpus'])),
+    'rate_one_row': lambda p: p['rows'][4].update(rate_usd_per_allocated_gpu_h=3.),
+    'rate_above_builder_ceiling': lambda p: [r.update(rate_usd_per_allocated_gpu_h=1e300) for r in p['rows']],
+    'band_one_row': lambda p: _shift_band(p, 6, 1.),
+    'band_every_upper': lambda p: [f.update(upper_gpu_h=f['upper_gpu_h'] + 1e6) for f in p['forecast']['rows']],
+}
+
+
+@pytest.mark.parametrize('edit', sorted(DERIVATION_EDITS))
+def test_resealed_underivable_plan_is_refused_then_rebuild_recovers(bundle, edit):
+    history, plan, _ = bundle
+    p = copy.deepcopy(plan); DERIVATION_EDITS[edit](p); p = reseal(p, 'plan_id')
+    with pytest.raises(ValueError):
+        validate_plan(p)
+    # Recovery: the builder's own output for the same inputs validates.
+    rebuilt = build_plan(plan['config'], history, plan['cutoff_hour'])
+    validate_plan(rebuilt); validate_plan(rebuilt, history=history)
+    assert rebuilt == plan
+
+
+def test_generated_plans_validate_exactly_across_methods_and_settings(bundle):
+    history, plan, _ = bundle
+    for method in ('seasonal', 'last_value'):
+        for bias, headroom in ((0., 0.), (.7, .1), (1., .3), (3, 1)):
+            p = json.loads(json.dumps(build_plan(plan['config'], history, 72, method=method,
+                                                 bias=bias, headroom=headroom)))
+            validate_plan(p); validate_plan(p, history=history)
+
+
+def test_supplied_history_rederivation_and_its_limits(bundle):
+    history, plan, _ = bundle
+    validate_plan(plan, history=history)
+    # A replaced history_id is invisible without history, refused with it.
+    p = copy.deepcopy(plan); p['forecast']['history_id'] = '0' * 64; p = reseal(p, 'plan_id')
+    validate_plan(p)
+    with pytest.raises(ValueError, match='re-derive'):
+        validate_plan(p, history=history)
+    # Ratios rebuilt consistently into every row still differ from history.
+    p = build_plan(plan['config'], history, 72); p = copy.deepcopy(p)
+    p['training_fill_ratio'] = p['training_fill_ratio'] / 2
+    for r in p['rows']:
+        r['train_alloc_gpu_h'] = r['training_budget_gpu_h'] * p['training_fill_ratio']
+        r['train_productive_gpu_h'] = r['train_alloc_gpu_h'] * p['training_retention_ratio']
+    p = reseal(p, 'plan_id')
+    validate_plan(p)
+    with pytest.raises(ValueError, match='ratios'):
+        validate_plan(p, history=history)
+
+
+def test_self_consistent_forged_history_is_not_authenticated(bundle):
+    """Negative control: consistency is not authenticity. A plan built from an
+    edited history validates against that edited history; only an anchor the
+    reader already trusts (here, the original plan_id) tells them apart."""
+    history, plan, _ = bundle
+    forged = copy.deepcopy(history)
+    for row in forged[48:]:
+        row['inf_demand_gpu_h'] = min(row['inf_demand_gpu_h'] * 1.5, row['inf_alloc_gpu_h'])
+        row['inf_productive_gpu_h'] = min(row['inf_productive_gpu_h'], row['inf_demand_gpu_h'])
+    other = build_plan(plan['config'], forged, 72)
+    validate_plan(other, history=forged)
+    assert other['forecast'] != plan['forecast']
+    assert other['plan_id'] != plan['plan_id']
+    with pytest.raises(ValueError):
+        validate_plan(other, history=history)
