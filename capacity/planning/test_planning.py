@@ -2,14 +2,18 @@
 import copy
 from dataclasses import asdict
 import json
+import math
 from pathlib import Path
+import random
 
+import numpy as np
 import pytest
 
 from capacity.report import digest
 from sim.simulator import Config, Simulation, STEPS_PER_HOUR
 from capacity.planning.model import (observe, build_plan, actual_artifact, validate_plan,
-                                     validate_actual, forecast, seal, ACCOUNT)
+                                     validate_actual, forecast, seal, ACCOUNT,
+                                     _shares_one_band)
 from capacity.planning.ledger import Ledger
 from capacity.planning.__main__ import publish_directory, read_json, main
 
@@ -440,3 +444,57 @@ def test_self_consistent_forged_history_is_not_authenticated(bundle):
     assert other['plan_id'] != plan['plan_id']
     with pytest.raises(ValueError):
         validate_plan(other, history=history)
+
+
+def _band_rows(demands, band):
+    """Rows exactly as forecast() builds them from point estimates and a band."""
+    return [{'hour': h, 'demand_gpu_h': d, 'lower_gpu_h': max(0, d - band), 'upper_gpu_h': d + band}
+            for h, d in enumerate(demands)]
+
+
+def _roundtrip(rows):
+    return json.loads(json.dumps(rows))
+
+
+BAND_DEMANDS = ([0.0, 5e-324, 1e-9, 0.1, 1.0, 3.0, 1e3, 2.0 ** 53 - 1, 1e9, 1e12, 1e15]
+                + [math.nextafter(2.0 ** k, 0) for k in range(-20, 50, 7)]
+                + [2.0 ** k for k in range(-20, 50, 7)])
+BAND_VALUES = [0.0, 5e-324, 1e-15, 1e-9, 0.1, 1.0, 14.000000000003055, 1e3, 1e9, 1e13]
+
+
+@pytest.mark.parametrize('band', BAND_VALUES)
+def test_band_check_accepts_adversarial_valid_forecasts(band):
+    """Mixed scales in one forecast, large demand with a tiny band, zero band,
+    binade edges and zero-clipped lower bounds all come from one band; the
+    check must accept them as floats, NumPy scalars and after a JSON round trip."""
+    rows = _band_rows(BAND_DEMANDS, band)
+    assert _shares_one_band(rows) and _shares_one_band(_roundtrip(rows))
+    assert _shares_one_band(_band_rows([np.float64(d) for d in BAND_DEMANDS], np.float64(band)))
+
+
+def test_band_check_accepts_random_valid_forecasts():
+    rng = random.Random(103)
+    for _ in range(3000):
+        band = 0.0 if rng.random() < .1 else 10 ** rng.uniform(-15, 13)
+        demands = [0.0 if rng.random() < .05 else 10 ** rng.uniform(-9, 15) * rng.choice([1, 1 / 3, math.pi])
+                   for _ in range(rng.choice([1, 24, 384]))]
+        rows = _band_rows(demands, band)
+        assert _shares_one_band(_roundtrip(rows)), (band, demands)
+
+
+BAND_FORGERIES = {
+    'upper_one_row': lambda r: r[5].update(upper_gpu_h=r[5]['upper_gpu_h'] + 1e-9),
+    'upper_16_ulps': lambda r: r[5].update(upper_gpu_h=r[5]['upper_gpu_h'] + 16 * math.ulp(r[5]['upper_gpu_h'])),
+    'lower_one_row': lambda r: r[5].update(lower_gpu_h=r[5]['lower_gpu_h'] + 1e-9),
+    'band_per_row': lambda r: [x.update(upper_gpu_h=x['upper_gpu_h'] + 1e-9 * i) for i, x in enumerate(r)],
+    'clipped_when_not': lambda r: r[5].update(lower_gpu_h=0),
+    'unclipped_when_clipped': lambda r: r[0].update(lower_gpu_h=1e-9),
+}
+
+
+@pytest.mark.parametrize('name', BAND_FORGERIES)
+def test_band_check_refuses_small_inconsistencies(name):
+    rows = _band_rows([3.0] + [1000.0 + 7.3 * i for i in range(1, 24)], 14.000000000003055)
+    assert _shares_one_band(rows)
+    BAND_FORGERIES[name](rows)
+    assert not _shares_one_band(_roundtrip(rows))

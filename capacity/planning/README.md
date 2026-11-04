@@ -101,10 +101,12 @@ ordinary variance reports compare actuals against each scenario's own plan.
   edit a plan and reseal it. `validate_plan` therefore recomputes every row
   field the plan itself determines (envelope, reservation, inference and
   training allocation, budget, productivity), using the builder's arithmetic,
-  and requires exact equality. The forecast rows must share one band, within
-  two ulps of each row's magnitude (about 2e-13 GPU-h at 1,000 GPU-h), because
-  `demand ± band` is rounded once. Rows share one rate, at most the builder's
-  1e6 ceiling.
+  and requires exact equality. The band is not stored, so the forecast rows
+  must admit one common band: each row bounds it to an interval two ulps wide
+  either side, and lower bounds must fit the result. The `_shares_one_band`
+  docstring proves every `forecast()` output passes. The slack is a few ulps
+  per row (about 1e-12 GPU-h at 1,000 GPU-h), and the check does not say which
+  band was used. Rows share one rate, at most the builder's 1e6 ceiling.
 - `validate_plan(plan, history=...)` also re-derives the forecast and the two
   ratios from the supplied history. That proves **consistency with that
   history**, not that the history is true or who produced either: a plan built

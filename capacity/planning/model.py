@@ -183,14 +183,23 @@ def validate_account(row):
 
 
 def _shares_one_band(rows):
-    """True when one band b explains every row: upper = demand + b and
-    lower = max(0, demand - b), as forecast() builds them.
+    """True when some band b >= 0 could explain every row as forecast()
+    builds them: upper = demand + b and lower = max(0, demand - b), each
+    rounded once. The band is not stored, and no single value of it is
+    recovered or trusted; this is a consistency check, not authentication.
 
-    The band is not stored. Each bound comes from one float addition or
-    subtraction, which rounds by at most half an ulp of the result, so a row
-    may differ from an exact b by about one ulp of its own magnitude. Two
-    ulps of max(|upper|, |demand|) is allowed: about 2e-13 GPU-h at 1,000
-    GPU-h, far below any meaningful edit.
+    Every valid forecast passes. For finite demand d >= 0 and band b >= 0,
+    let t = 2 ulp(max(|upper|, |d|, 1)). Rounding gives |upper - (d + b)| and
+    the error of upper - d each at most ulp(upper) / 2, so |(upper - d) - b|
+    <= t / 2. Rounding is monotone and b is a double, so b lies in
+    [upper - d - t, upper - d + t] as computed, for every row, and therefore
+    in [low, high]. Lower is within t / 4 of max(0, d - b), so it lies
+    between max(0, d - high) and max(0, d - max(low, 0)), widened by t.
+
+    Limits: the check admits deviations of a few ulps per row (about 1e-12
+    GPU-h at 1,000 GPU-h, 1e-15 below 1 GPU-h). It does not say which b
+    was used, and it relies on the existing checks that values are finite
+    and lower <= demand <= upper.
     """
     tolerance = [2 * math.ulp(max(abs(r['upper_gpu_h']), abs(r['demand_gpu_h']), 1.0)) for r in rows]
     width = [r['upper_gpu_h'] - r['demand_gpu_h'] for r in rows]
@@ -198,8 +207,8 @@ def _shares_one_band(rows):
     high = min(w + t for w, t in zip(width, tolerance))
     if low > high or high < 0:
         return False
-    band = max(0.0, (low + high) / 2)
-    return all(abs(r['lower_gpu_h'] - max(0, r['demand_gpu_h'] - band)) <= 2 * t
+    return all(max(0, r['demand_gpu_h'] - high) - t <= r['lower_gpu_h']
+               <= max(0, r['demand_gpu_h'] - max(low, 0.0)) + t
                for r, t in zip(rows, tolerance))
 
 
