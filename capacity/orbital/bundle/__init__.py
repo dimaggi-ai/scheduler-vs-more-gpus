@@ -21,7 +21,7 @@ def bounded(value):
     if len(json.dumps(value,allow_nan=False).encode())>MAX_BYTES:raise ValueError('JSON byte budget exceeded')
 
 def source_digest():
-    return digest(dict(platform=platform_source(),bundle={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(Path(__file__).parent.glob('*.py'))}))
+    return digest(dict(capacity_package=hashlib.sha256((Path(__file__).resolve().parents[2]/'__init__.py').read_bytes()).hexdigest(),platform=platform_source(),bundle={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(Path(__file__).parent.glob('*.py'))}))
 
 def export_bundle(mission):
     bounded(mission)
@@ -49,7 +49,7 @@ def verify_bundle(bundle,expected_sha256=None):
         if len(comparison['comparisons'])!=3 or [r['route'] for r in comparison['comparisons']]!=['ground','onboard','hybrid']:raise ValueError('route coverage differs')
         for report in comparison['comparisons']:
             if not verify_mission(c['mission'],report)['valid']:raise ValueError('report relationship verification failed')
-        if comparison!=compare_mission(c['mission']):raise ValueError('comparison replay differs')
+        if digest(comparison)!=digest(compare_mission(c['mission'])):raise ValueError('comparison replay differs')
         return dict(schema='capacity-orbital/bundle-verification-v1',valid=True,errors=[],sha256=bundle['sha256'],admissible_routes=[r['route'] for r in comparison['comparisons'] if r['admissible']],authenticity_verified=False,execution_performed=False)
-    except (ValueError,TypeError,KeyError,IndexError,AttributeError,OverflowError,RecursionError,OSError) as exc:
+    except (ValueError,TypeError,KeyError,IndexError,AttributeError,OverflowError,RecursionError,RuntimeError,OSError) as exc:
         return dict(schema='capacity-orbital/bundle-verification-v1',valid=False,errors=[str(exc)[:200]],authenticity_verified=False,execution_performed=False)

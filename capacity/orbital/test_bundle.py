@@ -24,6 +24,37 @@ class BundleTests(unittest.TestCase):
         replacement=demo();replacement['jobs'][0]['raw_gb']=2
         other=export_bundle(replacement);self.assertTrue(verify_bundle(other)['valid'])
         self.assertFalse(verify_bundle(other,base['sha256'])['valid'])
+    def test_contact_reference_and_boolean_tamper_refuse(self):
+        base=export_bundle(demo())
+        for target in ('mission','report','boolean'):
+            value=copy.deepcopy(base);content=value['content']
+            if target=='mission':
+                content['mission']['network']['contacts'][0]['id']='renamed-contact'
+                content['input_sha256']=digest(content['mission'])
+            elif target=='report':
+                report=content['comparison']['comparisons'][0]
+                report['network']['jobs'][0]['hops'][0]['contact_id']='renamed-contact'
+                report['receipt_id']=digest({k:v for k,v in report.items() if k!='receipt_id'})
+            else:content['comparison']['execution_performed']=0
+            value['sha256']=digest(content)
+            self.assertFalse(verify_bundle(value)['valid'],target)
+            with tempfile.TemporaryDirectory() as directory:
+                path=Path(directory)/'tampered.json';path.write_text(json.dumps(value))
+                response=subprocess.run([sys.executable,'-m','capacity.orbital.bundle','verify','--bundle',str(path)],capture_output=True,text=True,timeout=20)
+                self.assertEqual(response.returncode,2);self.assertFalse(json.loads(response.stdout)['valid']);self.assertNotIn('Traceback',response.stderr)
+        from unittest.mock import patch
+        with patch('capacity.orbital.bundle.verify_mission',side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):verify_bundle(base)
+
+    def test_committed_source_bound_fixture(self):
+        root=Path(__file__).parent
+        value=json.loads((root/'evidence/bundle/nominal.json').read_text())
+        expected=(root/'evidence/bundle/expected-sha256.txt').read_text().strip()
+        self.assertTrue(verify_bundle(value,expected)['valid'])
+        self.assertEqual(digest(export_bundle(json.loads((root/'examples/bundle-mission.json').read_text()))),digest(value))
+        result=subprocess.run([sys.executable,'-m','capacity.orbital.bundle','verify','--bundle',str(root/'evidence/bundle/nominal.json'),'--expected-sha256',expected],capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
     def test_shape_depth_size(self):
         for value in (None,[],{'content':[],'sha256':'bad'},'x'*(MAX_BYTES+1)):
             self.assertFalse(verify_bundle(value)['valid'])

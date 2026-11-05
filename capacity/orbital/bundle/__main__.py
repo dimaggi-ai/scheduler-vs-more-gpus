@@ -5,7 +5,7 @@ from ..output import publish
 
 def read_json(path):
     with open(path,'rb') as handle:data=handle.read(MAX_BYTES+1)
-    if len(data)>MAX_BYTES:raise ValueError('input exceeds8MiB')
+    if len(data)>MAX_BYTES:raise ValueError('input exceeds 8 MiB')
     def unique(pairs):
         result={}
         for key,value in pairs:
@@ -24,6 +24,6 @@ def main(argv=None):
             result=export_bundle(read_json(args.mission));publish([(args.output,json.dumps(result,allow_nan=False)+'\n')],args.mission)
             print(json.dumps(dict(status='exported',sha256=result['sha256'],execution_performed=False)));return 0
         result=verify_bundle(read_json(args.bundle),args.expected_sha256);print(json.dumps(result));return 0 if result['valid'] else 2
-    except (ValueError,TypeError,KeyError,OSError,OverflowError,RecursionError) as exc:
+    except (ValueError,TypeError,KeyError,OSError,OverflowError,RecursionError,RuntimeError) as exc:
         print(json.dumps(dict(status='refused',reason=str(exc)[:200],execution_performed=False)));return 2
 if __name__=='__main__':raise SystemExit(main())
