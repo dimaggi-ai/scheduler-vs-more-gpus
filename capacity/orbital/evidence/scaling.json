@@ -1,0 +1,79 @@
+{
+  "python": "3.12.6",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "scope": "Two fixed compute nodes; continuous and intermittent contacts. Serial greedy planner, not distributed execution.",
+  "measurements": [
+    {
+      "jobs": 10,
+      "contacts": 1,
+      "routes": 3,
+      "seconds": 0.004148,
+      "peak_bytes": 47434,
+      "planned": [
+        10,
+        10,
+        10
+      ]
+    },
+    {
+      "jobs": 100,
+      "contacts": 1,
+      "routes": 3,
+      "seconds": 0.034721,
+      "peak_bytes": 441540,
+      "planned": [
+        100,
+        100,
+        100
+      ]
+    },
+    {
+      "jobs": 1000,
+      "contacts": 1,
+      "routes": 3,
+      "seconds": 0.345843,
+      "peak_bytes": 4371184,
+      "planned": [
+        1000,
+        1000,
+        1000
+      ]
+    },
+    {
+      "jobs": 10,
+      "contacts": 10,
+      "routes": 3,
+      "seconds": 0.005931,
+      "peak_bytes": 44082,
+      "planned": [
+        10,
+        10,
+        10
+      ]
+    },
+    {
+      "jobs": 100,
+      "contacts": 100,
+      "routes": 3,
+      "seconds": 0.066355,
+      "peak_bytes": 434348,
+      "planned": [
+        100,
+        100,
+        100
+      ]
+    },
+    {
+      "jobs": 1000,
+      "contacts": 1000,
+      "routes": 3,
+      "seconds": 3.305842,
+      "peak_bytes": 4336752,
+      "planned": [
+        1000,
+        1000,
+        1000
+      ]
+    }
+  ]
+}

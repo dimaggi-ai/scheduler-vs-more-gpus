@@ -1,0 +1,105 @@
+{
+  "schema": "capacity-orbital/scenario-v1",
+  "name": "Synthetic intermittent EO comparison",
+  "horizon_s": 600,
+  "provenance": {
+    "kind": "synthetic",
+    "source": "DIMAGGI task105 hand-computable fixture, not vendor data",
+    "licence": "MIT (repository licence)",
+    "generated_on": "2026-11-05"
+  },
+  "nodes": {
+    "orbital": {
+      "memory_gb": 16,
+      "max_power_kw": 2,
+      "max_heat_kw": 2,
+      "energy_budget_kwh": 3,
+      "compute_usd_per_hour": 2,
+      "electricity_usd_per_kwh": 0.2
+    },
+    "ground": {
+      "memory_gb": 16,
+      "max_power_kw": 2,
+      "max_heat_kw": 2,
+      "energy_budget_kwh": 3,
+      "compute_usd_per_hour": 2,
+      "electricity_usd_per_kwh": 0.2
+    }
+  },
+  "contacts": [
+    {
+      "id": "pass-0",
+      "start_s": 60,
+      "end_s": 160,
+      "goodput_gbps": 1,
+      "usd_per_gb": 0.2
+    },
+    {
+      "id": "pass-1",
+      "start_s": 260,
+      "end_s": 360,
+      "goodput_gbps": 1,
+      "usd_per_gb": 0.2
+    },
+    {
+      "id": "pass-2",
+      "start_s": 460,
+      "end_s": 560,
+      "goodput_gbps": 1,
+      "usd_per_gb": 0.2
+    }
+  ],
+  "jobs": [
+    {
+      "id": "image-00000",
+      "release_s": 0,
+      "deadline_s": 180,
+      "raw_gb": 10,
+      "result_gb": 0.1,
+      "compressed_gb": 1,
+      "memory_gb": 4,
+      "power_kw": 1,
+      "ground_s": 20,
+      "onboard_s": 30,
+      "preprocess_s": 10,
+      "hybrid_ground_s": 10,
+      "required_quality": 0.95,
+      "onboard_quality": 0.98,
+      "hybrid_quality": 0.98
+    },
+    {
+      "id": "image-00001",
+      "release_s": 200,
+      "deadline_s": 380,
+      "raw_gb": 10,
+      "result_gb": 0.1,
+      "compressed_gb": 1,
+      "memory_gb": 4,
+      "power_kw": 1,
+      "ground_s": 20,
+      "onboard_s": 30,
+      "preprocess_s": 10,
+      "hybrid_ground_s": 10,
+      "required_quality": 0.95,
+      "onboard_quality": 0.98,
+      "hybrid_quality": 0.98
+    },
+    {
+      "id": "image-00002",
+      "release_s": 400,
+      "deadline_s": 580,
+      "raw_gb": 10,
+      "result_gb": 0.1,
+      "compressed_gb": 1,
+      "memory_gb": 4,
+      "power_kw": 1,
+      "ground_s": 20,
+      "onboard_s": 30,
+      "preprocess_s": 10,
+      "hybrid_ground_s": 10,
+      "required_quality": 0.95,
+      "onboard_quality": 0.98,
+      "hybrid_quality": 0.98
+    }
+  ]
+}
