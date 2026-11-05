@@ -1,0 +1,50 @@
+{
+  "schema": "capacity-orbital/diligence-response-v1",
+  "request_id": "thermal",
+  "input_sha256": "3d710fb24db9e40a1041946894d5a7958eedb6ab34e72402ef36d2e7a6fdf20c",
+  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+  "status": "screened",
+  "reason_code": "WITHIN_STATED_MODEL",
+  "reason": "synthetic assumption-bound result",
+  "result": {
+    "schema": "capacity-orbital/claim-result-v1",
+    "model": "thermal-synthetic-screen-v1",
+    "status": "consistent",
+    "reason_code": "WITHIN_STATED_MODEL",
+    "prediction": {
+      "total_emitting_area_m2": 1,
+      "radiative_flux_w_m2": 459.300327939,
+      "net_heat_rejection_w": 459.300327939,
+      "margin_w": 59.300327939
+    },
+    "missing_assumptions": [],
+    "assumptions": {
+      "absorbed_flux_w_m2": 0,
+      "area_basis": "emitting",
+      "area_m2": 1,
+      "emissivity": 1,
+      "fin_efficiency": 1,
+      "heat_w": 400,
+      "sink_temperature_k": 0,
+      "temperature_k": 300,
+      "view_factor": 1
+    },
+    "provenance": {
+      "generated_on": "2026-11-05",
+      "kind": "synthetic",
+      "licence": "MIT (repository licence)",
+      "source": "DIMAGGI task109 authored hand-computable fixture"
+    },
+    "limitations": [
+      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+      "Transient thermal behaviour and radiation qualification are unsupported.",
+      "Steady uniform temperature and supplied view factor; absorbed flux per emitting area; no transient storage, pump/coolant limit or mission environment validation."
+    ]
+  },
+  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+  "authority_disposition": "no_authorization_granted",
+  "execution_performed": false,
+  "promoted": false,
+  "outcome_sha256": "8ac537af41ddb0a40f981e329c56c0a30df5b0ee195443246b5b5179ef293e70"
+}
