@@ -1,0 +1,41 @@
+{
+  "schema": "capacity-orbital/diligence-scaling-v1",
+  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+  "environment": {
+    "python": "3.12.6",
+    "platform": "macOS-27.0.1-arm64-arm-64bit"
+  },
+  "classification": "single local observation with tracemalloc; not total RSS or production SLO",
+  "rows": [
+    {
+      "flows": 3,
+      "cohorts": 1,
+      "years": 2,
+      "elapsed_s": 0.004254583967849612,
+      "peak_traced_python_bytes": 34577,
+      "request_bytes": 782,
+      "response_bytes": 3945,
+      "status": "screened"
+    },
+    {
+      "flows": 100,
+      "cohorts": 20,
+      "years": 20,
+      "elapsed_s": 0.013378625037148595,
+      "peak_traced_python_bytes": 335803,
+      "request_bytes": 10726,
+      "response_bytes": 71902,
+      "status": "screened"
+    },
+    {
+      "flows": 1000,
+      "cohorts": 200,
+      "years": 100,
+      "elapsed_s": 0.3601778328884393,
+      "peak_traced_python_bytes": 11249177,
+      "request_bytes": 105132,
+      "response_bytes": 2786654,
+      "status": "screened"
+    }
+  ]
+}
