@@ -1,0 +1,54 @@
+{
+  "scenario": {
+    "schema": "capacity-orbital/dynamics-v1",
+    "name": "Synthetic reserve coupled-state case",
+    "horizon_s": 1800,
+    "provenance": {
+      "kind": "synthetic",
+      "source": "DIMAGGI task106 hand-calculation fixture",
+      "licence": "MIT (repository licence)",
+      "generated_on": "2026-11-05"
+    },
+    "nodes": {
+      "orbital": {
+        "battery": {
+          "capacity_kwh": 2,
+          "initial_kwh": 0.4,
+          "reserve_kwh": 0.2,
+          "charge_efficiency": 1,
+          "discharge_efficiency": 1,
+          "max_charge_kw": 2,
+          "max_discharge_kw": 2
+        },
+        "thermal": {
+          "initial_k": 300,
+          "maximum_k": 315,
+          "heat_capacity_j_per_k": 10000,
+          "conductance_w_per_k": 100
+        },
+        "profiles": [
+          {
+            "start_s": 0,
+            "end_s": 1800,
+            "solar_kw": 0,
+            "background_kw": 1,
+            "background_heat_w": 1000,
+            "sink_k": 280
+          }
+        ]
+      }
+    }
+  },
+  "proposal": {
+    "schema": "capacity-orbital/proposal-v1",
+    "id": "demo-reserve",
+    "at_s": 0,
+    "events": [],
+    "authority": {
+      "disposition": "allowed",
+      "valid_from_s": 0,
+      "expires_s": 1800,
+      "scope": "synthetic-evaluation"
+    }
+  }
+}

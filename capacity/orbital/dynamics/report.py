@@ -1,0 +1,19 @@
+"""Readable projection of the same predicted state/violations as the JSON tool result."""
+from html import escape
+
+
+def render(result):
+    esc=lambda v:escape(str(v),quote=True)
+    status='ADMISSIBLE' if result['admissible'] else 'REFUSED / HELD'
+    cards=[];rows=[];count=0
+    for name,node in result['nodes'].items():
+        cards.append(f'<article><h2>{esc(name)}</h2><p>Final battery <b>{node["final_kwh"]:.6f} kWh</b></p><p>Final temperature <b>{node["final_k"]:.6f} K</b></p><p>Evaluated to {node["evaluated_until_s"]:.6f} s · '+('full horizon' if node['completed_horizon'] else 'stopped at violation')+'</p></article>')
+        for interval in node['intervals']:
+            count+=1
+            if count>200:continue
+            e=interval['energy']
+            rows.append(f'<tr><th scope="row">{esc(name)}</th><td>{interval["start_s"]:.6f}–{interval["end_s"]:.6f}</td><td>{e["final_kwh"]:.6f}</td><td>{interval["final_k"]:.6f}</td><td>{e["solar_kwh"]:.6f}</td><td>{e["load_kwh"]:.6f}</td><td>{e["conversion_loss_kwh"]:.6f}</td><td>{e["curtailed_kwh"]:.6f}</td><td>{e["residual_kwh"]:.3g}</td></tr>')
+    violations=''.join('<li>'+esc(v['code'])+' · '+esc(v['node'])+' · '+esc(v['at_s'])+' s</li>' for v in result['violations']) or '<li>No predicted violations within the supplied model.</li>'
+    return '''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Capacity Orbital — coupled state</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f2f5fa;color:#15253b;font:16px/1.55 system-ui,sans-serif}main{max-width:1150px;margin:auto;padding:30px 20px}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1}.cards{display:flex;flex-wrap:wrap;gap:16px}article,section{border:1px solid #bbc8da;background:white;border-radius:10px;padding:18px;margin:16px 0}article{flex:1;min-width:240px}.status{background:#dce7f6;color:#193f70;padding:8px 14px;display:inline-block;font-weight:bold}.scroll{overflow:auto}table{border-collapse:collapse;min-width:1000px}th,td{text-align:left;padding:10px;border-bottom:1px solid #d4deea;font-size:14px}code{overflow-wrap:anywhere}small{color:#40546d}@media(max-width:640px){main{padding:18px 12px}article{min-width:100%}}
+</style><main><small>Offline synthetic planning · prediction, not execution</small><h1>Capacity Orbital: coupled state</h1><p class="status">'''+status+'</p><p>Proposal '+esc(result['proposal_id'])+'</p><ul>'+violations+'</ul><div class="cards">'+''.join(cards)+'''</div><section><h2>Conservation ledger</h2><p>All nodes use one shared interval clock. A refused node shows only its diagnostic prefix; no schedule state is committed. Showing at most 200 intervals; the JSON contains all evaluated intervals.</p><div class="scroll"><table><thead><tr><th scope="col">Node</th><th scope="col">Interval (s)</th><th scope="col">Battery (kWh)</th><th scope="col">Temperature (K)</th><th scope="col">Solar (kWh)</th><th scope="col">Load (kWh)</th><th scope="col">Loss (kWh)</th><th scope="col">Curtailed (kWh)</th><th scope="col">Residual (kWh)</th></tr></thead><tbody>'''+''.join(rows)+'''</tbody></table></div></section><section><h2>Limits and reproducibility</h2><p>Linear lumped synthetic thermal model, not an orbital propagation or calibrated radiator model. Battery power limits are at the external bus; discharge efficiency converts bus delivery to battery withdrawal. Input capabilities are caller-supplied planning declarations, not actual Tool Guard enforcement. Heat is separately declared; conversion losses and electrical waste heat are not automatically coupled into temperature. No observed outcomes, flight commands or automatic policy promotion.</p><p>Input SHA256 <code>'''+esc(result['input_sha256'])+'</code></p><p>Source SHA256 <code>'+esc(result['source_sha256'] or 'unbound API call')+'</code></p><p>Receipt <code>'+esc(result['receipt_id'])+'</code></p></section></main></html>'

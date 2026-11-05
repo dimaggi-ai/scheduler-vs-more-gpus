@@ -1,0 +1,36 @@
+{
+  "python": "3.12.6",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "workload": "one node, nonoverlapping one-second events; one traced run each; excludes HTML and CLI file IO",
+  "measurements": [
+    {
+      "events": 10,
+      "seconds": 0.00117575004696846,
+      "peak_traced_bytes": 20023,
+      "admissible": true,
+      "intervals": 10
+    },
+    {
+      "events": 100,
+      "seconds": 0.00951670901849866,
+      "peak_traced_bytes": 185309,
+      "admissible": true,
+      "intervals": 100
+    },
+    {
+      "events": 1000,
+      "seconds": 0.09570812503807247,
+      "peak_traced_bytes": 1818719,
+      "admissible": true,
+      "intervals": 1000
+    },
+    {
+      "events": 10000,
+      "seconds": 0.9647987498901784,
+      "peak_traced_bytes": 18491585,
+      "admissible": true,
+      "intervals": 10000
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "capacity-orbital/dynamics-report-v1",
+  "proposal_id": "demo-thermal",
+  "input_sha256": "43841e1997bf99b2d7177f4342853a09ae74c031b1db0ef6122c47a308e8f687",
+  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "source_binding": "caller-supplied",
+  "classification": "synthetic predicted feasibility; no observed or executed outcomes",
+  "authority": {
+    "disposition": "allowed",
+    "reason_code": null,
+    "enforcement": "caller-supplied planning capability; not actual Tool Guard enforcement"
+  },
+  "admissible": false,
+  "nodes": {
+    "orbital": {
+      "completed_horizon": false,
+      "evaluated_until_s": 69.31471805599453,
+      "final_kwh": 1.0,
+      "final_k": 305.0,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 69.31471805599453,
+          "planned_end_s": 1800,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 3000.0,
+          "initial_k": 300,
+          "final_k": 305.0,
+          "energy": {
+            "initial_kwh": 1,
+            "final_kwh": 1.0,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    }
+  },
+  "violations": [
+    {
+      "code": "THERMAL_LIMIT",
+      "node": "orbital",
+      "at_s": 69.31471805599453
+    }
+  ],
+  "receipt_id": "d8b27ddb83ea08424fb3dbdb5efc40e9c59af389a4d11f99a6522c4390ac7856"
+}
