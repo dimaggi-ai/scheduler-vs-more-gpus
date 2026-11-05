@@ -44,8 +44,10 @@ Claude exact-source review, Dmitry/Ronnie acceptance, browser visual verificatio
 and release remain open. Isolated chaos qualification is assigned by task105;
 these software refusal tests are supplementary, not host/network-isolation proof.
 
-Hosted CI coverage: existing `.github/workflows/ci.yml` runs `capacity/tests`,
-not `capacity/orbital/test_orbital.py`. New orbital tests were run locally only.
-A passing existing CI job does not prove this new module passed hosted tests.
-Adding the explicit unittest command to CI is a scoped integration follow-up;
-this builder did not edit workflows outside its assigned paths.
+Hosted CI coverage: the initial task105 delivery at15fe4b4 did not add the new
+orbital path to existing hosted tests. After the coordinator explicitly extended
+the owned scope, `.github/workflows/ci.yml` gained one named step, "Orbital planner
+contracts", running `python3 -m unittest capacity.orbital.test_orbital -v` in the
+existing test job. Triggers, permissions, dependencies and all other steps are
+unchanged. The exact command passes locally. Hosted execution of this new step
+must be checked on the new PR head; earlier green runs do not prove its execution.
