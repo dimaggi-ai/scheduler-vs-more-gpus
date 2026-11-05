@@ -1,0 +1,3512 @@
+{
+  "schema": "capacity-orbital/mission-tool-v1",
+  "id": "synthetic-feedback",
+  "tool": "feedback",
+  "arguments": {
+    "suite": {
+      "schema": "capacity-orbital/feedback-suite-v1",
+      "train": [
+        {
+          "mission": {
+            "schema": "capacity-orbital/mission-v1",
+            "id": "synthetic-EO",
+            "origin": "A",
+            "destination": "G",
+            "currency": "USD",
+            "network": {
+              "schema": "capacity-orbital/network-v1",
+              "name": "Synthetic relay",
+              "horizon_s": 300,
+              "provenance": {
+                "kind": "synthetic",
+                "source": "hand arithmetic fixture; no ephemeris",
+                "licence": "repository licence",
+                "generated_on": "2026-11-05"
+              },
+              "nodes": {
+                "A": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "B": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "G": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                }
+              },
+              "contacts": [
+                {
+                  "id": "AB",
+                  "link_id": "AB",
+                  "source": "A",
+                  "destination": "B",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 200,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                },
+                {
+                  "id": "BG",
+                  "link_id": "BG",
+                  "source": "B",
+                  "destination": "G",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 250,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                }
+              ],
+              "jobs": []
+            },
+            "dynamics": {
+              "schema": "capacity-orbital/dynamics-v1",
+              "name": "Synthetic transfer energy",
+              "horizon_s": 300,
+              "provenance": {
+                "kind": "synthetic",
+                "source": "hand arithmetic fixture; no ephemeris",
+                "licence": "repository licence",
+                "generated_on": "2026-11-05"
+              },
+              "nodes": {
+                "A": {
+                  "battery": {
+                    "capacity_kwh": 1,
+                    "initial_kwh": 1,
+                    "reserve_kwh": 0,
+                    "charge_efficiency": 1,
+                    "discharge_efficiency": 1,
+                    "max_charge_kw": 10,
+                    "max_discharge_kw": 10
+                  },
+                  "thermal": {
+                    "initial_k": 300,
+                    "maximum_k": 400,
+                    "heat_capacity_j_per_k": 10000,
+                    "conductance_w_per_k": 100
+                  },
+                  "profiles": [
+                    {
+                      "start_s": 0,
+                      "end_s": 300,
+                      "solar_kw": 0,
+                      "background_kw": 0,
+                      "background_heat_w": 0,
+                      "sink_k": 300
+                    }
+                  ]
+                },
+                "B": {
+                  "battery": {
+                    "capacity_kwh": 1,
+                    "initial_kwh": 1,
+                    "reserve_kwh": 0,
+                    "charge_efficiency": 1,
+                    "discharge_efficiency": 1,
+                    "max_charge_kw": 10,
+                    "max_discharge_kw": 10
+                  },
+                  "thermal": {
+                    "initial_k": 300,
+                    "maximum_k": 400,
+                    "heat_capacity_j_per_k": 10000,
+                    "conductance_w_per_k": 100
+                  },
+                  "profiles": [
+                    {
+                      "start_s": 0,
+                      "end_s": 300,
+                      "solar_kw": 0,
+                      "background_kw": 0,
+                      "background_heat_w": 0,
+                      "sink_k": 300
+                    }
+                  ]
+                },
+                "G": {
+                  "battery": {
+                    "capacity_kwh": 1,
+                    "initial_kwh": 1,
+                    "reserve_kwh": 0,
+                    "charge_efficiency": 1,
+                    "discharge_efficiency": 1,
+                    "max_charge_kw": 10,
+                    "max_discharge_kw": 10
+                  },
+                  "thermal": {
+                    "initial_k": 300,
+                    "maximum_k": 400,
+                    "heat_capacity_j_per_k": 10000,
+                    "conductance_w_per_k": 100
+                  },
+                  "profiles": [
+                    {
+                      "start_s": 0,
+                      "end_s": 300,
+                      "solar_kw": 0,
+                      "background_kw": 0,
+                      "background_heat_w": 0,
+                      "sink_k": 300
+                    }
+                  ]
+                }
+              }
+            },
+            "authority": {
+              "disposition": "allowed",
+              "valid_from_s": 0,
+              "expires_s": 300,
+              "scope": "synthetic-evaluation"
+            },
+            "compute": {
+              "A": {
+                "memory_gb": 2,
+                "power_kw": 1,
+                "heat_w": 100,
+                "cost_per_s_usd": 0.01
+              },
+              "G": {
+                "memory_gb": 2,
+                "power_kw": 1,
+                "heat_w": 100,
+                "cost_per_s_usd": 0.01
+              }
+            },
+            "jobs": [
+              {
+                "id": "job-0",
+                "release_s": 0,
+                "deadline_s": 100,
+                "raw_gb": 1,
+                "result_gb": 0.1,
+                "compressed_gb": 0.4,
+                "memory_gb": 1,
+                "required_quality": 0.9,
+                "ground_quality": 1,
+                "onboard_quality": 0.95,
+                "hybrid_quality": 0.98,
+                "ground_s": 10,
+                "onboard_s": 5,
+                "preprocess_s": 2,
+                "hybrid_ground_s": 5,
+                "allowed_jurisdictions": [
+                  "synthetic-zone"
+                ]
+              },
+              {
+                "id": "job-1",
+                "release_s": 0,
+                "deadline_s": 100,
+                "raw_gb": 1,
+                "result_gb": 0.1,
+                "compressed_gb": 0.4,
+                "memory_gb": 1,
+                "required_quality": 0.9,
+                "ground_quality": 1,
+                "onboard_quality": 0.95,
+                "hybrid_quality": 0.98,
+                "ground_s": 10,
+                "onboard_s": 5,
+                "preprocess_s": 2,
+                "hybrid_ground_s": 5,
+                "allowed_jurisdictions": [
+                  "synthetic-zone"
+                ]
+              }
+            ],
+            "diligence": {
+              "mission_id": "synthetic-EO",
+              "lifecycle": {
+                "schema": "capacity-orbital/lifecycle-v1",
+                "name": "Two-year synthetic capacity sensitivity",
+                "currency": "USD",
+                "horizon_years": 2,
+                "discount_rate": 0.1,
+                "cash_flows": [
+                  {
+                    "id": "payload",
+                    "category": "payload",
+                    "year": 0,
+                    "amount": 1000,
+                    "currency": "USD"
+                  },
+                  {
+                    "id": "operation1",
+                    "category": "operation",
+                    "year": 1,
+                    "amount": 100,
+                    "currency": "USD"
+                  },
+                  {
+                    "id": "operation2",
+                    "category": "operation",
+                    "year": 2,
+                    "amount": 100,
+                    "currency": "USD"
+                  }
+                ],
+                "cohorts": [
+                  {
+                    "id": "cohort1",
+                    "count": 1,
+                    "commission_year": 0,
+                    "retirement_year": 2,
+                    "capacity_kw": 1,
+                    "utilization": 1,
+                    "availability": 1
+                  }
+                ],
+                "provenance": {
+                  "kind": "synthetic",
+                  "source": "DIMAGGI task109 authored hand-computable fixture",
+                  "licence": "MIT (repository licence)",
+                  "generated_on": "2026-11-05"
+                }
+              }
+            }
+          },
+          "report": {
+            "schema": "capacity-orbital/mission-report-v1",
+            "mission_id": "synthetic-EO",
+            "route": "onboard",
+            "input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
+            "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+            "classification": "synthetic coupled prediction; no execution or billing",
+            "execution_performed": false,
+            "promoted": false,
+            "admissible": true,
+            "failures": [],
+            "jobs": [
+              {
+                "id": "job-0",
+                "completion_s": 6.600000000000001,
+                "quality": 0.95,
+                "required_quality": 0.9,
+                "deadline_s": 100
+              },
+              {
+                "id": "job-1",
+                "completion_s": 11.600000000000001,
+                "quality": 0.95,
+                "required_quality": 0.9,
+                "deadline_s": 100
+              }
+            ],
+            "network_input": {
+              "schema": "capacity-orbital/network-v1",
+              "name": "Synthetic relay",
+              "horizon_s": 300,
+              "provenance": {
+                "kind": "synthetic",
+                "source": "hand arithmetic fixture; no ephemeris",
+                "licence": "repository licence",
+                "generated_on": "2026-11-05"
+              },
+              "nodes": {
+                "A": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "B": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "G": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                }
+              },
+              "contacts": [
+                {
+                  "id": "AB",
+                  "link_id": "AB",
+                  "source": "A",
+                  "destination": "B",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 200,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                },
+                {
+                  "id": "BG",
+                  "link_id": "BG",
+                  "source": "B",
+                  "destination": "G",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 250,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                }
+              ],
+              "jobs": [
+                {
+                  "id": "job-0",
+                  "source": "A",
+                  "destination": "G",
+                  "release_s": 5,
+                  "deadline_s": 100,
+                  "data_gb": 0.1,
+                  "allowed_jurisdictions": [
+                    "synthetic-zone"
+                  ]
+                },
+                {
+                  "id": "job-1",
+                  "source": "A",
+                  "destination": "G",
+                  "release_s": 10,
+                  "deadline_s": 100,
+                  "data_gb": 0.1,
+                  "allowed_jurisdictions": [
+                    "synthetic-zone"
+                  ]
+                }
+              ]
+            },
+            "network": {
+              "schema": "capacity-orbital/network-report-v1",
+              "input_sha256": "f13ef07cac4c15cae90b14556c0f485657ebac90fddec247237fc8366bebd803",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
+              "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
+              "jobs": [
+                {
+                  "id": "job-0",
+                  "status": "delivered",
+                  "reason_code": null,
+                  "hops": [
+                    {
+                      "contact_id": "AB",
+                      "link_id": "AB",
+                      "source": "A",
+                      "destination": "B",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 5,
+                      "tx_end_s": 5.800000000000001,
+                      "rx_start_s": 5,
+                      "arrival_s": 5.800000000000001,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    },
+                    {
+                      "contact_id": "BG",
+                      "link_id": "BG",
+                      "source": "B",
+                      "destination": "G",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 5.800000000000001,
+                      "tx_end_s": 6.600000000000001,
+                      "rx_start_s": 5.800000000000001,
+                      "arrival_s": 6.600000000000001,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    }
+                  ],
+                  "arrival_s": 6.600000000000001,
+                  "estimated_cost": 0.020000000000000004
+                },
+                {
+                  "id": "job-1",
+                  "status": "delivered",
+                  "reason_code": null,
+                  "hops": [
+                    {
+                      "contact_id": "AB",
+                      "link_id": "AB",
+                      "source": "A",
+                      "destination": "B",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 10,
+                      "tx_end_s": 10.8,
+                      "rx_start_s": 10,
+                      "arrival_s": 10.8,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    },
+                    {
+                      "contact_id": "BG",
+                      "link_id": "BG",
+                      "source": "B",
+                      "destination": "G",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 10.8,
+                      "tx_end_s": 11.600000000000001,
+                      "rx_start_s": 10.8,
+                      "arrival_s": 11.600000000000001,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    }
+                  ],
+                  "arrival_s": 11.600000000000001,
+                  "estimated_cost": 0.020000000000000004
+                }
+              ],
+              "fleet": {
+                "A": {
+                  "available_seconds": 300.0,
+                  "available_capacity_kw_seconds": 300.0
+                },
+                "B": {
+                  "available_seconds": 300.0,
+                  "available_capacity_kw_seconds": 300.0
+                },
+                "G": {
+                  "available_seconds": 300.0,
+                  "available_capacity_kw_seconds": 300.0
+                }
+              },
+              "available_capacity_kw_seconds": 900.0,
+              "estimated_cost": 0.04000000000000001,
+              "resource_reservations": [
+                {
+                  "resource": [
+                    "link",
+                    "AB"
+                  ],
+                  "start_s": 5,
+                  "end_s": 5.800000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "A",
+                    "radio"
+                  ],
+                  "start_s": 5,
+                  "end_s": 5.800000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 5,
+                  "end_s": 5.800000000000001
+                },
+                {
+                  "resource": [
+                    "link",
+                    "BG"
+                  ],
+                  "start_s": 5.800000000000001,
+                  "end_s": 6.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 5.800000000000001,
+                  "end_s": 6.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "G",
+                    "radio"
+                  ],
+                  "start_s": 5.800000000000001,
+                  "end_s": 6.600000000000001
+                },
+                {
+                  "resource": [
+                    "link",
+                    "AB"
+                  ],
+                  "start_s": 10,
+                  "end_s": 10.8
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "A",
+                    "radio"
+                  ],
+                  "start_s": 10,
+                  "end_s": 10.8
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 10,
+                  "end_s": 10.8
+                },
+                {
+                  "resource": [
+                    "link",
+                    "BG"
+                  ],
+                  "start_s": 10.8,
+                  "end_s": 11.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 10.8,
+                  "end_s": 11.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "G",
+                    "radio"
+                  ],
+                  "start_s": 10.8,
+                  "end_s": 11.600000000000001
+                }
+              ],
+              "buffer_reservations": [
+                {
+                  "node": "A",
+                  "start_s": 5,
+                  "end_s": 5.800000000000001,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "B",
+                  "start_s": 5,
+                  "end_s": 6.600000000000001,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "G",
+                  "start_s": 5.800000000000001,
+                  "end_s": 6.600000000000001,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "A",
+                  "start_s": 10,
+                  "end_s": 10.8,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "B",
+                  "start_s": 10,
+                  "end_s": 11.600000000000001,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "G",
+                  "start_s": 10.8,
+                  "end_s": 11.600000000000001,
+                  "data_gb": 0.1
+                }
+              ],
+              "operations": 137,
+              "receipt_id": "6a88bf1f86dfb6a530fe0f919f21b38dd68da9570fc3eb53a7376ec59b265f0a"
+            },
+            "proposal": {
+              "schema": "capacity-orbital/proposal-v1",
+              "id": "synthetic-EO:onboard",
+              "at_s": 0,
+              "events": [
+                {
+                  "id": "job-0:0:tx",
+                  "node": "A",
+                  "kind": "transfer",
+                  "start_s": 5,
+                  "end_s": 5.800000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-0:0:rx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 5,
+                  "end_s": 5.800000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-0:1:tx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 5.800000000000001,
+                  "end_s": 6.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-0:1:rx",
+                  "node": "G",
+                  "kind": "transfer",
+                  "start_s": 5.800000000000001,
+                  "end_s": 6.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:0:tx",
+                  "node": "A",
+                  "kind": "transfer",
+                  "start_s": 10,
+                  "end_s": 10.8,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:0:rx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 10,
+                  "end_s": 10.8,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:1:tx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 10.8,
+                  "end_s": 11.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:1:rx",
+                  "node": "G",
+                  "kind": "transfer",
+                  "start_s": 10.8,
+                  "end_s": 11.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "compute:job-0:origin",
+                  "node": "A",
+                  "kind": "compute",
+                  "start_s": 0,
+                  "end_s": 5,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "compute:job-1:origin",
+                  "node": "A",
+                  "kind": "compute",
+                  "start_s": 5,
+                  "end_s": 10,
+                  "power_kw": 1,
+                  "heat_w": 100
+                }
+              ],
+              "authority": {
+                "disposition": "allowed",
+                "valid_from_s": 0,
+                "expires_s": 300,
+                "scope": "synthetic-evaluation"
+              }
+            },
+            "dynamics": {
+              "schema": "capacity-orbital/dynamics-report-v1",
+              "proposal_id": "synthetic-EO:onboard",
+              "input_sha256": "20bab3d553e102083c0661c3c716cf96d17c921322c7c0a766e2aea9cd7e5778",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "source_binding": "caller-supplied",
+              "classification": "synthetic predicted feasibility; no observed or executed outcomes",
+              "authority": {
+                "disposition": "allowed",
+                "reason_code": null,
+                "enforcement": "caller-supplied planning capability; not actual Tool Guard enforcement"
+              },
+              "admissible": true,
+              "nodes": {
+                "A": {
+                  "completed_horizon": true,
+                  "evaluated_until_s": 300.0,
+                  "final_kwh": 0.9967777777777778,
+                  "final_k": 300.0060984998902,
+                  "intervals": [
+                    {
+                      "start_s": 0,
+                      "end_s": 5,
+                      "planned_end_s": 5,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300,
+                      "final_k": 300.0487705754993,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 0.9986111111111111,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.001388888888888889,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 5,
+                      "end_s": 5.800000000000001,
+                      "planned_end_s": 5.800000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 2.0,
+                      "heat_w": 200.0,
+                      "initial_k": 300.0487705754993,
+                      "final_k": 300.06431813772616,
+                      "energy": {
+                        "initial_kwh": 0.9986111111111111,
+                        "final_kwh": 0.9981666666666666,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00044444444444444485,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 5.800000000000001,
+                      "end_s": 6.600000000000001,
+                      "planned_end_s": 6.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.06431813772616,
+                      "final_k": 300.0717737304902,
+                      "energy": {
+                        "initial_kwh": 0.9981666666666666,
+                        "final_kwh": 0.9979444444444444,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 6.600000000000001,
+                      "end_s": 10.0,
+                      "planned_end_s": 10,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0717737304902,
+                      "final_k": 300.10280293803584,
+                      "energy": {
+                        "initial_kwh": 0.9979444444444444,
+                        "final_kwh": 0.997,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.000944444444444444,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 10,
+                      "end_s": 10.8,
+                      "planned_end_s": 10.8,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.10280293803584,
+                      "final_k": 300.1099518806335,
+                      "energy": {
+                        "initial_kwh": 0.997,
+                        "final_kwh": 0.9967777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 10.8,
+                      "end_s": 11.600000000000001,
+                      "planned_end_s": 11.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.1099518806335,
+                      "final_k": 300.1090757746848,
+                      "energy": {
+                        "initial_kwh": 0.9967777777777778,
+                        "final_kwh": 0.9967777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 11.600000000000001,
+                      "end_s": 300.0,
+                      "planned_end_s": 300,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.1090757746848,
+                      "final_k": 300.0060984998902,
+                      "energy": {
+                        "initial_kwh": 0.9967777777777778,
+                        "final_kwh": 0.9967777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    }
+                  ]
+                },
+                "B": {
+                  "completed_horizon": true,
+                  "evaluated_until_s": 300.0,
+                  "final_kwh": 0.9991111111111111,
+                  "final_k": 300.0017316228578,
+                  "intervals": [
+                    {
+                      "start_s": 0,
+                      "end_s": 5,
+                      "planned_end_s": 5,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 5,
+                      "end_s": 5.800000000000001,
+                      "planned_end_s": 5.800000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.00796808516293,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 5.800000000000001,
+                      "end_s": 6.600000000000001,
+                      "planned_end_s": 6.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.00796808516293,
+                      "final_k": 300.0158726799447,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 6.600000000000001,
+                      "end_s": 10.0,
+                      "planned_end_s": 10,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0158726799447,
+                      "final_k": 300.0153420801368,
+                      "energy": {
+                        "initial_kwh": 0.9995555555555555,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 10,
+                      "end_s": 10.8,
+                      "planned_end_s": 10.8,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0153420801368,
+                      "final_k": 300.0231879182986,
+                      "energy": {
+                        "initial_kwh": 0.9995555555555555,
+                        "final_kwh": 0.9993333333333333,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 10.8,
+                      "end_s": 11.600000000000001,
+                      "planned_end_s": 11.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0231879182986,
+                      "final_k": 300.0309712401538,
+                      "energy": {
+                        "initial_kwh": 0.9993333333333333,
+                        "final_kwh": 0.9991111111111111,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 11.600000000000001,
+                      "end_s": 300.0,
+                      "planned_end_s": 300,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0309712401538,
+                      "final_k": 300.0017316228578,
+                      "energy": {
+                        "initial_kwh": 0.9991111111111111,
+                        "final_kwh": 0.9991111111111111,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    }
+                  ]
+                },
+                "G": {
+                  "completed_horizon": true,
+                  "evaluated_until_s": 300.0,
+                  "final_kwh": 0.9995555555555555,
+                  "final_k": 300.00086927465617,
+                  "intervals": [
+                    {
+                      "start_s": 0,
+                      "end_s": 5,
+                      "planned_end_s": 5,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 5,
+                      "end_s": 5.800000000000001,
+                      "planned_end_s": 5.800000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 5.800000000000001,
+                      "end_s": 6.600000000000001,
+                      "planned_end_s": 6.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.00796808516293,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 6.600000000000001,
+                      "end_s": 10.0,
+                      "planned_end_s": 10,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.00796808516293,
+                      "final_k": 300.007701724065,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 10,
+                      "end_s": 10.8,
+                      "planned_end_s": 10.8,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.007701724065,
+                      "final_k": 300.00764035607176,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 10.8,
+                      "end_s": 11.600000000000001,
+                      "planned_end_s": 11.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.00764035607176,
+                      "final_k": 300.01554756222686,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 11.600000000000001,
+                      "end_s": 300.0,
+                      "planned_end_s": 300,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.01554756222686,
+                      "final_k": 300.00086927465617,
+                      "energy": {
+                        "initial_kwh": 0.9995555555555555,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    }
+                  ]
+                }
+              },
+              "violations": [],
+              "receipt_id": "082442434466c1f739dfeee44c97ca08d6b251ba01761531a2800ff4bffce0a0"
+            },
+            "processing_buffers": [
+              {
+                "node": "A",
+                "start_s": 0,
+                "end_s": 5,
+                "data_gb": 1
+              },
+              {
+                "node": "A",
+                "start_s": 0,
+                "end_s": 10,
+                "data_gb": 1
+              }
+            ],
+            "cost": {
+              "currency": "USD",
+              "compute_usd": 0.1,
+              "network_usd": 0.04000000000000001,
+              "partial_operating_usd": 0.14,
+              "lifecycle_total_usd": null
+            },
+            "energy": {
+              "proposed_event_kwh": 0.0045555555555555575,
+              "evaluated_prefix_load_kwh": 0.0045555555555555575
+            },
+            "capabilities": {
+              "topology": "single origin compute, single ground compute, optional relay nodes",
+              "live_execution": false,
+              "orbital_geometry": false,
+              "real_tool_guard": false,
+              "production_metering": false,
+              "lifecycle_economics": "separate explicitly linked sensitivity; not mission total"
+            },
+            "diligence": {
+              "mission_id": "synthetic-EO",
+              "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
+              "network_receipt_id": "6a88bf1f86dfb6a530fe0f919f21b38dd68da9570fc3eb53a7376ec59b265f0a",
+              "lifecycle": {
+                "schema": "capacity-orbital/diligence-response-v1",
+                "request_id": "synthetic-EO:lifecycle",
+                "input_sha256": "5b4b4d809d676540eb4bd3503448f247078ca96588a60b05aaf3d4e60a42946e",
+                "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                "status": "screened",
+                "reason_code": "COMPUTED_SYNTHETIC",
+                "reason": "synthetic assumption-bound result",
+                "result": {
+                  "schema": "capacity-orbital/lifecycle-result-v1",
+                  "model": "event-cashflows/year-end-capacity-v1",
+                  "status": "computed",
+                  "reason_code": "COMPUTED_SYNTHETIC",
+                  "currency": "USD",
+                  "totals": {
+                    "undiscounted_cost": 1200,
+                    "discounted_cost": 1173.5537190082646,
+                    "undiscounted_useful_kw_years": 2.0,
+                    "discounted_useful_kw_years": 1.7355371900826446,
+                    "cost_per_discounted_useful_kw_year": 676.1904761904763
+                  },
+                  "cash_flows": [
+                    {
+                      "amount": 1000,
+                      "category": "payload",
+                      "currency": "USD",
+                      "id": "payload",
+                      "year": 0,
+                      "discount_factor": 1.0,
+                      "discounted_amount": 1000.0
+                    },
+                    {
+                      "amount": 100,
+                      "category": "operation",
+                      "currency": "USD",
+                      "id": "operation1",
+                      "year": 1,
+                      "discount_factor": 0.9090909090909091,
+                      "discounted_amount": 90.9090909090909
+                    },
+                    {
+                      "amount": 100,
+                      "category": "operation",
+                      "currency": "USD",
+                      "id": "operation2",
+                      "year": 2,
+                      "discount_factor": 0.8264462809917356,
+                      "discounted_amount": 82.64462809917356
+                    }
+                  ],
+                  "cohort_output": [
+                    {
+                      "cohort_id": "cohort1",
+                      "year_end": 1,
+                      "active_years": 1,
+                      "useful_kw_years": 1,
+                      "discounted_useful_kw_years": 0.9090909090909091
+                    },
+                    {
+                      "cohort_id": "cohort1",
+                      "year_end": 2,
+                      "active_years": 1,
+                      "useful_kw_years": 1,
+                      "discounted_useful_kw_years": 0.8264462809917356
+                    }
+                  ],
+                  "annual_output": [
+                    {
+                      "year_end": 1,
+                      "useful_kw_years": 1.0,
+                      "discount_factor": 0.9090909090909091,
+                      "discounted_useful_kw_years": 0.9090909090909091
+                    },
+                    {
+                      "year_end": 2,
+                      "useful_kw_years": 1.0,
+                      "discount_factor": 0.8264462809917356,
+                      "discounted_useful_kw_years": 0.8264462809917356
+                    }
+                  ],
+                  "by_category": {
+                    "development": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "payload": {
+                      "undiscounted": 1000.0,
+                      "discounted": 1000.0
+                    },
+                    "platform": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "launch": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "insurance": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "operation": {
+                      "undiscounted": 200.0,
+                      "discounted": 173.55371900826447
+                    },
+                    "replacement": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "disposal": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "residual": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "downlink_marginal": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "downlink_allocated": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    }
+                  },
+                  "provenance": {
+                    "generated_on": "2026-11-05",
+                    "kind": "synthetic",
+                    "licence": "MIT (repository licence)",
+                    "source": "DIMAGGI task109 authored hand-computable fixture"
+                  },
+                  "assumptions": [
+                    "Positive cash flows are expenditures; residual entries are nonpositive credits. No revenue or financing cash flows.",
+                    "Cash flows are discounted at their declared year offset; useful capacity accrues over active interval intersections and is discounted at each year-end.",
+                    "Both numerator and denominator use the same annual discount factor and time origin; partial-year output is credited at the containing year-end.",
+                    "No output before commissioning or after retirement. Replacements require their own cohorts and cash flows.",
+                    "Utilization and availability are declared synthetic constants, not inferred survival probabilities.",
+                    "Discount rate is a supplied cost-of-capital assumption; interest, debt proceeds, repayments and principal are excluded to avoid financing double-counting.",
+                    "Allocated/prepaid downlink expense and incremental marginal downlink expense are separate categories; callers must not enter the same invoice twice.",
+                    "Single declared currency only; no FX lookup/conversion, inflation model, tax model or investment suitability conclusion.",
+                    "Alternatives are sensitivity scenarios, not forecasts, accepted improvements or automatic calibration."
+                  ]
+                },
+                "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                "authority_disposition": "no_authorization_granted",
+                "execution_performed": false,
+                "promoted": false,
+                "outcome_sha256": "174f670892a20935d45340379a58f5c386ddda0e4029ba83a0a8bea0ad6f03ae"
+              },
+              "lifecycle_status": "separate sensitivity",
+              "lifecycle_horizon_years": 2,
+              "mission_horizon_s": 300,
+              "mission_cost_combined_with_lifecycle": false,
+              "contact_claims": [
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-0:0",
+                  "input_sha256": "1db804bec6a04f15c13c3d94c480814cee4a0ad803b7e48fb1632fdbfc09d3f2",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 25.0,
+                      "window_margin_s": 199.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 200
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "26a3ece1187915fa2fab8aa4a66e6566e357b74c3eb5416d079a438b8ad16804"
+                },
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-0:1",
+                  "input_sha256": "a32e1eee589873ec8a06eea2e3aa324a537d2b9ce0d95eb6b048240512e33748",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 31.25,
+                      "window_margin_s": 249.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 250
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "a2bb8b436b1ca39025a7432b3ea2f7fce0d35c71f233488173cdfc00132f2d84"
+                },
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-1:0",
+                  "input_sha256": "3d77b344ec273285f5395f94c179716dd44dd6e41d088d4abfc1cfb7bc74ff8a",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 25.0,
+                      "window_margin_s": 199.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 200
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "1f43489dc9b4c03f4aa290c9c2401cb0f47fd21da4034ed2e6daafe5fabbb877"
+                },
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-1:1",
+                  "input_sha256": "03e37737e07eb776cdba9051629efc20b9748eab60610c6939870d3677e82e5a",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 31.25,
+                      "window_margin_s": 249.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 250
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "2c9081ffd04868a27d785b862afb0a75675beeefe3f3946dcd63c6ff3f33fcb5"
+                }
+              ],
+              "static_agent_tools": {
+                "schema": "capacity-orbital/tool-manifest-v1",
+                "version": "0.1.0",
+                "request_schema": "capacity-orbital/agent-request-v1",
+                "request_schema_file": "request.schema.json",
+                "response_schema": "capacity-orbital/agent-response-v1",
+                "evaluator": "capacity-orbital/static-planner-v1",
+                "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+                "tools": {
+                  "plan": {
+                    "arguments": [
+                      "scenario",
+                      "route"
+                    ],
+                    "routes": [
+                      "ground",
+                      "onboard",
+                      "hybrid"
+                    ]
+                  },
+                  "compare": {
+                    "arguments": [
+                      "scenario"
+                    ]
+                  },
+                  "evaluate": {
+                    "arguments": [
+                      "suite",
+                      "baseline",
+                      "candidates"
+                    ]
+                  }
+                },
+                "limits": {
+                  "request_bytes": 1000000,
+                  "requests_per_session": 32,
+                  "jobs_per_scenario": 200,
+                  "contacts_per_scenario": 200,
+                  "evaluation_scenarios": 20,
+                  "candidates": 3,
+                  "response_bytes": 4000000,
+                  "cache_bytes": 16000000
+                },
+                "refusal_codes": [
+                  "INVALID_ARGUMENT",
+                  "UNSUPPORTED_SCHEMA",
+                  "UNKNOWN_TOOL",
+                  "DATA_LEAKAGE",
+                  "BUDGET_EXCEEDED",
+                  "REQUEST_ID_CONFLICT",
+                  "SOURCE_CHANGED",
+                  "SOURCE_UNAVAILABLE"
+                ],
+                "authority": "planning_only; no execution permission, authentication or Tool Guard authorization",
+                "promotion": "never; recommendations require independent review and designated acceptance"
+              },
+              "limitations": [
+                "Lifecycle USD/kW-year sensitivity is not the mission partial operating USD or a mission total.",
+                "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
+              ]
+            },
+            "receipt_id": "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35"
+          },
+          "records": [
+            {
+              "schema": "capacity-orbital/synthetic-replay-v1",
+              "id": "train:job-0",
+              "classification": "supplied synthetic replay",
+              "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "proposal_receipt_id": "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35",
+              "job_id": "job-0",
+              "completion_s": 7.2600000000000025,
+              "energy_kwh": 0.002505555555555557,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            {
+              "schema": "capacity-orbital/synthetic-replay-v1",
+              "id": "train:job-1",
+              "classification": "supplied synthetic replay",
+              "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "proposal_receipt_id": "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35",
+              "job_id": "job-1",
+              "completion_s": 12.760000000000003,
+              "energy_kwh": 0.002505555555555557,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            }
+          ]
+        }
+      ],
+      "heldout": [
+        {
+          "mission": {
+            "schema": "capacity-orbital/mission-v1",
+            "id": "heldout-EO",
+            "origin": "A",
+            "destination": "G",
+            "currency": "USD",
+            "network": {
+              "schema": "capacity-orbital/network-v1",
+              "name": "Synthetic relay",
+              "horizon_s": 300,
+              "provenance": {
+                "kind": "synthetic",
+                "source": "hand arithmetic fixture; no ephemeris",
+                "licence": "repository licence",
+                "generated_on": "2026-11-05"
+              },
+              "nodes": {
+                "A": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "B": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "G": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                }
+              },
+              "contacts": [
+                {
+                  "id": "AB",
+                  "link_id": "AB",
+                  "source": "A",
+                  "destination": "B",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 200,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                },
+                {
+                  "id": "BG",
+                  "link_id": "BG",
+                  "source": "B",
+                  "destination": "G",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 250,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                }
+              ],
+              "jobs": []
+            },
+            "dynamics": {
+              "schema": "capacity-orbital/dynamics-v1",
+              "name": "Synthetic transfer energy",
+              "horizon_s": 300,
+              "provenance": {
+                "kind": "synthetic",
+                "source": "hand arithmetic fixture; no ephemeris",
+                "licence": "repository licence",
+                "generated_on": "2026-11-05"
+              },
+              "nodes": {
+                "A": {
+                  "battery": {
+                    "capacity_kwh": 1,
+                    "initial_kwh": 1,
+                    "reserve_kwh": 0,
+                    "charge_efficiency": 1,
+                    "discharge_efficiency": 1,
+                    "max_charge_kw": 10,
+                    "max_discharge_kw": 10
+                  },
+                  "thermal": {
+                    "initial_k": 300,
+                    "maximum_k": 400,
+                    "heat_capacity_j_per_k": 10000,
+                    "conductance_w_per_k": 100
+                  },
+                  "profiles": [
+                    {
+                      "start_s": 0,
+                      "end_s": 300,
+                      "solar_kw": 0,
+                      "background_kw": 0,
+                      "background_heat_w": 0,
+                      "sink_k": 300
+                    }
+                  ]
+                },
+                "B": {
+                  "battery": {
+                    "capacity_kwh": 1,
+                    "initial_kwh": 1,
+                    "reserve_kwh": 0,
+                    "charge_efficiency": 1,
+                    "discharge_efficiency": 1,
+                    "max_charge_kw": 10,
+                    "max_discharge_kw": 10
+                  },
+                  "thermal": {
+                    "initial_k": 300,
+                    "maximum_k": 400,
+                    "heat_capacity_j_per_k": 10000,
+                    "conductance_w_per_k": 100
+                  },
+                  "profiles": [
+                    {
+                      "start_s": 0,
+                      "end_s": 300,
+                      "solar_kw": 0,
+                      "background_kw": 0,
+                      "background_heat_w": 0,
+                      "sink_k": 300
+                    }
+                  ]
+                },
+                "G": {
+                  "battery": {
+                    "capacity_kwh": 1,
+                    "initial_kwh": 1,
+                    "reserve_kwh": 0,
+                    "charge_efficiency": 1,
+                    "discharge_efficiency": 1,
+                    "max_charge_kw": 10,
+                    "max_discharge_kw": 10
+                  },
+                  "thermal": {
+                    "initial_k": 300,
+                    "maximum_k": 400,
+                    "heat_capacity_j_per_k": 10000,
+                    "conductance_w_per_k": 100
+                  },
+                  "profiles": [
+                    {
+                      "start_s": 0,
+                      "end_s": 300,
+                      "solar_kw": 0,
+                      "background_kw": 0,
+                      "background_heat_w": 0,
+                      "sink_k": 300
+                    }
+                  ]
+                }
+              }
+            },
+            "authority": {
+              "disposition": "allowed",
+              "valid_from_s": 0,
+              "expires_s": 300,
+              "scope": "synthetic-evaluation"
+            },
+            "compute": {
+              "A": {
+                "memory_gb": 2,
+                "power_kw": 1,
+                "heat_w": 100,
+                "cost_per_s_usd": 0.01
+              },
+              "G": {
+                "memory_gb": 2,
+                "power_kw": 1,
+                "heat_w": 100,
+                "cost_per_s_usd": 0.01
+              }
+            },
+            "jobs": [
+              {
+                "id": "job-0",
+                "release_s": 3,
+                "deadline_s": 100,
+                "raw_gb": 1.2,
+                "result_gb": 0.1,
+                "compressed_gb": 0.4,
+                "memory_gb": 1,
+                "required_quality": 0.9,
+                "ground_quality": 1,
+                "onboard_quality": 0.95,
+                "hybrid_quality": 0.98,
+                "ground_s": 10,
+                "onboard_s": 5,
+                "preprocess_s": 2,
+                "hybrid_ground_s": 5,
+                "allowed_jurisdictions": [
+                  "synthetic-zone"
+                ]
+              },
+              {
+                "id": "job-1",
+                "release_s": 3,
+                "deadline_s": 100,
+                "raw_gb": 1.2,
+                "result_gb": 0.1,
+                "compressed_gb": 0.4,
+                "memory_gb": 1,
+                "required_quality": 0.9,
+                "ground_quality": 1,
+                "onboard_quality": 0.95,
+                "hybrid_quality": 0.98,
+                "ground_s": 10,
+                "onboard_s": 5,
+                "preprocess_s": 2,
+                "hybrid_ground_s": 5,
+                "allowed_jurisdictions": [
+                  "synthetic-zone"
+                ]
+              }
+            ],
+            "diligence": {
+              "mission_id": "heldout-EO",
+              "lifecycle": {
+                "schema": "capacity-orbital/lifecycle-v1",
+                "name": "Two-year synthetic capacity sensitivity",
+                "currency": "USD",
+                "horizon_years": 2,
+                "discount_rate": 0.1,
+                "cash_flows": [
+                  {
+                    "id": "payload",
+                    "category": "payload",
+                    "year": 0,
+                    "amount": 1000,
+                    "currency": "USD"
+                  },
+                  {
+                    "id": "operation1",
+                    "category": "operation",
+                    "year": 1,
+                    "amount": 100,
+                    "currency": "USD"
+                  },
+                  {
+                    "id": "operation2",
+                    "category": "operation",
+                    "year": 2,
+                    "amount": 100,
+                    "currency": "USD"
+                  }
+                ],
+                "cohorts": [
+                  {
+                    "id": "cohort1",
+                    "count": 1,
+                    "commission_year": 0,
+                    "retirement_year": 2,
+                    "capacity_kw": 1,
+                    "utilization": 1,
+                    "availability": 1
+                  }
+                ],
+                "provenance": {
+                  "kind": "synthetic",
+                  "source": "DIMAGGI task109 authored hand-computable fixture",
+                  "licence": "MIT (repository licence)",
+                  "generated_on": "2026-11-05"
+                }
+              }
+            }
+          },
+          "report": {
+            "schema": "capacity-orbital/mission-report-v1",
+            "mission_id": "heldout-EO",
+            "route": "onboard",
+            "input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
+            "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+            "classification": "synthetic coupled prediction; no execution or billing",
+            "execution_performed": false,
+            "promoted": false,
+            "admissible": true,
+            "failures": [],
+            "jobs": [
+              {
+                "id": "job-0",
+                "completion_s": 9.600000000000001,
+                "quality": 0.95,
+                "required_quality": 0.9,
+                "deadline_s": 100
+              },
+              {
+                "id": "job-1",
+                "completion_s": 14.600000000000001,
+                "quality": 0.95,
+                "required_quality": 0.9,
+                "deadline_s": 100
+              }
+            ],
+            "network_input": {
+              "schema": "capacity-orbital/network-v1",
+              "name": "Synthetic relay",
+              "horizon_s": 300,
+              "provenance": {
+                "kind": "synthetic",
+                "source": "hand arithmetic fixture; no ephemeris",
+                "licence": "repository licence",
+                "generated_on": "2026-11-05"
+              },
+              "nodes": {
+                "A": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "B": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                },
+                "G": {
+                  "jurisdiction": "synthetic-zone",
+                  "buffer_gb": 10,
+                  "commissioned_s": 0,
+                  "retired_s": 300,
+                  "unavailable": [],
+                  "preserve_storage": false,
+                  "capacity_kw": 1,
+                  "terminals": [
+                    "radio"
+                  ],
+                  "tx_kw": 1,
+                  "rx_kw": 1,
+                  "tx_heat_w": 100,
+                  "rx_heat_w": 100
+                }
+              },
+              "contacts": [
+                {
+                  "id": "AB",
+                  "link_id": "AB",
+                  "source": "A",
+                  "destination": "B",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 200,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                },
+                {
+                  "id": "BG",
+                  "link_id": "BG",
+                  "source": "B",
+                  "destination": "G",
+                  "source_terminal": "radio",
+                  "destination_terminal": "radio",
+                  "start_s": 0,
+                  "end_s": 250,
+                  "goodput_gbps": 1,
+                  "propagation_s": 0,
+                  "cost_per_gb": 0.1
+                }
+              ],
+              "jobs": [
+                {
+                  "id": "job-0",
+                  "source": "A",
+                  "destination": "G",
+                  "release_s": 8,
+                  "deadline_s": 100,
+                  "data_gb": 0.1,
+                  "allowed_jurisdictions": [
+                    "synthetic-zone"
+                  ]
+                },
+                {
+                  "id": "job-1",
+                  "source": "A",
+                  "destination": "G",
+                  "release_s": 13,
+                  "deadline_s": 100,
+                  "data_gb": 0.1,
+                  "allowed_jurisdictions": [
+                    "synthetic-zone"
+                  ]
+                }
+              ]
+            },
+            "network": {
+              "schema": "capacity-orbital/network-report-v1",
+              "input_sha256": "c634e6a2732e0d0a921d60b5e125f2f08c9b3feaddec17a2d44355fd1ed4bb45",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
+              "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
+              "jobs": [
+                {
+                  "id": "job-0",
+                  "status": "delivered",
+                  "reason_code": null,
+                  "hops": [
+                    {
+                      "contact_id": "AB",
+                      "link_id": "AB",
+                      "source": "A",
+                      "destination": "B",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 8,
+                      "tx_end_s": 8.8,
+                      "rx_start_s": 8,
+                      "arrival_s": 8.8,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    },
+                    {
+                      "contact_id": "BG",
+                      "link_id": "BG",
+                      "source": "B",
+                      "destination": "G",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 8.8,
+                      "tx_end_s": 9.600000000000001,
+                      "rx_start_s": 8.8,
+                      "arrival_s": 9.600000000000001,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    }
+                  ],
+                  "arrival_s": 9.600000000000001,
+                  "estimated_cost": 0.020000000000000004
+                },
+                {
+                  "id": "job-1",
+                  "status": "delivered",
+                  "reason_code": null,
+                  "hops": [
+                    {
+                      "contact_id": "AB",
+                      "link_id": "AB",
+                      "source": "A",
+                      "destination": "B",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 13,
+                      "tx_end_s": 13.8,
+                      "rx_start_s": 13,
+                      "arrival_s": 13.8,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    },
+                    {
+                      "contact_id": "BG",
+                      "link_id": "BG",
+                      "source": "B",
+                      "destination": "G",
+                      "source_terminal": "radio",
+                      "destination_terminal": "radio",
+                      "start_s": 13.8,
+                      "tx_end_s": 14.600000000000001,
+                      "rx_start_s": 13.8,
+                      "arrival_s": 14.600000000000001,
+                      "data_gb": 0.1,
+                      "cost": 0.010000000000000002
+                    }
+                  ],
+                  "arrival_s": 14.600000000000001,
+                  "estimated_cost": 0.020000000000000004
+                }
+              ],
+              "fleet": {
+                "A": {
+                  "available_seconds": 300.0,
+                  "available_capacity_kw_seconds": 300.0
+                },
+                "B": {
+                  "available_seconds": 300.0,
+                  "available_capacity_kw_seconds": 300.0
+                },
+                "G": {
+                  "available_seconds": 300.0,
+                  "available_capacity_kw_seconds": 300.0
+                }
+              },
+              "available_capacity_kw_seconds": 900.0,
+              "estimated_cost": 0.04000000000000001,
+              "resource_reservations": [
+                {
+                  "resource": [
+                    "link",
+                    "AB"
+                  ],
+                  "start_s": 8,
+                  "end_s": 8.8
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "A",
+                    "radio"
+                  ],
+                  "start_s": 8,
+                  "end_s": 8.8
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 8,
+                  "end_s": 8.8
+                },
+                {
+                  "resource": [
+                    "link",
+                    "BG"
+                  ],
+                  "start_s": 8.8,
+                  "end_s": 9.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 8.8,
+                  "end_s": 9.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "G",
+                    "radio"
+                  ],
+                  "start_s": 8.8,
+                  "end_s": 9.600000000000001
+                },
+                {
+                  "resource": [
+                    "link",
+                    "AB"
+                  ],
+                  "start_s": 13,
+                  "end_s": 13.8
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "A",
+                    "radio"
+                  ],
+                  "start_s": 13,
+                  "end_s": 13.8
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 13,
+                  "end_s": 13.8
+                },
+                {
+                  "resource": [
+                    "link",
+                    "BG"
+                  ],
+                  "start_s": 13.8,
+                  "end_s": 14.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "B",
+                    "radio"
+                  ],
+                  "start_s": 13.8,
+                  "end_s": 14.600000000000001
+                },
+                {
+                  "resource": [
+                    "terminal",
+                    "G",
+                    "radio"
+                  ],
+                  "start_s": 13.8,
+                  "end_s": 14.600000000000001
+                }
+              ],
+              "buffer_reservations": [
+                {
+                  "node": "A",
+                  "start_s": 8,
+                  "end_s": 8.8,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "B",
+                  "start_s": 8,
+                  "end_s": 9.600000000000001,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "G",
+                  "start_s": 8.8,
+                  "end_s": 9.600000000000001,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "A",
+                  "start_s": 13,
+                  "end_s": 13.8,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "B",
+                  "start_s": 13,
+                  "end_s": 14.600000000000001,
+                  "data_gb": 0.1
+                },
+                {
+                  "node": "G",
+                  "start_s": 13.8,
+                  "end_s": 14.600000000000001,
+                  "data_gb": 0.1
+                }
+              ],
+              "operations": 137,
+              "receipt_id": "397551e7e56b37365b5c07b505a55466473f57ea7ada9c1836684dc1e0165949"
+            },
+            "proposal": {
+              "schema": "capacity-orbital/proposal-v1",
+              "id": "heldout-EO:onboard",
+              "at_s": 0,
+              "events": [
+                {
+                  "id": "job-0:0:tx",
+                  "node": "A",
+                  "kind": "transfer",
+                  "start_s": 8,
+                  "end_s": 8.8,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-0:0:rx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 8,
+                  "end_s": 8.8,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-0:1:tx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 8.8,
+                  "end_s": 9.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-0:1:rx",
+                  "node": "G",
+                  "kind": "transfer",
+                  "start_s": 8.8,
+                  "end_s": 9.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:0:tx",
+                  "node": "A",
+                  "kind": "transfer",
+                  "start_s": 13,
+                  "end_s": 13.8,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:0:rx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 13,
+                  "end_s": 13.8,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:1:tx",
+                  "node": "B",
+                  "kind": "transfer",
+                  "start_s": 13.8,
+                  "end_s": 14.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "job-1:1:rx",
+                  "node": "G",
+                  "kind": "transfer",
+                  "start_s": 13.8,
+                  "end_s": 14.600000000000001,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "compute:job-0:origin",
+                  "node": "A",
+                  "kind": "compute",
+                  "start_s": 3,
+                  "end_s": 8,
+                  "power_kw": 1,
+                  "heat_w": 100
+                },
+                {
+                  "id": "compute:job-1:origin",
+                  "node": "A",
+                  "kind": "compute",
+                  "start_s": 8,
+                  "end_s": 13,
+                  "power_kw": 1,
+                  "heat_w": 100
+                }
+              ],
+              "authority": {
+                "disposition": "allowed",
+                "valid_from_s": 0,
+                "expires_s": 300,
+                "scope": "synthetic-evaluation"
+              }
+            },
+            "dynamics": {
+              "schema": "capacity-orbital/dynamics-report-v1",
+              "proposal_id": "heldout-EO:onboard",
+              "input_sha256": "2498a20c374a268ec1cb5eecf5b62312c61ff223aa54caf0398d809582880ea9",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "source_binding": "caller-supplied",
+              "classification": "synthetic predicted feasibility; no observed or executed outcomes",
+              "authority": {
+                "disposition": "allowed",
+                "reason_code": null,
+                "enforcement": "caller-supplied planning capability; not actual Tool Guard enforcement"
+              },
+              "admissible": true,
+              "nodes": {
+                "A": {
+                  "completed_horizon": true,
+                  "evaluated_until_s": 300.0,
+                  "final_kwh": 0.9967777777777778,
+                  "final_k": 300.0062842268622,
+                  "intervals": [
+                    {
+                      "start_s": 0,
+                      "end_s": 3,
+                      "planned_end_s": 3,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 3,
+                      "end_s": 8,
+                      "planned_end_s": 8,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.0487705754993,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 0.9986111111111111,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.001388888888888889,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 8,
+                      "end_s": 8.8,
+                      "planned_end_s": 8.8,
+                      "solar_kw": 0,
+                      "load_kw": 2.0,
+                      "heat_w": 200.0,
+                      "initial_k": 300.0487705754993,
+                      "final_k": 300.06431813772616,
+                      "energy": {
+                        "initial_kwh": 0.9986111111111111,
+                        "final_kwh": 0.9981666666666666,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00044444444444444485,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 8.8,
+                      "end_s": 9.600000000000001,
+                      "planned_end_s": 9.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.06431813772616,
+                      "final_k": 300.0717737304902,
+                      "energy": {
+                        "initial_kwh": 0.9981666666666666,
+                        "final_kwh": 0.9979444444444444,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 9.600000000000001,
+                      "end_s": 13.0,
+                      "planned_end_s": 13,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0717737304902,
+                      "final_k": 300.10280293803584,
+                      "energy": {
+                        "initial_kwh": 0.9979444444444444,
+                        "final_kwh": 0.997,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.000944444444444444,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 13,
+                      "end_s": 13.8,
+                      "planned_end_s": 13.8,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.10280293803584,
+                      "final_k": 300.1099518806335,
+                      "energy": {
+                        "initial_kwh": 0.997,
+                        "final_kwh": 0.9967777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 13.8,
+                      "end_s": 14.600000000000001,
+                      "planned_end_s": 14.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.1099518806335,
+                      "final_k": 300.1090757746848,
+                      "energy": {
+                        "initial_kwh": 0.9967777777777778,
+                        "final_kwh": 0.9967777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 14.600000000000001,
+                      "end_s": 300.0,
+                      "planned_end_s": 300,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.1090757746848,
+                      "final_k": 300.0062842268622,
+                      "energy": {
+                        "initial_kwh": 0.9967777777777778,
+                        "final_kwh": 0.9967777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    }
+                  ]
+                },
+                "B": {
+                  "completed_horizon": true,
+                  "evaluated_until_s": 300.0,
+                  "final_kwh": 0.9991111111111111,
+                  "final_k": 300.00178435862495,
+                  "intervals": [
+                    {
+                      "start_s": 0,
+                      "end_s": 3,
+                      "planned_end_s": 3,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 3,
+                      "end_s": 8,
+                      "planned_end_s": 8,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 8,
+                      "end_s": 8.8,
+                      "planned_end_s": 8.8,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.00796808516293,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 8.8,
+                      "end_s": 9.600000000000001,
+                      "planned_end_s": 9.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.00796808516293,
+                      "final_k": 300.0158726799447,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 9.600000000000001,
+                      "end_s": 13.0,
+                      "planned_end_s": 13,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0158726799447,
+                      "final_k": 300.0153420801368,
+                      "energy": {
+                        "initial_kwh": 0.9995555555555555,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 13,
+                      "end_s": 13.8,
+                      "planned_end_s": 13.8,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0153420801368,
+                      "final_k": 300.0231879182986,
+                      "energy": {
+                        "initial_kwh": 0.9995555555555555,
+                        "final_kwh": 0.9993333333333333,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 13.8,
+                      "end_s": 14.600000000000001,
+                      "planned_end_s": 14.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0231879182986,
+                      "final_k": 300.0309712401538,
+                      "energy": {
+                        "initial_kwh": 0.9993333333333333,
+                        "final_kwh": 0.9991111111111111,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 14.600000000000001,
+                      "end_s": 300.0,
+                      "planned_end_s": 300,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0309712401538,
+                      "final_k": 300.00178435862495,
+                      "energy": {
+                        "initial_kwh": 0.9991111111111111,
+                        "final_kwh": 0.9991111111111111,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    }
+                  ]
+                },
+                "G": {
+                  "completed_horizon": true,
+                  "evaluated_until_s": 300.0,
+                  "final_kwh": 0.9995555555555555,
+                  "final_k": 300.0008957480107,
+                  "intervals": [
+                    {
+                      "start_s": 0,
+                      "end_s": 3,
+                      "planned_end_s": 3,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 3,
+                      "end_s": 8,
+                      "planned_end_s": 8,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 8,
+                      "end_s": 8.8,
+                      "planned_end_s": 8.8,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.0,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 1,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 8.8,
+                      "end_s": 9.600000000000001,
+                      "planned_end_s": 9.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.0,
+                      "final_k": 300.00796808516293,
+                      "energy": {
+                        "initial_kwh": 1,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 9.600000000000001,
+                      "end_s": 13.0,
+                      "planned_end_s": 13,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.00796808516293,
+                      "final_k": 300.007701724065,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 13,
+                      "end_s": 13.8,
+                      "planned_end_s": 13.8,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.007701724065,
+                      "final_k": 300.00764035607176,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9997777777777778,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 13.8,
+                      "end_s": 14.600000000000001,
+                      "planned_end_s": 14.600000000000001,
+                      "solar_kw": 0,
+                      "load_kw": 1.0,
+                      "heat_w": 100.0,
+                      "initial_k": 300.00764035607176,
+                      "final_k": 300.01554756222686,
+                      "energy": {
+                        "initial_kwh": 0.9997777777777778,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.00022222222222222242,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    },
+                    {
+                      "start_s": 14.600000000000001,
+                      "end_s": 300.0,
+                      "planned_end_s": 300,
+                      "solar_kw": 0,
+                      "load_kw": 0.0,
+                      "heat_w": 0.0,
+                      "initial_k": 300.01554756222686,
+                      "final_k": 300.0008957480107,
+                      "energy": {
+                        "initial_kwh": 0.9995555555555555,
+                        "final_kwh": 0.9995555555555555,
+                        "solar_kwh": 0.0,
+                        "load_kwh": 0.0,
+                        "conversion_loss_kwh": 0.0,
+                        "curtailed_kwh": 0.0,
+                        "residual_kwh": 0.0,
+                        "residual_tolerance_kwh": 1e-10
+                      }
+                    }
+                  ]
+                }
+              },
+              "violations": [],
+              "receipt_id": "16035e562a5a087a6e61a16d8cb52d03623909ac5cc868d499625a506d6c8ddc"
+            },
+            "processing_buffers": [
+              {
+                "node": "A",
+                "start_s": 3,
+                "end_s": 8,
+                "data_gb": 1.2
+              },
+              {
+                "node": "A",
+                "start_s": 3,
+                "end_s": 13,
+                "data_gb": 1.2
+              }
+            ],
+            "cost": {
+              "currency": "USD",
+              "compute_usd": 0.1,
+              "network_usd": 0.04000000000000001,
+              "partial_operating_usd": 0.14,
+              "lifecycle_total_usd": null
+            },
+            "energy": {
+              "proposed_event_kwh": 0.0045555555555555575,
+              "evaluated_prefix_load_kwh": 0.0045555555555555575
+            },
+            "capabilities": {
+              "topology": "single origin compute, single ground compute, optional relay nodes",
+              "live_execution": false,
+              "orbital_geometry": false,
+              "real_tool_guard": false,
+              "production_metering": false,
+              "lifecycle_economics": "separate explicitly linked sensitivity; not mission total"
+            },
+            "diligence": {
+              "mission_id": "heldout-EO",
+              "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
+              "network_receipt_id": "397551e7e56b37365b5c07b505a55466473f57ea7ada9c1836684dc1e0165949",
+              "lifecycle": {
+                "schema": "capacity-orbital/diligence-response-v1",
+                "request_id": "heldout-EO:lifecycle",
+                "input_sha256": "a193279a81342124009f63f252ecb9bc148960f75f41c9cb508cab64d2f119bd",
+                "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                "status": "screened",
+                "reason_code": "COMPUTED_SYNTHETIC",
+                "reason": "synthetic assumption-bound result",
+                "result": {
+                  "schema": "capacity-orbital/lifecycle-result-v1",
+                  "model": "event-cashflows/year-end-capacity-v1",
+                  "status": "computed",
+                  "reason_code": "COMPUTED_SYNTHETIC",
+                  "currency": "USD",
+                  "totals": {
+                    "undiscounted_cost": 1200,
+                    "discounted_cost": 1173.5537190082646,
+                    "undiscounted_useful_kw_years": 2.0,
+                    "discounted_useful_kw_years": 1.7355371900826446,
+                    "cost_per_discounted_useful_kw_year": 676.1904761904763
+                  },
+                  "cash_flows": [
+                    {
+                      "amount": 1000,
+                      "category": "payload",
+                      "currency": "USD",
+                      "id": "payload",
+                      "year": 0,
+                      "discount_factor": 1.0,
+                      "discounted_amount": 1000.0
+                    },
+                    {
+                      "amount": 100,
+                      "category": "operation",
+                      "currency": "USD",
+                      "id": "operation1",
+                      "year": 1,
+                      "discount_factor": 0.9090909090909091,
+                      "discounted_amount": 90.9090909090909
+                    },
+                    {
+                      "amount": 100,
+                      "category": "operation",
+                      "currency": "USD",
+                      "id": "operation2",
+                      "year": 2,
+                      "discount_factor": 0.8264462809917356,
+                      "discounted_amount": 82.64462809917356
+                    }
+                  ],
+                  "cohort_output": [
+                    {
+                      "cohort_id": "cohort1",
+                      "year_end": 1,
+                      "active_years": 1,
+                      "useful_kw_years": 1,
+                      "discounted_useful_kw_years": 0.9090909090909091
+                    },
+                    {
+                      "cohort_id": "cohort1",
+                      "year_end": 2,
+                      "active_years": 1,
+                      "useful_kw_years": 1,
+                      "discounted_useful_kw_years": 0.8264462809917356
+                    }
+                  ],
+                  "annual_output": [
+                    {
+                      "year_end": 1,
+                      "useful_kw_years": 1.0,
+                      "discount_factor": 0.9090909090909091,
+                      "discounted_useful_kw_years": 0.9090909090909091
+                    },
+                    {
+                      "year_end": 2,
+                      "useful_kw_years": 1.0,
+                      "discount_factor": 0.8264462809917356,
+                      "discounted_useful_kw_years": 0.8264462809917356
+                    }
+                  ],
+                  "by_category": {
+                    "development": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "payload": {
+                      "undiscounted": 1000.0,
+                      "discounted": 1000.0
+                    },
+                    "platform": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "launch": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "insurance": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "operation": {
+                      "undiscounted": 200.0,
+                      "discounted": 173.55371900826447
+                    },
+                    "replacement": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "disposal": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "residual": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "downlink_marginal": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    },
+                    "downlink_allocated": {
+                      "undiscounted": 0.0,
+                      "discounted": 0.0
+                    }
+                  },
+                  "provenance": {
+                    "generated_on": "2026-11-05",
+                    "kind": "synthetic",
+                    "licence": "MIT (repository licence)",
+                    "source": "DIMAGGI task109 authored hand-computable fixture"
+                  },
+                  "assumptions": [
+                    "Positive cash flows are expenditures; residual entries are nonpositive credits. No revenue or financing cash flows.",
+                    "Cash flows are discounted at their declared year offset; useful capacity accrues over active interval intersections and is discounted at each year-end.",
+                    "Both numerator and denominator use the same annual discount factor and time origin; partial-year output is credited at the containing year-end.",
+                    "No output before commissioning or after retirement. Replacements require their own cohorts and cash flows.",
+                    "Utilization and availability are declared synthetic constants, not inferred survival probabilities.",
+                    "Discount rate is a supplied cost-of-capital assumption; interest, debt proceeds, repayments and principal are excluded to avoid financing double-counting.",
+                    "Allocated/prepaid downlink expense and incremental marginal downlink expense are separate categories; callers must not enter the same invoice twice.",
+                    "Single declared currency only; no FX lookup/conversion, inflation model, tax model or investment suitability conclusion.",
+                    "Alternatives are sensitivity scenarios, not forecasts, accepted improvements or automatic calibration."
+                  ]
+                },
+                "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                "authority_disposition": "no_authorization_granted",
+                "execution_performed": false,
+                "promoted": false,
+                "outcome_sha256": "f379f70c2c383d2a850e6c9525e1ff16789725ffddd9fa434d9c676844197925"
+              },
+              "lifecycle_status": "separate sensitivity",
+              "lifecycle_horizon_years": 2,
+              "mission_horizon_s": 300,
+              "mission_cost_combined_with_lifecycle": false,
+              "contact_claims": [
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-0:0",
+                  "input_sha256": "1db804bec6a04f15c13c3d94c480814cee4a0ad803b7e48fb1632fdbfc09d3f2",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 25.0,
+                      "window_margin_s": 199.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 200
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "26a3ece1187915fa2fab8aa4a66e6566e357b74c3eb5416d079a438b8ad16804"
+                },
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-0:1",
+                  "input_sha256": "a32e1eee589873ec8a06eea2e3aa324a537d2b9ce0d95eb6b048240512e33748",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 31.25,
+                      "window_margin_s": 249.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 250
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "a2bb8b436b1ca39025a7432b3ea2f7fce0d35c71f233488173cdfc00132f2d84"
+                },
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-1:0",
+                  "input_sha256": "3d77b344ec273285f5395f94c179716dd44dd6e41d088d4abfc1cfb7bc74ff8a",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 25.0,
+                      "window_margin_s": 199.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 200
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "1f43489dc9b4c03f4aa290c9c2401cb0f47fd21da4034ed2e6daafe5fabbb877"
+                },
+                {
+                  "schema": "capacity-orbital/diligence-response-v1",
+                  "request_id": "job-1:1",
+                  "input_sha256": "03e37737e07eb776cdba9051629efc20b9748eab60610c6939870d3677e82e5a",
+                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "status": "screened",
+                  "reason_code": "WITHIN_STATED_MODEL",
+                  "reason": "synthetic assumption-bound result",
+                  "result": {
+                    "schema": "capacity-orbital/claim-result-v1",
+                    "model": "link-synthetic-screen-v1",
+                    "status": "consistent",
+                    "reason_code": "WITHIN_STATED_MODEL",
+                    "prediction": {
+                      "required_duration_s": 0.8,
+                      "capacity_gb": 31.25,
+                      "window_margin_s": 249.2,
+                      "claim_margin_s": 6.661338147750939e-16
+                    },
+                    "missing_assumptions": [],
+                    "assumptions": {
+                      "claimed_duration_s": 0.8000000000000007,
+                      "data_gb": 0.1,
+                      "goodput_gbps": 1,
+                      "window_s": 250
+                    },
+                    "provenance": {
+                      "generated_on": "2026-11-05",
+                      "kind": "synthetic",
+                      "licence": "repository licence",
+                      "source": "hand arithmetic fixture; no ephemeris"
+                    },
+                    "limitations": [
+                      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+                      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+                      "Transient thermal behaviour and radiation qualification are unsupported.",
+                      "Decimal GB/Gbps; supplied effective goodput already includes overhead; no propagation delay, contention, outage or route model."
+                    ]
+                  },
+                  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+                  "authority_disposition": "no_authorization_granted",
+                  "execution_performed": false,
+                  "promoted": false,
+                  "outcome_sha256": "2c9081ffd04868a27d785b862afb0a75675beeefe3f3946dcd63c6ff3f33fcb5"
+                }
+              ],
+              "static_agent_tools": {
+                "schema": "capacity-orbital/tool-manifest-v1",
+                "version": "0.1.0",
+                "request_schema": "capacity-orbital/agent-request-v1",
+                "request_schema_file": "request.schema.json",
+                "response_schema": "capacity-orbital/agent-response-v1",
+                "evaluator": "capacity-orbital/static-planner-v1",
+                "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+                "tools": {
+                  "plan": {
+                    "arguments": [
+                      "scenario",
+                      "route"
+                    ],
+                    "routes": [
+                      "ground",
+                      "onboard",
+                      "hybrid"
+                    ]
+                  },
+                  "compare": {
+                    "arguments": [
+                      "scenario"
+                    ]
+                  },
+                  "evaluate": {
+                    "arguments": [
+                      "suite",
+                      "baseline",
+                      "candidates"
+                    ]
+                  }
+                },
+                "limits": {
+                  "request_bytes": 1000000,
+                  "requests_per_session": 32,
+                  "jobs_per_scenario": 200,
+                  "contacts_per_scenario": 200,
+                  "evaluation_scenarios": 20,
+                  "candidates": 3,
+                  "response_bytes": 4000000,
+                  "cache_bytes": 16000000
+                },
+                "refusal_codes": [
+                  "INVALID_ARGUMENT",
+                  "UNSUPPORTED_SCHEMA",
+                  "UNKNOWN_TOOL",
+                  "DATA_LEAKAGE",
+                  "BUDGET_EXCEEDED",
+                  "REQUEST_ID_CONFLICT",
+                  "SOURCE_CHANGED",
+                  "SOURCE_UNAVAILABLE"
+                ],
+                "authority": "planning_only; no execution permission, authentication or Tool Guard authorization",
+                "promotion": "never; recommendations require independent review and designated acceptance"
+              },
+              "limitations": [
+                "Lifecycle USD/kW-year sensitivity is not the mission partial operating USD or a mission total.",
+                "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
+              ]
+            },
+            "receipt_id": "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5"
+          },
+          "records": [
+            {
+              "schema": "capacity-orbital/synthetic-replay-v1",
+              "id": "heldout:job-0",
+              "classification": "supplied synthetic replay",
+              "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "proposal_receipt_id": "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5",
+              "job_id": "job-0",
+              "completion_s": 8.940000000000001,
+              "energy_kwh": 0.002050000000000001,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            {
+              "schema": "capacity-orbital/synthetic-replay-v1",
+              "id": "heldout:job-1",
+              "classification": "supplied synthetic replay",
+              "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
+              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "proposal_receipt_id": "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5",
+              "job_id": "job-1",
+              "completion_s": 13.440000000000001,
+              "energy_kwh": 0.002050000000000001,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

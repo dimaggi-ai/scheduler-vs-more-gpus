@@ -1,0 +1,97 @@
+{
+  "schema": "capacity-orbital/mission-evaluation-v1",
+  "evaluator": "coupled-mission-v1",
+  "static_evaluator": "task107 remains separate and unchanged",
+  "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+  "suite_sha256": "45ae33a994001b22dd16bd65500690c514b323817df647bfe9eb470bb7840c0b",
+  "baseline": "ground",
+  "candidates": [
+    "onboard",
+    "hybrid"
+  ],
+  "rejected_training_regressions": [],
+  "selected_on_train": "onboard",
+  "recommendation": "onboard",
+  "results": {
+    "train": {
+      "ground": {
+        "score": [
+          0,
+          0.6000000000000001
+        ],
+        "admissible": [
+          true
+        ],
+        "receipts": [
+          "4252d48892456c20a9f491a0295e050b96ad9939c369c49045ec055b2b9f0b81"
+        ]
+      },
+      "onboard": {
+        "score": [
+          0,
+          0.14
+        ],
+        "admissible": [
+          true
+        ],
+        "receipts": [
+          "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35"
+        ]
+      },
+      "hybrid": {
+        "score": [
+          0,
+          0.30000000000000004
+        ],
+        "admissible": [
+          true
+        ],
+        "receipts": [
+          "3d667cf0edf7e2fa3e78a96953a580d56db3c721f805cbb0c55a61d30adb9971"
+        ]
+      }
+    },
+    "heldout": {
+      "ground": {
+        "score": [
+          0,
+          0.68
+        ],
+        "admissible": [
+          true
+        ],
+        "receipts": [
+          "dbd3abb7a43ab8df7f473dd5f8689a0459a6cd6ef706921654ffcf7f9bbe684a"
+        ]
+      },
+      "onboard": {
+        "score": [
+          0,
+          0.14
+        ],
+        "admissible": [
+          true
+        ],
+        "receipts": [
+          "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5"
+        ]
+      },
+      "hybrid": {
+        "score": [
+          0,
+          0.30000000000000004
+        ],
+        "admissible": [
+          true
+        ],
+        "receipts": [
+          "66a519f81ddd517c301e552a656fe859ae66383007926fe236aba3c080d82ee1"
+        ]
+      }
+    }
+  },
+  "objective": "whole-mission failures then partial operating USD",
+  "stop_reason": "fixed candidate budget exhausted",
+  "promoted": false,
+  "execution_performed": false
+}

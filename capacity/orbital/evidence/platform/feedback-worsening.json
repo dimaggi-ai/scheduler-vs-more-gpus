@@ -1,0 +1,179 @@
+{
+  "schema": "capacity-orbital/feedback-result-v1",
+  "classification": "supplied synthetic replay diagnostics, not measured telemetry",
+  "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+  "suite_sha256": "d0e3166627ac0a574f16c28f5c8b4d7a448441fa9d1e0cef4bcd6be95177bcc4",
+  "baseline": "identity",
+  "registered_candidates": {
+    "identity": 1.0,
+    "scale_090": 0.9,
+    "scale_110": 1.1
+  },
+  "selected_on_train": "scale_110",
+  "recommendation": null,
+  "prediction_outcome_log": {
+    "train": [
+      {
+        "mission_id": "synthetic-EO",
+        "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
+        "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+        "proposal_receipt_id": "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35",
+        "classification": "supplied synthetic replay",
+        "jobs": [
+          {
+            "job_id": "job-0",
+            "record_id": "train:job-0",
+            "prediction": {
+              "duration_s": 6.600000000000001,
+              "energy_kwh": 0.0022777777777777787,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "replay": {
+              "duration_s": 7.2600000000000025,
+              "energy_kwh": 0.002505555555555557,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "baseline_residual": {
+              "duration_s": -0.660000000000001,
+              "energy_kwh": -0.00022777777777777813,
+              "link_gb": 0.0,
+              "cost_usd": 0.0
+            }
+          },
+          {
+            "job_id": "job-1",
+            "record_id": "train:job-1",
+            "prediction": {
+              "duration_s": 11.600000000000001,
+              "energy_kwh": 0.0022777777777777787,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "replay": {
+              "duration_s": 12.760000000000003,
+              "energy_kwh": 0.002505555555555557,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "baseline_residual": {
+              "duration_s": -1.160000000000002,
+              "energy_kwh": -0.00022777777777777813,
+              "link_gb": 0.0,
+              "cost_usd": 0.0
+            }
+          }
+        ]
+      }
+    ],
+    "heldout": [
+      {
+        "mission_id": "heldout-EO",
+        "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
+        "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+        "proposal_receipt_id": "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5",
+        "classification": "supplied synthetic replay",
+        "jobs": [
+          {
+            "job_id": "job-0",
+            "record_id": "heldout:job-0",
+            "prediction": {
+              "duration_s": 6.600000000000001,
+              "energy_kwh": 0.0022777777777777787,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "replay": {
+              "duration_s": 5.940000000000001,
+              "energy_kwh": 0.002050000000000001,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "baseline_residual": {
+              "duration_s": 0.6600000000000001,
+              "energy_kwh": 0.0002277777777777777,
+              "link_gb": 0.0,
+              "cost_usd": 0.0
+            }
+          },
+          {
+            "job_id": "job-1",
+            "record_id": "heldout:job-1",
+            "prediction": {
+              "duration_s": 11.600000000000001,
+              "energy_kwh": 0.0022777777777777787,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "replay": {
+              "duration_s": 10.440000000000001,
+              "energy_kwh": 0.002050000000000001,
+              "link_gb": 0.2,
+              "cost_usd": 0.07
+            },
+            "baseline_residual": {
+              "duration_s": 1.1600000000000001,
+              "energy_kwh": 0.0002277777777777777,
+              "link_gb": 0.0,
+              "cost_usd": 0.0
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "metrics": {
+    "train": {
+      "identity": {
+        "duration_s_mae": 0.9100000000000015,
+        "energy_kwh_mae": 0.00022777777777777813,
+        "link_gb_mae": 0.0,
+        "cost_usd_mae": 0.0
+      },
+      "scale_090": {
+        "duration_s_mae": 1.8200000000000016,
+        "energy_kwh_mae": 0.00045555555555555583,
+        "link_gb_mae": 0.0,
+        "cost_usd_mae": 0.0
+      },
+      "scale_110": {
+        "duration_s_mae": 0.0,
+        "energy_kwh_mae": 0.0,
+        "link_gb_mae": 0.0,
+        "cost_usd_mae": 0.0
+      }
+    },
+    "heldout": {
+      "identity": {
+        "duration_s_mae": 0.9100000000000001,
+        "energy_kwh_mae": 0.0002277777777777777,
+        "link_gb_mae": 0.0,
+        "cost_usd_mae": 0.0
+      },
+      "scale_090": {
+        "duration_s_mae": 0.0,
+        "energy_kwh_mae": 0.0,
+        "link_gb_mae": 0.0,
+        "cost_usd_mae": 0.0
+      },
+      "scale_110": {
+        "duration_s_mae": 1.8200000000000016,
+        "energy_kwh_mae": 0.00045555555555555583,
+        "link_gb_mae": 0.0,
+        "cost_usd_mae": 0.0
+      }
+    }
+  },
+  "metric_units": {
+    "duration_s_mae": "seconds",
+    "energy_kwh_mae": "kWh",
+    "link_gb_mae": "decimal GB summed across hops",
+    "cost_usd_mae": "USD"
+  },
+  "stop_reason": "fixed candidates evaluated; no heldout reselection",
+  "changes_feasibility": false,
+  "changes_prices": false,
+  "execution_performed": false,
+  "promoted": false
+}
