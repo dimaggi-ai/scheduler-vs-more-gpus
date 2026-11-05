@@ -1,0 +1,141 @@
+{
+  "schema": "capacity-orbital/agent-request-v1",
+  "id": "demo-heldout-regression",
+  "tool": "evaluate",
+  "arguments": {
+    "suite": {
+      "schema": "capacity-orbital/evaluation-suite-v1",
+      "objective": "failures_then_cost",
+      "cost_tolerance_usd": 1e-09,
+      "train": [
+        {
+          "id": "train-1",
+          "scenario": {
+            "schema": "capacity-orbital/scenario-v1",
+            "name": "Synthetic continuous EO comparison",
+            "horizon_s": 600,
+            "provenance": {
+              "kind": "synthetic",
+              "source": "DIMAGGI task105 hand-computable fixture, not vendor data",
+              "licence": "MIT (repository licence)",
+              "generated_on": "2026-11-05"
+            },
+            "nodes": {
+              "orbital": {
+                "memory_gb": 16,
+                "max_power_kw": 2,
+                "max_heat_kw": 2,
+                "energy_budget_kwh": 1,
+                "compute_usd_per_hour": 2,
+                "electricity_usd_per_kwh": 0.2
+              },
+              "ground": {
+                "memory_gb": 16,
+                "max_power_kw": 2,
+                "max_heat_kw": 2,
+                "energy_budget_kwh": 1,
+                "compute_usd_per_hour": 2,
+                "electricity_usd_per_kwh": 0.2
+              }
+            },
+            "contacts": [
+              {
+                "id": "continuous",
+                "start_s": 0,
+                "end_s": 600,
+                "goodput_gbps": 1,
+                "usd_per_gb": 0.2
+              }
+            ],
+            "jobs": [
+              {
+                "id": "image-00000",
+                "release_s": 0,
+                "deadline_s": 180,
+                "raw_gb": 10,
+                "result_gb": 0.1,
+                "compressed_gb": 1,
+                "memory_gb": 4,
+                "power_kw": 1,
+                "ground_s": 20,
+                "onboard_s": 30,
+                "preprocess_s": 10,
+                "hybrid_ground_s": 10,
+                "required_quality": 0.95,
+                "onboard_quality": 0.98,
+                "hybrid_quality": 0.98
+              }
+            ]
+          }
+        }
+      ],
+      "heldout": [
+        {
+          "id": "heldout-1",
+          "scenario": {
+            "schema": "capacity-orbital/scenario-v1",
+            "name": "Synthetic continuous EO comparison",
+            "horizon_s": 600,
+            "provenance": {
+              "kind": "synthetic",
+              "source": "DIMAGGI task105 hand-computable fixture, not vendor data",
+              "licence": "MIT (repository licence)",
+              "generated_on": "2026-11-05"
+            },
+            "nodes": {
+              "orbital": {
+                "memory_gb": 16,
+                "max_power_kw": 2,
+                "max_heat_kw": 2,
+                "energy_budget_kwh": 1,
+                "compute_usd_per_hour": 2,
+                "electricity_usd_per_kwh": 0.2
+              },
+              "ground": {
+                "memory_gb": 16,
+                "max_power_kw": 2,
+                "max_heat_kw": 2,
+                "energy_budget_kwh": 1,
+                "compute_usd_per_hour": 2,
+                "electricity_usd_per_kwh": 0.2
+              }
+            },
+            "contacts": [
+              {
+                "id": "continuous",
+                "start_s": 0,
+                "end_s": 600,
+                "goodput_gbps": 1,
+                "usd_per_gb": 0.2
+              }
+            ],
+            "jobs": [
+              {
+                "id": "image-00000",
+                "release_s": 1,
+                "deadline_s": 180,
+                "raw_gb": 10,
+                "result_gb": 0.1,
+                "compressed_gb": 1,
+                "memory_gb": 4,
+                "power_kw": 1,
+                "ground_s": 20,
+                "onboard_s": 30,
+                "preprocess_s": 10,
+                "hybrid_ground_s": 10,
+                "required_quality": 0.95,
+                "onboard_quality": 0.1,
+                "hybrid_quality": 0.1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "baseline": "ground",
+    "candidates": [
+      "onboard",
+      "hybrid"
+    ]
+  }
+}
