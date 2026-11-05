@@ -21,17 +21,26 @@ python3 -m capacity.orbital.benchmark
 Open the HTML locally. It contains no scripts, fonts or external assets. Output
 paths must not exist and must be distinct from each other and the input. Use
 fresh paths for reruns; this preserves evidence rather than silently overwriting
-it. Invalid input exits 2 with `REFUSE:` and no planning report. Existing-path
-checks happen before writes; an OS error or concurrent file creation during
-writing can still leave a partial output set. Inspect the exit status. No claim
-of a multi-file atomic filesystem transaction is made.
+it. `--jobs` is valid only with `--demo`. Invalid input exits 2 with `REFUSE:`.
+All output parents and destinations are checked before any write. Output files
+are staged in temporary siblings, then published without overwrite. On ordinary
+write/publish errors, only files created by this run are removed; concurrent
+foreign files are preserved. No successful report is printed to stdout until
+file publication succeeds. This is **not** a multi-file atomic transaction under
+process death, power loss or cleanup failure; inspect exit status and the complete
+expected artifact set. Cleanup failures surface as errors rather than a success.
 
 The JSON contains each job's completion time or refusal, deadline, assumed
 quality, downlinked GB, compute kWh, partial cost, deterministic planning receipt
 and reservation events. The HTML shows the same outcomes and source/input hashes.
 A deterministic receipt is **not** a signature, actual executed result, a bill
-or production metering integration. A replay of identical input/version yields
-the same receipt IDs; a caller must deduplicate those IDs if recording plans.
+or production metering integration. Receipt-v2 hashes bind the input, source
+fingerprint, version, outcome fields and committed events. The CLI obtains the
+source fingerprint before computing. Pure API callers may pass `source_sha256`;
+if omitted, reports explicitly mark receipts **unbound to code**, not verified.
+Caller-provided fingerprints are not authenticated. Identical input, source and
+outcome replay to the same ID; changes to any binding change it. A planning
+receipt is not an execution-idempotency key or authorization to charge a bill.
 
 ## A concrete hand calculation
 
@@ -58,15 +67,15 @@ completed jobs is not an economic advantage; inspect counts before costs.
 | `resources.py` | Serial compute, memory/power/heat envelopes and cumulative compute-energy budget |
 | `planner.py` | Pure route composition and transactional admission; no filesystem/network IO |
 | `report.py` | Escaped self-contained responsive HTML |
-| `__main__.py` | CLI IO and current source-file hash binding |
+| `__main__.py`, `output.py` | CLI IO, source binding, staged no-overwrite artifact publication and ordinary-error rollback |
 | `benchmark.py` | Reproducible scaling measurement, separate from planning results |
 
 Inputs must have exactly the fields shown in the example. Unknown fields and
 versions refuse; there are no implicit unit conversions or migrations. A new
 schema needs an explicit adapter and compatibility tests. `horizon_s` is seconds
 from scenario start, at most one year; job and contact lists are bounded at
-10,000 each. This is a validation cap, not a tested performance bound; the recorded
-benchmark stops at 1,000 jobs/contacts. IDs are unique. Contact windows are ordered and nonoverlapping for
+10,000 each. This is a validation cap, not a guaranteed latency bound; review-fix
+benchmarks include the cap for two declared fixture shapes only. IDs are unique. Contact windows are ordered and nonoverlapping for
 **one shared terminal**. Both nodes have **one serial compute lane**. Jobs are
 scheduled by `(release_s, id)`, deterministically and greedily. There is no
 optimality claim, backfill optimization, multiple satellite routing or DAG
@@ -77,7 +86,9 @@ with each other. Within one route, all jobs share the same terminal and node
 resources. Refused plans commit no reservations. This is admission planning,
 not a claim that execution failures consume no energy or money. Power is assumed
 to become heat; max_heat_kw is a declared steady envelope, not a radiator model.
-Energy accounts for compute only, with no replenishment. Costs include declared
+One job power figure is used for both ground and orbital hardware; real payload
+power differences require a future contract. Energy accounts for compute only,
+with no replenishment. Costs include declared
 compute time, compute electricity and transfer GB; no lifecycle, NRE, insurance,
 launch, transfer energy, idle energy, radiation or orbit propagation is modeled.
 
@@ -87,15 +98,21 @@ launch, transfer energy, idle energy, radiation or orbit propagation is modeled.
   MIT-licensed assumptions, not vendor/observational data.
 - [`evidence/demo-report.json`](evidence/demo-report.json) and
   [`evidence/demo-report.html`](evidence/demo-report.html): reproducible CLI output.
-- [`evidence/scaling.json`](evidence/scaling.json): observed run time and traced
-  Python peak memory for 10, 100 and 1,000 jobs with one and many contacts, on the
-  recorded environment. This is not total process RSS or a production benchmark.
+- [`evidence/scaling.json`](evidence/scaling.json): retained initial run measurements.
+- [`evidence/scaling-review-fixes.json`](evidence/scaling-review-fixes.json): observed
+  run time and traced Python peak memory through 10,000 jobs with one and many
+  contacts after review fixes. This is not total RSS or a production benchmark.
+- `evidence/history/`: retained original reports before receipt-v2 corrections.
 - [`evidence/VALIDATION.md`](evidence/VALIDATION.md): commands and remaining gates.
 
-The contact scan and validation cost grows with jobs × contacts. The measured
-1,000-job / 1,000-contact case is materially slower than a single contact. No
-claim that merely modular code scales linearly or horizontally is made. One
-kernel owns accounting; conservation tests are required before partitioning it.
+Validation now checks the slowest contact once rather than every job/contact
+pair; each comparison validates once. Transfers bisect past expired contacts,
+and transactions track only changed cursors. Contact scans can still approach
+jobs × contacts for adversarial workloads; these optimizations do not establish
+a universal complexity or horizontal-scaling guarantee. The post-review
+10,000-job / 10,000-contact fixture completed in about 5.0 seconds with 43.4 MB
+traced Python peak memory on the recorded host. One kernel owns accounting;
+conservation tests are required before partitioning it.
 
 This tool cannot contact hardware or execute tenant/flight actions. It does not
 implement Tool Guard authorization or claim sandbox/network isolation of the

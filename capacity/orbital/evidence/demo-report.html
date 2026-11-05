@@ -5,14 +5,20 @@
 <h2>Synthetic intermittent EO comparison</h2><p class="muted">synthetic offline plan; not measured execution or flight qualification</p><div class="cards"><article><h2>Ground</h2>
 <p class="count">3 planned <span>/ 3 jobs</span></p>
 <p>0 refused · 30.000 GB downlinked</p>
+<p>Assumed quality: 1.000–1.000 (not measured accuracy)</p>
+<p>$2.012 per planned result · compare quality and counts</p>
 <p>0.0167 kWh compute energy · $6.037 modeled cost</p>
 <div class="bar" aria-label="Modeled cost relative to highest route"><i style="width:100.000%"></i></div></article><article><h2>Onboard</h2>
 <p class="count">3 planned <span>/ 3 jobs</span></p>
 <p>0 refused · 0.300 GB downlinked</p>
+<p>Assumed quality: 0.980–0.980 (not measured accuracy)</p>
+<p>$0.038 per planned result · compare quality and counts</p>
 <p>0.0250 kWh compute energy · $0.115 modeled cost</p>
 <div class="bar" aria-label="Modeled cost relative to highest route"><i style="width:1.905%"></i></div></article><article><h2>Hybrid</h2>
 <p class="count">3 planned <span>/ 3 jobs</span></p>
 <p>0 refused · 3.000 GB downlinked</p>
+<p>Assumed quality: 0.980–0.980 (not measured accuracy)</p>
+<p>$0.212 per planned result · compare quality and counts</p>
 <p>0.0167 kWh compute energy · $0.637 modeled cost</p>
 <div class="bar" aria-label="Modeled cost relative to highest route"><i style="width:10.547%"></i></div></article></div>
 <section><h2>Every job has an outcome</h2><p>Times are seconds from scenario start. Quality is an assumed retained-quality score / required minimum. No measured AI accuracy is claimed.</p><div class="scroll"><table><thead><tr><th>Job</th><th>Route</th><th>Outcome</th><th>Completion (s)</th><th>Deadline (s)</th><th>Quality / min.</th><th>Reason</th></tr></thead><tbody><tr><th scope="row">image-00000</th><td>ground</td>
@@ -34,5 +40,5 @@
 <td>0.980 / 0.950</td><td>Within stated envelopes</td></tr><tr><th scope="row">image-00002</th><td>hybrid</td>
 <td class="planned">planned</td><td>478.000</td><td>580.000</td>
 <td>0.980 / 0.950</td><td>Within stated envelopes</td></tr></tbody></table></div></section>
-<section><h2>What this comparison means</h2><p>Costs are partial synthetic compute, electricity and transfer costs. Refused work is not equivalent to completed work; compare completion counts before comparing costs.</p><ul><li>All jobs originate in space and results terminate on the ground.</li><li>Ground quality 1.0 is a synthetic reference assumption, not measured perfect AI accuracy.</li><li>Each route is a separate counterfactual with the same workload and resource inputs.</li><li>One serial compute lane per node; one shared downlink terminal.</li><li>Release-time then job-id greedy planning; no optimality guarantee.</li><li>Static power and heat rejection envelopes, total compute-energy budgets; no orbital/thermal dynamics.</li><li>Transfer energy, lifecycle capex, qualification, radiation and unplanned runtime failures excluded.</li><li>Refused plans reserve nothing; no claim that failed execution is free.</li><li>Receipts are deterministic planning IDs, not signatures or production metering.</li></ul></section>
-<section><h2>Reproduce and inspect</h2><p>Input SHA-256: <code>4f06c4fcec0943a35b33e9469f494c3509790dfad420d9bf279e0cb78755e085</code></p><p>Model version: 0.1.0</p><p>Source SHA-256: <code>10c6fc3e2d9a6f403c162651adf7c77508a4fd34781563b3391d65ab61602ebf</code></p><p>Source: DIMAGGI task105 hand-computable fixture, not vendor data</p></section></main></html>
+<section><h2>What this comparison means</h2><p>Costs are partial synthetic compute, electricity and transfer costs. Refused work is not equivalent to completed work; compare completion counts before comparing costs.</p><ul><li>All jobs originate in space and results terminate on the ground.</li><li>Ground quality 1.0 is a synthetic reference assumption, not measured perfect AI accuracy.</li><li>Each route is a separate counterfactual with the same workload and resource inputs.</li><li>One serial compute lane per node; one shared downlink terminal.</li><li>One assumed job power_kw applies on both nodes; hardware-specific power profiles are not modeled.</li><li>Release-time then job-id greedy planning; no optimality guarantee.</li><li>Static power and heat rejection envelopes, total compute-energy budgets; no orbital/thermal dynamics.</li><li>Transfer energy, lifecycle capex, qualification, radiation and unplanned runtime failures excluded.</li><li>Refused plans reserve nothing; no claim that failed execution is free.</li><li>Receipts are deterministic planning IDs, not signatures or production metering.</li></ul></section>
+<section><h2>Reproduce and inspect</h2><p>Input SHA-256: <code>4f06c4fcec0943a35b33e9469f494c3509790dfad420d9bf279e0cb78755e085</code></p><p>Model version: 0.1.1</p><p>Source SHA-256: <code>6493bb6986a2c2c3cc263c71cae3bc54ca1f9f71ca95449258a02115db73bc2f</code></p><p>Source: DIMAGGI task105 hand-computable fixture, not vendor data</p></section></main></html>

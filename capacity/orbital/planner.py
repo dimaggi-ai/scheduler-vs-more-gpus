@@ -8,8 +8,24 @@ from . import VERSION
 ROUTES = ('ground', 'onboard', 'hybrid')
 
 
-def plan_route(scenario, route):
+def plan_route(scenario, route, *, source_sha256=None):
     validate(scenario)
+    _validate_source(source_sha256)
+    return _plan_route(scenario, route, source_sha256)
+
+
+def _validate_source(value):
+    if value is not None and (not isinstance(value, str) or len(value) != 64 or any(c not in '0123456789abcdef' for c in value)):
+        raise ValueError('source_sha256 must be lowercase hex SHA-256 or None (unbound API call)')
+
+
+def receipt_id(input_sha256, source_sha256, row, events):
+    return digest({'schema': 'capacity-orbital/receipt-v2', 'input_sha256': input_sha256,
+                   'source_sha256': source_sha256, 'version': VERSION,
+                   'outcome': {k: v for k, v in row.items() if k != 'receipt_id'}, 'events': events})
+
+
+def _plan_route(scenario, route, source_sha256):
     if route not in ROUTES:
         raise ValueError('unsupported route')
     source_hash = digest(scenario)
@@ -41,8 +57,10 @@ def plan_route(scenario, route):
             if not all(math.isfinite(v) for v in (t, energy, cost)):
                 raise ValueError('derived result is not finite')
             row.update(status='planned', completion_s=t, downlink_gb=sum(e.get('gb', 0) for e in events),
-                       energy_kwh=energy, cost_usd=cost,
-                       receipt_id=digest({'scenario': source_hash, 'version': VERSION, 'job': j['id'], 'route': route}))
+                       energy_kwh=energy, cost_usd=cost)
+            row['receipt_id'] = receipt_id(source_hash, source_sha256, row, events)
+            for index, end in candidate['contact_updates'].items():
+                candidate['contacts'][index] = end
             state['events'].extend(candidate['events'])
             candidate['events'] = state['events']
             state = candidate
@@ -59,18 +77,23 @@ def plan_route(scenario, route):
         cost_per_planned_result_usd=cost/count if count else None))
 
 
-def compare(scenario):
+def compare(scenario, *, source_sha256=None):
     validate(scenario)
+    _validate_source(source_sha256)
     return dict(schema='capacity-orbital/report-v1', version=VERSION, name=scenario['name'],
-                input_sha256=digest(scenario), provenance=scenario['provenance'],
+                input_sha256=digest(scenario), source_sha256=source_sha256,
+                receipt_schema='capacity-orbital/receipt-v2',
+                source_binding='caller-supplied' if source_sha256 else 'unbound: no code digest supplied',
+                provenance=scenario['provenance'],
                 classification='synthetic offline plan; not measured execution or flight qualification',
                 assumptions=['All jobs originate in space and results terminate on the ground.',
                              'Ground quality 1.0 is a synthetic reference assumption, not measured perfect AI accuracy.',
                              'Each route is a separate counterfactual with the same workload and resource inputs.',
                              'One serial compute lane per node; one shared downlink terminal.',
+                             'One assumed job power_kw applies on both nodes; hardware-specific power profiles are not modeled.',
                              'Release-time then job-id greedy planning; no optimality guarantee.',
                              'Static power and heat rejection envelopes, total compute-energy budgets; no orbital/thermal dynamics.',
                              'Transfer energy, lifecycle capex, qualification, radiation and unplanned runtime failures excluded.',
                              'Refused plans reserve nothing; no claim that failed execution is free.',
                              'Receipts are deterministic planning IDs, not signatures or production metering.'],
-                comparisons=[plan_route(scenario, r) for r in ROUTES])
+                comparisons=[_plan_route(scenario, r, source_sha256) for r in ROUTES])

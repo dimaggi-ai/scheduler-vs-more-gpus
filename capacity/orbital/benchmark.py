@@ -9,7 +9,7 @@ from .planner import compare
 
 def run():
     measurements=[]
-    for jobs,adapter in ((10,'continuous'),(100,'continuous'),(1000,'continuous'),(10,'intermittent'),(100,'intermittent'),(1000,'intermittent')):
+    for jobs,adapter in ((10,'continuous'),(100,'continuous'),(1000,'continuous'),(10000,'continuous'),(10,'intermittent'),(100,'intermittent'),(1000,'intermittent'),(10000,'intermittent')):
         scenario=synthetic(adapter,jobs)
         tracemalloc.start()
         start=time.perf_counter()

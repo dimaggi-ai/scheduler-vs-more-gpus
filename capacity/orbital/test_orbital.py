@@ -5,11 +5,14 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from unittest.mock import patch
+import os
 import unittest
 
 from .adapters import synthetic
 from .contracts import validate, digest
-from .planner import compare, plan_route
+from .planner import compare, plan_route, receipt_id
+from .output import publish
 from .report import html_report
 
 
@@ -142,6 +145,80 @@ class OrbitalTests(unittest.TestCase):
             duplicate=root/'duplicate.json';duplicate.write_text('{"schema":1,"schema":2}')
             bad=subprocess.run([sys.executable,'-m','capacity.orbital','--scenario',str(duplicate)],capture_output=True,text=True)
             self.assertEqual(bad.returncode,2);self.assertIn('duplicate JSON key',bad.stderr)
+
+
+    def test_missing_directory_produces_no_partial_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);out=root/'partial.json'
+            result=subprocess.run([sys.executable,'-m','capacity.orbital','--demo','continuous',
+                                   '--output',str(out),'--html',str(root/'missing'/'report.html')],
+                                  capture_output=True,text=True)
+            self.assertEqual(result.returncode,2)
+            self.assertFalse(out.exists())
+            self.assertEqual(list(root.iterdir()),[])
+
+    def test_publish_rollback_preserves_concurrent_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);a=root/'a';b=root/'b';link=os.link
+            def injected(src,dst):
+                if Path(dst)==b:
+                    b.write_text('another writer')
+                    raise FileExistsError('race')
+                link(src,dst)
+            with patch('capacity.orbital.output.os.link',side_effect=injected):
+                with self.assertRaises(FileExistsError):
+                    publish([(a,'first'),(b,'second')])
+            self.assertFalse(a.exists())
+            self.assertEqual(b.read_text(),'another writer')
+            self.assertEqual(list(root.iterdir()),[b])
+
+    def test_publish_preflight_and_staging_failure_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);a=root/'a';b=root/'b'
+            with patch('capacity.orbital.output.os.fsync',side_effect=OSError('disk failure')):
+                with self.assertRaises(OSError):publish([(a,'first'),(b,'second')])
+            self.assertEqual(list(root.iterdir()),[])
+            b.write_text('existing')
+            with self.assertRaises(ValueError):publish([(a,'first'),(b,'second')])
+            self.assertFalse(a.exists());self.assertEqual(b.read_text(),'existing')
+
+    def test_receipts_bind_source_outcome_and_events(self):
+        s=synthetic(jobs=1);code='a'*64
+        r=compare(s,source_sha256=code);route=r['comparisons'][0];row=route['jobs'][0]
+        original=row['receipt_id']
+        self.assertEqual(original,receipt_id(r['input_sha256'],code,row,route['events']))
+        for key in ('completion_s','energy_kwh','cost_usd','downlink_gb','quality'):
+            altered=dict(row);altered[key]+=1
+            self.assertNotEqual(original,receipt_id(r['input_sha256'],code,altered,route['events']))
+        changed=copy.deepcopy(route['events']);changed[0]['start_s']+=1
+        self.assertNotEqual(original,receipt_id(r['input_sha256'],code,row,changed))
+        self.assertNotEqual(original,compare(s,source_sha256='b'*64)['comparisons'][0]['jobs'][0]['receipt_id'])
+        self.assertIsNone(compare(s)['source_sha256'])
+        self.assertIn('unbound',compare(s)['source_binding'])
+        with self.assertRaises(ValueError):compare(s,source_sha256='invalid')
+
+    def test_scenario_with_jobs_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'s.json';path.write_text(json.dumps(synthetic(jobs=1)))
+            result=subprocess.run([sys.executable,'-m','capacity.orbital','--scenario',str(path),'--jobs','999'],
+                                  capture_output=True,text=True)
+            self.assertEqual(result.returncode,2)
+            self.assertIn('--jobs is only valid with --demo',result.stderr)
+
+    def test_compare_validates_once(self):
+        from .contracts import validate
+        with patch('capacity.orbital.planner.validate',wraps=validate) as check:
+            compare(synthetic())
+            self.assertEqual(check.call_count,1)
+
+    def test_contact_bisect_keeps_boundary_and_rollback(self):
+        s=synthetic(jobs=1)
+        s['jobs'][0].update(release_s=40,deadline_s=180)
+        s['contacts']=[dict(id='past',start_s=0,end_s=40,goodput_gbps=1,usd_per_gb=.2),
+                       dict(id='future',start_s=40,end_s=180,goodput_gbps=1,usd_per_gb=.2)]
+        r=plan_route(s,'ground')
+        self.assertEqual(r['jobs'][0]['completion_s'],140)
+        self.assertEqual(r['events'][0]['resource'],'future')
 
 
 if __name__ == '__main__':

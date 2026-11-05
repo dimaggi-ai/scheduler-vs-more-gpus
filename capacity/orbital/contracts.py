@@ -89,13 +89,13 @@ def validate(s):
             raise ValueError('result <= compressed <= raw GB required')
     # Refuse overflow in derived quantities, before planning or JSON output.
     try:
+        slowest = min((c['goodput_gbps'] for c in s['contacts']), default=None)
         for j in s['jobs']:
             for duration in ('ground_s', 'onboard_s', 'preprocess_s', 'hybrid_ground_s'):
                 if not math.isfinite(j['power_kw'] * j[duration]):
                     raise ValueError('derived energy overflows')
-            for c in s['contacts']:
-                if not math.isfinite(j['raw_gb'] * 8 / c['goodput_gbps']):
-                    raise ValueError('derived transfer duration overflows')
+            if slowest is not None and not math.isfinite(j['raw_gb'] * 8 / slowest):
+                raise ValueError('derived transfer duration overflows')
     except OverflowError as exc:
         raise ValueError('numeric magnitude too large') from exc
     return s

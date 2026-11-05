@@ -51,3 +51,27 @@ contracts", running `python3 -m unittest capacity.orbital.test_orbital -v` in th
 existing test job. Triggers, permissions, dependencies and all other steps are
 unchanged. The exact command passes locally. Hosted execution of this new step
 must be checked on the new PR head; earlier green runs do not prove its execution.
+
+## Claude167 corrections (source successor to9538f76)
+
+- Ordinary CLI publication failures now clean staged files and only this run's
+  published inodes. Preflight rejects missing parents; no-overwrite hard-link
+  publication refuses racing destinations. Regression injects a foreign file
+  at the second publish and verifies the first output is removed and foreign
+  file retained. Process crash / power loss / cleanup-permission failure remain
+  outside multi-file atomicity guarantees.
+- Receipt-v2 binds input SHA, supplied source SHA, model version, outcome fields
+  and committed events. CLI supplies the actual source fingerprint. Pure API
+  without a fingerprint is explicitly marked unbound. No signature or billing
+  guarantee is implied. Outcome/event/source mutation tests change the ID.
+- `--jobs` with `--scenario` now refuses. Summary cards show assumed quality
+  beside unit cost; one power figure across nodes is explicitly an assumption.
+- Validation now runs once per comparison with minimum-goodput overflow checks;
+  contact scans bisect expired windows; transaction copies hold only changed
+  cursors. Scaling measured through the10,000 schema cap (two synthetic shapes),
+  not inferred: ~4.88s one contact / ~5.01s10,000contacts, ~43.4MB Python peak.
+  Adversarial contact scans can still approach jobs×contacts.
+- New unit suite:21tests; combined capacity/calculator/simulator + orbital suite:
+  103tests and11subtests pass in9.16s. Original pre-review reports and initial scaling results
+  retained. Source/report hashes regenerated; no claim that receipts stayed equal.
+- Visual rendering gate remains blocked; static escaped HTML reviewed only.

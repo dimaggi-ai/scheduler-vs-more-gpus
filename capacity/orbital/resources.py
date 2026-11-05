@@ -8,12 +8,14 @@ class Refusal(ValueError):
 
 def empty_state(scenario):
     return {'nodes': {name: {'free_s': 0.0, 'energy_kwh': 0.0} for name in scenario['nodes']},
-            'contacts': [c['start_s'] for c in scenario['contacts']], 'events': []}
+            'contacts': [c['start_s'] for c in scenario['contacts']],
+            'contact_ends': tuple(c['end_s'] for c in scenario['contacts']), 'contact_updates': {}, 'events': []}
 
 
 def trial(state):
     # A refused plan commits no reservations. This is planning, not consumed runtime.
-    return {'nodes': deepcopy(state['nodes']), 'contacts': list(state['contacts']), 'events': []}
+    return {'nodes': deepcopy(state['nodes']), 'contacts': state['contacts'],
+            'contact_ends': state['contact_ends'], 'contact_updates': {}, 'events': []}
 
 
 def compute(scenario, state, job, node_name, earliest, duration):

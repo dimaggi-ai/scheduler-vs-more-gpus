@@ -1,8 +1,11 @@
 {
   "schema": "capacity-orbital/report-v1",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "Synthetic intermittent EO comparison",
   "input_sha256": "4f06c4fcec0943a35b33e9469f494c3509790dfad420d9bf279e0cb78755e085",
+  "source_sha256": "6493bb6986a2c2c3cc263c71cae3bc54ca1f9f71ca95449258a02115db73bc2f",
+  "receipt_schema": "capacity-orbital/receipt-v2",
+  "source_binding": "caller-supplied",
   "provenance": {
     "kind": "synthetic",
     "source": "DIMAGGI task105 hand-computable fixture, not vendor data",
@@ -15,6 +18,7 @@
     "Ground quality 1.0 is a synthetic reference assumption, not measured perfect AI accuracy.",
     "Each route is a separate counterfactual with the same workload and resource inputs.",
     "One serial compute lane per node; one shared downlink terminal.",
+    "One assumed job power_kw applies on both nodes; hardware-specific power profiles are not modeled.",
     "Release-time then job-id greedy planning; no optimality guarantee.",
     "Static power and heat rejection envelopes, total compute-energy budgets; no orbital/thermal dynamics.",
     "Transfer energy, lifecycle capex, qualification, radiation and unplanned runtime failures excluded.",
@@ -37,7 +41,7 @@
           "downlink_gb": 10,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 2.0122222222222224,
-          "receipt_id": "9d4c493c4065cfbf9f9cc7dff1d6335d409a81a428aa3b768ab8c826a94b7b65"
+          "receipt_id": "0be8de514a5e1bee250f3e0f168a3d43645cb91a77426e4b882d5729649a7f78"
         },
         {
           "job_id": "image-00001",
@@ -51,7 +55,7 @@
           "downlink_gb": 10,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 2.0122222222222224,
-          "receipt_id": "02d3a4664a2657bde7915737f859b13c40c3dc614946b62a2facf488aa4b3e24"
+          "receipt_id": "c39050ce9f2c6dd008a88b810923c2f7aa457b185174eaf387a5cb1495cfd7bd"
         },
         {
           "job_id": "image-00002",
@@ -65,7 +69,7 @@
           "downlink_gb": 10,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 2.0122222222222224,
-          "receipt_id": "a03c3e2e89374429a749f0beba6ccddd0b6f56513541a0eb136d32ad6b977e83"
+          "receipt_id": "a09182de5069ba8fa41c2295d75dbf928d87de40c926e323b5e15900abcd90c4"
         }
       ],
       "events": [
@@ -148,7 +152,7 @@
           "downlink_gb": 0.1,
           "energy_kwh": 0.008333333333333333,
           "cost_usd": 0.03833333333333334,
-          "receipt_id": "3de19c7ed17215d34435d9820fc49ab1ddc1270e2fd699b1c200828c51fd19d6"
+          "receipt_id": "a566517b17661bf67f92596f4ba3cd5d94e0f4aec5c05578f5148818d5c4f6fa"
         },
         {
           "job_id": "image-00001",
@@ -162,7 +166,7 @@
           "downlink_gb": 0.1,
           "energy_kwh": 0.008333333333333333,
           "cost_usd": 0.03833333333333334,
-          "receipt_id": "544fa0aac67adb1ad77e807e3994f805cd523e8c68c58dd7a34a4bc27bbc34ef"
+          "receipt_id": "696696abd844b2b6dc2b7daa7e69bbf4ac16c3f0d56720b95d56a5e26c97eec4"
         },
         {
           "job_id": "image-00002",
@@ -176,7 +180,7 @@
           "downlink_gb": 0.1,
           "energy_kwh": 0.008333333333333333,
           "cost_usd": 0.03833333333333334,
-          "receipt_id": "77db9385c995990967154e030ad784238724f3922fb0088c84f8fa27c76bdfc1"
+          "receipt_id": "eacc86388c23d412c26bf3b93ee712b7488417031573aad0c167e910445932c2"
         }
       ],
       "events": [
@@ -259,7 +263,7 @@
           "downlink_gb": 1,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 0.21222222222222223,
-          "receipt_id": "643e4bb8289e9d277ada8c5261a4263badf50a724092aeaf9b9018cd1898e231"
+          "receipt_id": "01d3caa255ce7707bc44786f33289750e764e85e9c7dbead7667cc9d9554f3b3"
         },
         {
           "job_id": "image-00001",
@@ -273,7 +277,7 @@
           "downlink_gb": 1,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 0.21222222222222223,
-          "receipt_id": "0b41dcb7cd939f7a0b7e806323c5537a2a7524f910c46978aa08e2e13bebffad"
+          "receipt_id": "7f98d3c244d4ff995de31bf77c0d2d851237aabacb9bdc1ae0b92b5c57f0fa28"
         },
         {
           "job_id": "image-00002",
@@ -287,7 +291,7 @@
           "downlink_gb": 1,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 0.21222222222222223,
-          "receipt_id": "d863a9bdb07e5ca5cebb3c59c8140c1f2c53d5a0fa9e7f9fbe4bcd2f189527e4"
+          "receipt_id": "810be120473a207f42da5143badb2140fbd95502c6f4ff1abfc7fc5d313b54ab"
         }
       ],
       "events": [
@@ -382,6 +386,5 @@
         "cost_per_planned_result_usd": 0.21222222222222223
       }
     }
-  ],
-  "source_sha256": "10c6fc3e2d9a6f403c162651adf7c77508a4fd34781563b3391d65ab61602ebf"
+  ]
 }
