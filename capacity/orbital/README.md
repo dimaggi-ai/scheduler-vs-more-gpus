@@ -65,7 +65,8 @@ Inputs must have exactly the fields shown in the example. Unknown fields and
 versions refuse; there are no implicit unit conversions or migrations. A new
 schema needs an explicit adapter and compatibility tests. `horizon_s` is seconds
 from scenario start, at most one year; job and contact lists are bounded at
-10,000 each. IDs are unique. Contact windows are ordered and nonoverlapping for
+10,000 each. This is a validation cap, not a tested performance bound; the recorded
+benchmark stops at 1,000 jobs/contacts. IDs are unique. Contact windows are ordered and nonoverlapping for
 **one shared terminal**. Both nodes have **one serial compute lane**. Jobs are
 scheduled by `(release_s, id)`, deterministically and greedily. There is no
 optimality claim, backfill optimization, multiple satellite routing or DAG
