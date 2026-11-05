@@ -7,11 +7,15 @@ permissions:
   contents: read
 jobs:
   platform:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Integrated mission and composed module contracts
-        run: python3 -m unittest capacity.orbital.test_platform capacity.orbital.test_network capacity.orbital.test_dynamics capacity.orbital.test_agentic capacity.orbital.test_diligence capacity.orbital.test_orbital -v
+        run: python3 -m unittest capacity.orbital.test_platform capacity.orbital.test_network capacity.orbital.test_dynamics capacity.orbital.test_agentic capacity.orbital.test_diligence capacity.orbital.test_orbital capacity.orbital.test_bundle -v
