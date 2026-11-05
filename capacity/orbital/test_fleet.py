@@ -1,0 +1,67 @@
+import copy,json,math,subprocess,sys,tempfile,unittest
+from pathlib import Path
+from .fleet import evaluate,compare,project_economics
+from .fleet.api import dispatch
+from .fleet.fixtures import demo,request
+from .diligence.fixtures import lifecycle_example
+from .diligence.lifecycle import lifecycle_cost
+class FleetTests(unittest.TestCase):
+    def test_zero_and_exponential_hand_oracle(self):
+        s=demo();s['cohorts']=s['cohorts'][:1];c=s['cohorts'][0];c.update(count=10,capacity_kw=2,utilization=1,availability=1,hazard_per_year=0)
+        self.assertEqual(evaluate(s)['total_useful_kw_years'],60)
+        c['hazard_per_year']=math.log(2);r=evaluate(s)
+        self.assertAlmostEqual(r['annual'][0]['expected_surviving_nodes'],5)
+        self.assertAlmostEqual(r['annual'][0]['expected_useful_kw_years'],10/math.log(2))
+        self.assertAlmostEqual(r['total_useful_kw_years'],20*(1-.125)/math.log(2))
+    def test_commission_retirement_conservation_and_projection(self):
+        s=demo();before=copy.deepcopy(s);r=evaluate(s);self.assertEqual(s,before)
+        replacement=[x for x in r['cohort_periods'] if x['cohort_id']=='replacement'];self.assertEqual(replacement[0]['expected_node_years'],0)
+        self.assertAlmostEqual(replacement[1]['expected_node_years'],3*(1-math.exp(-.05))/.1)
+        for year in r['annual']:
+            self.assertAlmostEqual(sum(year[k] for k in ('expected_surviving_nodes','expected_failed_nodes','expected_retired_nodes','uncommissioned_nodes')),13)
+        template=lifecycle_example();template.update(horizon_years=3,cohorts=[])
+        p=project_economics(s,template);self.assertEqual(template['cohorts'],[])
+        for a,b in zip(r['annual'],p['economics']['annual_output']):self.assertAlmostEqual(a['expected_useful_kw_years'],b['useful_kw_years'])
+        self.assertEqual(p['projected_lifecycle']['cash_flows'],template['cash_flows'])
+        s['cohorts'][1]['delay_years']=3
+        self.assertEqual([x for x in evaluate(s)['cohort_periods'] if x['cohort_id']=='replacement'][-1]['expected_surviving_nodes'],0)
+    def test_fixed_comparison_hazard_delay_and_determinism(self):
+        a=demo();b=copy.deepcopy(a)
+        for c in b['cohorts']:c['hazard_per_year']+=.2;c['delay_years']+=.25
+        r=compare(a,b);self.assertLess(r['useful_exposure_delta_kw_years'],0);self.assertFalse(r['promoted']);self.assertEqual(r,compare(a,b))
+        b['demand_kw'][0]+=1
+        self.assertEqual(dispatch(dict(request(),tool='compare',input=dict(baseline=a,candidate=b)))['code'],'BASELINE_MISMATCH')
+    def test_refusal_recovery_and_bounds(self):
+        for bad in (-1,float('inf'),True,10**400):
+            s=demo();s['cohorts'][0]['hazard_per_year']=bad
+            self.assertEqual(dispatch(request(s))['status'],'refused')
+        self.assertEqual(dispatch(request())['status'],'completed')
+        s=demo();s['cohorts']*=101;self.assertEqual(dispatch(request(s))['code'],'BUDGET_EXCEEDED')
+        s=demo();s['horizon_years']=100;s['demand_kw']=[1]*100;s['cohorts']=[dict(s['cohorts'][0],id=str(i),retirement_year=100) for i in range(3)]
+        t=lifecycle_example();t.update(horizon_years=100,cohorts=[])
+        self.assertEqual(dispatch(dict(request(),tool='economics',input=dict(scenario=s,template=t)))['code'],'BUDGET_EXCEEDED')
+    def test_zero_hazard_matches_existing_lifecycle_and_fractional_buckets(self):
+        s=demo();s['cohorts'][0].update(planned_commission_year=.25,delay_years=.25,retirement_year=2.25,hazard_per_year=0)
+        s['cohorts']=s['cohorts'][:1];c=s['cohorts'][0]
+        t=lifecycle_example();t.update(horizon_years=3,cohorts=[dict(id=c['id'],count=c['count'],commission_year=.5,retirement_year=2.25,capacity_kw=c['capacity_kw'],utilization=c['utilization'],availability=c['availability'])])
+        fleet=evaluate(s);old=lifecycle_cost(t)
+        self.assertEqual([x['expected_useful_kw_years'] for x in fleet['annual']],[x['useful_kw_years'] for x in old['annual_output']])
+        c['hazard_per_year']=math.log(2)
+        expected=[10*(1-2**(-.5))/math.log(2),10*(2**(-.5)-2**(-1.5))/math.log(2),10*(2**(-1.5)-2**(-1.75))/math.log(2)]
+        for row,oracle in zip(evaluate(s)['cohort_periods'],expected):self.assertAlmostEqual(row['expected_node_years'],oracle)
+    def test_monotonicity_separate_hazard_and_delay(self):
+        base=demo();reference=evaluate(base)['total_useful_kw_years']
+        for key,extra in (('delay_years',.5),('hazard_per_year',.2)):
+            altered=copy.deepcopy(base)
+            for c in altered['cohorts']:c[key]+=extra
+            self.assertLessEqual(evaluate(altered)['total_useful_kw_years'],reference)
+        s=demo();s['cohorts'][0].update(utilization=1e-300,availability=1e-300)
+        self.assertEqual(dispatch(request(s))['code'],'ARITHMETIC_RESOLUTION')
+
+    def test_real_cli_success_refusal_recovery_overwrite(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'input.json';out=Path(d)/'out.json'
+            def run():return subprocess.run([sys.executable,'-m','capacity.orbital.fleet','--request',str(p),'--output',str(out)],capture_output=True,text=True,timeout=10)
+            bad=request();bad['input']['cohorts'][0]['delay_years']=-1;p.write_text(json.dumps(bad));self.assertEqual(run().returncode,2)
+            out.unlink();p.write_text(json.dumps(request()));self.assertEqual(run().returncode,0);saved=out.read_bytes();self.assertEqual(run().returncode,2);self.assertEqual(out.read_bytes(),saved)
+if __name__=='__main__':unittest.main()

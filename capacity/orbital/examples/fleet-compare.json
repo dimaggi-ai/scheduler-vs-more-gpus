@@ -1,0 +1,87 @@
+{
+  "schema": "capacity-orbital/fleet-tool-v1",
+  "id": "synthetic-evaluation",
+  "tool": "compare",
+  "input": {
+    "baseline": {
+      "schema": "capacity-orbital/fleet-v1",
+      "id": "synthetic-fleet",
+      "horizon_years": 3,
+      "demand_kw": [
+        16,
+        16,
+        16
+      ],
+      "provenance": {
+        "kind": "synthetic",
+        "source": "DIMAGGI authored fleet arithmetic example",
+        "licence": "MIT (repository licence)",
+        "generated_on": "2026-11-05"
+      },
+      "cohorts": [
+        {
+          "id": "initial",
+          "count": 10,
+          "planned_commission_year": 0,
+          "delay_years": 0,
+          "retirement_year": 3,
+          "capacity_kw": 2,
+          "hazard_per_year": 0.1,
+          "utilization": 0.8,
+          "availability": 0.95
+        },
+        {
+          "id": "replacement",
+          "count": 3,
+          "planned_commission_year": 1,
+          "delay_years": 0.5,
+          "retirement_year": 3,
+          "capacity_kw": 2,
+          "hazard_per_year": 0.1,
+          "utilization": 0.8,
+          "availability": 0.95
+        }
+      ]
+    },
+    "candidate": {
+      "schema": "capacity-orbital/fleet-v1",
+      "id": "delayed-sensitivity",
+      "horizon_years": 3,
+      "demand_kw": [
+        16,
+        16,
+        16
+      ],
+      "provenance": {
+        "kind": "synthetic",
+        "source": "DIMAGGI authored fleet arithmetic example",
+        "licence": "MIT (repository licence)",
+        "generated_on": "2026-11-05"
+      },
+      "cohorts": [
+        {
+          "id": "initial",
+          "count": 10,
+          "planned_commission_year": 0,
+          "delay_years": 0,
+          "retirement_year": 3,
+          "capacity_kw": 2,
+          "hazard_per_year": 0.1,
+          "utilization": 0.8,
+          "availability": 0.95
+        },
+        {
+          "id": "replacement",
+          "count": 3,
+          "planned_commission_year": 1,
+          "delay_years": 1,
+          "retirement_year": 3,
+          "capacity_kw": 2,
+          "hazard_per_year": 0.1,
+          "utilization": 0.8,
+          "availability": 0.95
+        }
+      ]
+    }
+  }
+}
