@@ -1,0 +1,58 @@
+{
+  "python": "3.12.6",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "source_sha256": "dce5a371a64fbff2a451b4222cb89a74fa894c53f13c5bfb405f1c8d99e713cc",
+  "workload": "single physical link and shared terminal; one traced run, excludes CLI/HTML IO",
+  "measurements": [
+    {
+      "jobs": 10,
+      "contacts": 2,
+      "nodes": 3,
+      "seconds": 0.003446792019531131,
+      "peak_traced_bytes": 39327,
+      "refusal": null,
+      "operations": 2490,
+      "delivered": 10
+    },
+    {
+      "jobs": 50,
+      "contacts": 2,
+      "nodes": 3,
+      "seconds": 0.051438042195513844,
+      "peak_traced_bytes": 215335,
+      "refusal": null,
+      "operations": 130450,
+      "delivered": 50
+    },
+    {
+      "jobs": 100,
+      "contacts": 2,
+      "nodes": 3,
+      "seconds": 0.0610920418985188,
+      "peak_traced_bytes": 75520,
+      "refusal": "network operation budget exceeds200000",
+      "operations": null,
+      "delivered": null
+    },
+    {
+      "jobs": 200,
+      "contacts": 2,
+      "nodes": 3,
+      "seconds": 0.06212991685606539,
+      "peak_traced_bytes": 69696,
+      "refusal": "network operation budget exceeds200000",
+      "operations": null,
+      "delivered": null
+    },
+    {
+      "jobs": 50,
+      "contacts": 50,
+      "nodes": 3,
+      "seconds": 0.12758287484757602,
+      "peak_traced_bytes": 53008,
+      "refusal": "network operation budget exceeds200000",
+      "operations": null,
+      "delivered": null
+    }
+  ]
+}

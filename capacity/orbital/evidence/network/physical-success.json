@@ -1,0 +1,282 @@
+{
+  "schema": "capacity-orbital/dynamics-report-v1",
+  "proposal_id": "network-transfer-evaluation",
+  "input_sha256": "e061181caf094ab0755dde8b94d8074a0c6d5276e1c20d9f03e72ededa684b80",
+  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "source_binding": "caller-supplied",
+  "classification": "synthetic predicted feasibility; no observed or executed outcomes",
+  "authority": {
+    "disposition": "allowed",
+    "reason_code": null,
+    "enforcement": "caller-supplied planning capability; not actual Tool Guard enforcement"
+  },
+  "admissible": true,
+  "nodes": {
+    "A": {
+      "completed_horizon": true,
+      "evaluated_until_s": 300.0,
+      "final_kwh": 0.9977777777777778,
+      "final_k": 300.0041466189325,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 8.0,
+          "planned_end_s": 8.0,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 100.0,
+          "initial_k": 300,
+          "final_k": 300.0768836536134,
+          "energy": {
+            "initial_kwh": 1,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0022222222222222222,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 8.0,
+          "end_s": 10.0,
+          "planned_end_s": 10,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.0768836536134,
+          "final_k": 300.0753612552708,
+          "energy": {
+            "initial_kwh": 0.9977777777777778,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 10,
+          "end_s": 18.0,
+          "planned_end_s": 18.0,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.0753612552708,
+          "final_k": 300.0695672066247,
+          "energy": {
+            "initial_kwh": 0.9977777777777778,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 18.0,
+          "end_s": 300.0,
+          "planned_end_s": 300,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.0695672066247,
+          "final_k": 300.0041466189325,
+          "energy": {
+            "initial_kwh": 0.9977777777777778,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    },
+    "B": {
+      "completed_horizon": true,
+      "evaluated_until_s": 300.0,
+      "final_kwh": 0.9955555555555555,
+      "final_k": 300.008729341585,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 8.0,
+          "planned_end_s": 8.0,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 100.0,
+          "initial_k": 300,
+          "final_k": 300.0768836536134,
+          "energy": {
+            "initial_kwh": 1,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0022222222222222222,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 8.0,
+          "end_s": 10.0,
+          "planned_end_s": 10,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.0768836536134,
+          "final_k": 300.0753612552708,
+          "energy": {
+            "initial_kwh": 0.9977777777777778,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 10,
+          "end_s": 18.0,
+          "planned_end_s": 18.0,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 100.0,
+          "initial_k": 300.0753612552708,
+          "final_k": 300.1464508602381,
+          "energy": {
+            "initial_kwh": 0.9977777777777778,
+            "final_kwh": 0.9955555555555555,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0022222222222222222,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 18.0,
+          "end_s": 300.0,
+          "planned_end_s": 300,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.1464508602381,
+          "final_k": 300.008729341585,
+          "energy": {
+            "initial_kwh": 0.9955555555555555,
+            "final_kwh": 0.9955555555555555,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    },
+    "G": {
+      "completed_horizon": true,
+      "evaluated_until_s": 300.0,
+      "final_kwh": 0.9977777777777778,
+      "final_k": 300.0045827226525,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 8.0,
+          "planned_end_s": 8.0,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300,
+          "final_k": 300.0,
+          "energy": {
+            "initial_kwh": 1,
+            "final_kwh": 1,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 8.0,
+          "end_s": 10.0,
+          "planned_end_s": 10,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.0,
+          "final_k": 300.0,
+          "energy": {
+            "initial_kwh": 1,
+            "final_kwh": 1,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 10,
+          "end_s": 18.0,
+          "planned_end_s": 18.0,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 100.0,
+          "initial_k": 300.0,
+          "final_k": 300.0768836536134,
+          "energy": {
+            "initial_kwh": 1,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0022222222222222222,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 18.0,
+          "end_s": 300.0,
+          "planned_end_s": 300,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.0768836536134,
+          "final_k": 300.0045827226525,
+          "energy": {
+            "initial_kwh": 0.9977777777777778,
+            "final_kwh": 0.9977777777777778,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    }
+  },
+  "violations": [],
+  "receipt_id": "2bcb2c6354570b799194e5a8559c24b949a5b591d4f6b196bf8b461d2118e869"
+}
