@@ -3,12 +3,7 @@ from ..contracts import digest,fields,canonical
 from .contracts import ROUTES,validate
 from .mission import plan_mission,source_digest
 
-def semantic(value,key=None):
-    if isinstance(value,dict):return {k:semantic(v,k) for k,v in value.items() if k not in ('id','name','provenance','mission_id')}
-    if isinstance(value,list):
-        items=[semantic(v) for v in value]
-        return sorted(items,key=canonical) if key in ('jobs','contacts','allowed_jurisdictions','terminals') else items
-    return value
+from .semantic import semantic
 
 def evaluate_policies(suite,baseline,candidates):
     fields(suite,'schema train heldout','mission suite')

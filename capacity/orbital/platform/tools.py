@@ -10,7 +10,7 @@ class Refusal(ValueError):
 
 
 def manifest():
-    return dict(schema='capacity-orbital/mission-tool-manifest-v1',request_schema='capacity-orbital/mission-tool-v1',request_schema_file='request.schema.json',tools={'compare':['mission'],'verify':['mission','report'],'evaluate':['suite','baseline','candidates'],'feedback':['suite']},request_bytes=4000000,response_bytes=8000000,refusal_codes=['INVALID_ARGUMENT','UNSUPPORTED_SCHEMA','UNKNOWN_TOOL','BUDGET_EXCEEDED','SOURCE_UNAVAILABLE'],semantics='stateless deterministic recomputation; IDs correlate requests but have no persisted uniqueness/conflict protection',source_sha256=source_digest(),authority='synthetic planning only; no permissions provisioned',execution_performed=False,promoted=False)
+    return dict(schema='capacity-orbital/mission-tool-manifest-v1',request_schema='capacity-orbital/mission-tool-v1',request_schema_file='request.schema.json',tools={'compare':['mission'],'verify':['mission','report'],'evaluate':['suite','baseline','candidates'],'feedback':['suite']},request_bytes=4000000,response_bytes=8000000,refusal_codes=['INVALID_ARGUMENT','UNSUPPORTED_SCHEMA','UNKNOWN_TOOL','BUDGET_EXCEEDED','SOURCE_UNAVAILABLE','SEMANTIC_TOPOLOGY_AMBIGUOUS'],semantics='stateless deterministic recomputation; IDs correlate requests but have no persisted uniqueness/conflict protection',source_sha256=source_digest(),authority='synthetic planning only; no permissions provisioned',execution_performed=False,promoted=False)
 
 
 def dispatch(request):

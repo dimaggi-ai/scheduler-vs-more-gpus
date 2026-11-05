@@ -124,6 +124,73 @@ class PlatformTests(unittest.TestCase):
         m['diligence']['mission_id']='different'
         with self.assertRaises(ValueError):plan_mission(m,'onboard')
 
+    @staticmethod
+    def relabel(m):
+        """Rename every graph/job identifier and reverse unordered collections."""
+        out=copy.deepcopy(m);names={name:'renamed-'+str(i) for i,name in enumerate(reversed(list(m['network']['nodes'])))}
+        terminals={(n,t):'terminal-'+str(i) for i,(n,t) in enumerate((n,t) for n,node in m['network']['nodes'].items() for t in node['terminals'])}
+        links={c['link_id']:'link-'+str(i) for i,c in enumerate(m['network']['contacts'])}
+        out['id']='relabeled';out['diligence']['mission_id']='relabeled'
+        for role in ('origin','destination'):out[role]=names[m[role]]
+        out['compute']={names[k]:v for k,v in reversed(list(out['compute'].items()))}
+        out['dynamics']['nodes']={names[k]:v for k,v in reversed(list(out['dynamics']['nodes'].items()))}
+        out['network']['nodes']={names[k]:dict(v,terminals=[terminals[(k,t)] for t in reversed(v['terminals'])]) for k,v in reversed(list(out['network']['nodes'].items()))}
+        for i,c in enumerate(out['network']['contacts']):
+            source,destination=c['source'],c['destination']
+            c['source_terminal']=terminals[(source,c['source_terminal'])];c['destination_terminal']=terminals[(destination,c['destination_terminal'])]
+            c['source']=names[source];c['destination']=names[destination];c['link_id']=links[c['link_id']];c['id']='contact-'+str(i)
+        out['network']['contacts'].reverse();out['jobs'].reverse()
+        for i,j in enumerate(out['jobs']):j['id']='payload-'+str(i);j['allowed_jurisdictions'].reverse()
+        return out
+
+    def test_relabelled_graph_and_jobs_cannot_be_heldout(self):
+        from .platform.evaluation import semantic
+        a=demo();a['jobs'][0]['raw_gb']=1.25;b=self.relabel(a)
+        self.assertEqual(digest(semantic(a)),digest(semantic(b)))
+        s=dict(schema='capacity-orbital/mission-suite-v1',train=[a],heldout=[b])
+        with self.assertRaisesRegex(ValueError,'duplicate workload'):evaluate_policies(s,'ground',['onboard'])
+        # Physical/jurisdiction/price changes are not erased as label changes.
+        for edit in ('price','jurisdiction','power','quality'):
+            changed=copy.deepcopy(b)
+            if edit=='price':changed['network']['contacts'][0]['cost_per_gb']+=.01
+            elif edit=='jurisdiction':changed['network']['nodes'][changed['origin']]['jurisdiction']='other-zone'
+            elif edit=='power':changed['compute'][changed['origin']]['power_kw']+=.1
+            else:changed['jobs'][0]['required_quality']=.89
+            self.assertNotEqual(digest(semantic(a)),digest(semantic(changed)))
+
+    def test_feedback_relabelled_graph_cannot_be_heldout(self):
+        from .platform.fixtures import feedback_suite
+        from .platform.feedback import assess_feedback,predictions
+        from .platform.mission import source_digest
+        s=feedback_suite();m=self.relabel(s['train'][0]['mission']);r=plan_mission(m,'onboard');records=[]
+        for j in m['jobs']:
+            pred=predictions(m,r,j['id'])
+            records.append(dict(schema='capacity-orbital/synthetic-replay-v1',id=j['id'],classification='supplied synthetic replay',mission_input_sha256=digest(m),source_sha256=source_digest(),proposal_receipt_id=r['receipt_id'],job_id=j['id'],completion_s=j['release_s']+pred['duration_s'],energy_kwh=pred['energy_kwh'],link_gb=pred['link_gb'],cost_usd=pred['cost_usd']))
+        s['heldout']=[dict(mission=m,report=r,records=records)]
+        with self.assertRaisesRegex(ValueError,'workload leakage'):assess_feedback(s)
+
+    def test_topology_aliasing_is_preserved_and_symmetry_refuses(self):
+        from .platform.evaluation import semantic
+        from .platform.semantic import SemanticRefusal
+        from unittest.mock import patch
+        a=demo();a['network']['contacts'].append(dict(a['network']['contacts'][0],id='later',start_s=205,end_s=220))
+        b=copy.deepcopy(a);b['network']['contacts'][-1]['link_id']='separate-link'
+        self.assertNotEqual(digest(semantic(a)),digest(semantic(b)))
+        a=demo();a['network']['nodes']['A']['terminals'].append('unused')
+        b=copy.deepcopy(a);b['network']['contacts'].append(dict(b['network']['contacts'][0],id='later',start_s=205,end_s=220))
+        a=copy.deepcopy(b);b['network']['contacts'][-1]['source_terminal']='unused'
+        self.assertNotEqual(digest(semantic(a)),digest(semantic(b)))
+        symmetric=demo()
+        for i in range(29):
+            name='symmetric-'+str(i);symmetric['network']['nodes'][name]=copy.deepcopy(symmetric['network']['nodes']['B']);symmetric['dynamics']['nodes'][name]=copy.deepcopy(symmetric['dynamics']['nodes']['B'])
+        with self.assertRaises(SemanticRefusal) as caught:semantic(symmetric)
+        self.assertEqual(caught.exception.code,'SEMANTIC_TOPOLOGY_AMBIGUOUS')
+        request=dict(schema='capacity-orbital/mission-tool-v1',id='symmetric',tool='evaluate',arguments=dict(suite=dict(schema='capacity-orbital/mission-suite-v1',train=[symmetric],heldout=[demo()]),baseline='ground',candidates=['onboard']))
+        self.assertEqual(dispatch(request)['code'],'SEMANTIC_TOPOLOGY_AMBIGUOUS')
+        with patch('capacity.orbital.platform.semantic.MAX_WORK',1):
+            with self.assertRaises(SemanticRefusal) as caught:semantic(demo())
+            self.assertEqual(caught.exception.code,'BUDGET_EXCEEDED')
+
     def test_tool_refusal_codes_and_source_failure(self):
         from unittest.mock import patch
         request=dict(schema='capacity-orbital/mission-tool-v1',id='recoverable',tool='unknown',arguments={})

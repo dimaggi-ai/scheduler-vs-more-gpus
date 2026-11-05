@@ -29,6 +29,6 @@ for count in (1,5,10,20):
     try:result=compare_mission(m)
     except ValueError as exc:error=str(exc)
     elapsed=time.perf_counter()-start;_,peak=tracemalloc.get_traced_memory();tracemalloc.stop()
-    rows.append(dict(jobs=count,nodes=3,contacts=2,seconds=elapsed,peak_traced_bytes=peak,refusal=error,admissible_routes=[r['route'] for r in result['comparisons'] if r['admissible']] if result else None))
+    rows.append(dict(jobs=count,nodes=3,contacts=2,seconds=elapsed,peak_traced_bytes=peak,refusal=error,admissible_routes=[r['route'] for r in result['comparisons'] if r['admissible']] if result else None,delivered_hops=sum(len(j['hops']) for r in result['comparisons'] for j in r['network']['jobs'] if j['status']=='delivered') if result else None,resource_reservations=sum(len(r['network']['resource_reservations']) for r in result['comparisons']) if result else None))
 (root/'scaling.json').write_text(json.dumps(dict(source_sha256=source_digest(),python=platform.python_version(),platform=platform.platform(),workload='one traced compare call per size; includes source hashing and diligence, excludes CLI/HTML IO',measurements=rows),indent=2)+'\n')
 print(json.dumps(rows))
