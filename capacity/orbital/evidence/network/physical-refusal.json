@@ -1,0 +1,158 @@
+{
+  "schema": "capacity-orbital/dynamics-report-v1",
+  "proposal_id": "network-transfer-evaluation",
+  "input_sha256": "bc56a8e8f43bc4c05ce2d0c4e623e70c77cb418a6f654422243277509192c21f",
+  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "source_binding": "caller-supplied",
+  "classification": "synthetic predicted feasibility; no observed or executed outcomes",
+  "authority": {
+    "disposition": "allowed",
+    "reason_code": null,
+    "enforcement": "caller-supplied planning capability; not actual Tool Guard enforcement"
+  },
+  "admissible": false,
+  "nodes": {
+    "A": {
+      "completed_horizon": false,
+      "evaluated_until_s": 3.6,
+      "final_kwh": 0.0,
+      "final_k": 300.0353597065169,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 3.6,
+          "planned_end_s": 8.0,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 100.0,
+          "initial_k": 300,
+          "final_k": 300.0353597065169,
+          "energy": {
+            "initial_kwh": 0.001,
+            "final_kwh": 0.0,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.001,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    },
+    "B": {
+      "completed_horizon": false,
+      "evaluated_until_s": 3.6,
+      "final_kwh": 0.0,
+      "final_k": 300.0353597065169,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 3.6,
+          "planned_end_s": 8.0,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 100.0,
+          "initial_k": 300,
+          "final_k": 300.0353597065169,
+          "energy": {
+            "initial_kwh": 0.001,
+            "final_kwh": 0.0,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.001,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    },
+    "G": {
+      "completed_horizon": false,
+      "evaluated_until_s": 13.6,
+      "final_kwh": 0.0,
+      "final_k": 300.0353597065169,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 8.0,
+          "planned_end_s": 8.0,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300,
+          "final_k": 300.0,
+          "energy": {
+            "initial_kwh": 0.001,
+            "final_kwh": 0.001,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 8.0,
+          "end_s": 10.0,
+          "planned_end_s": 10,
+          "solar_kw": 0,
+          "load_kw": 0.0,
+          "heat_w": 0.0,
+          "initial_k": 300.0,
+          "final_k": 300.0,
+          "energy": {
+            "initial_kwh": 0.001,
+            "final_kwh": 0.001,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.0,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 10,
+          "end_s": 13.6,
+          "planned_end_s": 18.0,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 100.0,
+          "initial_k": 300.0,
+          "final_k": 300.0353597065169,
+          "energy": {
+            "initial_kwh": 0.001,
+            "final_kwh": 0.0,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.001,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    }
+  },
+  "violations": [
+    {
+      "code": "BATTERY_RESERVE",
+      "node": "A",
+      "at_s": 3.6
+    },
+    {
+      "code": "BATTERY_RESERVE",
+      "node": "B",
+      "at_s": 3.6
+    },
+    {
+      "code": "BATTERY_RESERVE",
+      "node": "G",
+      "at_s": 13.6
+    }
+  ],
+  "receipt_id": "da340b456b1e7c32bf1b1ccdd6aa239598dbeeea7353e76564659b4f5f15629f"
+}

@@ -1,0 +1,102 @@
+{
+  "schema": "capacity-orbital/network-v1",
+  "name": "Synthetic relay",
+  "horizon_s": 300,
+  "provenance": {
+    "kind": "synthetic",
+    "source": "hand arithmetic fixture; no ephemeris",
+    "licence": "repository licence",
+    "generated_on": "2026-11-05"
+  },
+  "nodes": {
+    "A": {
+      "jurisdiction": "synthetic-zone",
+      "buffer_gb": 2,
+      "commissioned_s": 0,
+      "retired_s": 300,
+      "unavailable": [],
+      "preserve_storage": false,
+      "capacity_kw": 1,
+      "terminals": [
+        "radio"
+      ],
+      "tx_kw": 1,
+      "rx_kw": 1,
+      "tx_heat_w": 100,
+      "rx_heat_w": 100
+    },
+    "B": {
+      "jurisdiction": "synthetic-zone",
+      "buffer_gb": 2,
+      "commissioned_s": 0,
+      "retired_s": 300,
+      "unavailable": [],
+      "preserve_storage": false,
+      "capacity_kw": 1,
+      "terminals": [
+        "radio"
+      ],
+      "tx_kw": 1,
+      "rx_kw": 1,
+      "tx_heat_w": 100,
+      "rx_heat_w": 100
+    },
+    "G": {
+      "jurisdiction": "synthetic-zone",
+      "buffer_gb": 2,
+      "commissioned_s": 0,
+      "retired_s": 300,
+      "unavailable": [],
+      "preserve_storage": false,
+      "capacity_kw": 1,
+      "terminals": [
+        "radio"
+      ],
+      "tx_kw": 1,
+      "rx_kw": 1,
+      "tx_heat_w": 100,
+      "rx_heat_w": 100
+    }
+  },
+  "contacts": [
+    {
+      "id": "AB",
+      "link_id": "AB",
+      "source": "A",
+      "destination": "B",
+      "source_terminal": "radio",
+      "destination_terminal": "radio",
+      "start_s": 0,
+      "end_s": 8,
+      "goodput_gbps": 1,
+      "propagation_s": 0,
+      "cost_per_gb": 0.1
+    },
+    {
+      "id": "BG",
+      "link_id": "BG",
+      "source": "B",
+      "destination": "G",
+      "source_terminal": "radio",
+      "destination_terminal": "radio",
+      "start_s": 10,
+      "end_s": 18,
+      "goodput_gbps": 1,
+      "propagation_s": 0,
+      "cost_per_gb": 0.1
+    }
+  ],
+  "jobs": [
+    {
+      "id": "job-1",
+      "source": "A",
+      "destination": "G",
+      "release_s": 0,
+      "deadline_s": 30,
+      "data_gb": 1,
+      "allowed_jurisdictions": [
+        "synthetic-zone"
+      ]
+    }
+  ]
+}
