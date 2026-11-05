@@ -328,3 +328,97 @@ def validate_actual(plan, actual):
         validate_account(row)
         if abs(row['nominal_gpu_h'] - plan['config']['gpus']) > 1e-5:
             raise ValueError('actual nominal capacity mismatch')
+
+
+def horizon_backtest(history, cutoff, horizon, *, method='seasonal', bias=1.0,
+                     first_origin=168, origin_step=24):
+    """Frozen-horizon forecast error at historical origins. Measurement only.
+
+    Each origin calls forecast() on its own prefix, so nothing at or after the
+    origin is visible to it, and nothing at or after cutoff is read at all.
+    Leads run to min(horizon, cutoff - origin) and errors from every origin are
+    pooled. When the longest lead is shorter than the requested horizon, the
+    result describes pooled, truncated historical horizons, not the requested
+    one. Too little history gives observations 0 and null metrics, never zero.
+    """
+    if type(cutoff) is not int or cutoff < 72 or type(horizon) is not int or horizon < 1:
+        raise ValueError('integer cutoff >= 72 and integer horizon >= 1 required')
+    if type(first_origin) is not int or first_origin < 72 or type(origin_step) is not int or origin_step < 1:
+        raise ValueError('integer first origin >= 72 and origin step >= 1 required')
+    if method not in ('seasonal', 'last_value'):
+        raise ValueError('unknown forecast method')
+    checked_number(bias, 'forecast bias', high=3)
+    prefix = history[:cutoff]
+    if len(prefix) != cutoff or any(type(r['hour']) is not int for r in prefix) or [r['hour'] for r in prefix] != list(range(cutoff)):
+        raise ValueError('history must contain the contiguous prefix before cutoff')
+    values = [checked_number(r['inf_demand_gpu_h'], 'historical demand') for r in prefix]
+    origins = list(range(first_origin, cutoff, origin_step))
+    errors, longest = [], 0
+    for origin in origins:
+        end = min(origin + horizon, cutoff)
+        rows = forecast(prefix[:origin], origin, end, method=method, bias=bias)['rows']
+        errors += [abs(values[r['hour']] - r['demand_gpu_h']) for r in rows]
+        longest = max(longest, end - origin)
+    if not errors:
+        scope = 'insufficient history: no origin before cutoff'
+    elif longest < horizon:
+        scope = (f'pooled truncated historical horizons: leads 1-{longest} h over {len(origins)} origins; '
+                 f'not validation of the requested {horizon} h frozen horizon')
+    else:
+        scope = f'pooled historical horizons: leads 1-{horizon} h over {len(origins)} origins'
+    return {'method': method, 'bias': bias, 'cutoff_hour': cutoff, 'requested_horizon_h': horizon,
+            'first_origin_hour': origins[0] if origins else None,
+            'last_origin_hour': origins[-1] if origins else None, 'origin_step_h': origin_step,
+            'origins': len(origins), 'lead_range_h': [1, longest] if errors else None,
+            'observations': len(errors),
+            'mae_gpu_h': float(np.mean(errors)) if errors else None,
+            'p50_abs_error_gpu_h': float(np.quantile(errors, 0.5)) if errors else None,
+            'p90_abs_error_gpu_h': float(np.quantile(errors, 0.9)) if errors else None,
+            'scope': scope, 'evidence_kind': 'synthetic historical backtest'}
+
+
+def band_coverage(plan, actual, forecast_artifact=None):
+    """Share of planned hours whose observed demand lies inside a forecast band.
+    Measurement only; a descriptive frequency, not calibrated coverage.
+
+    The band is the plan's own unless another forecast is given. That one must
+    come from the same history and cutoff and cover the same hours; it is then
+    measured against demand observed under this plan's replay, which is fair
+    only while observed demand does not depend on the plan. An incomplete
+    actual gives null coverage, never a fabricated value.
+    """
+    validate_actual(plan, actual)
+    f = plan['forecast'] if forecast_artifact is None else forecast_artifact
+    hours = [r['hour'] for r in plan['rows']]
+    if forecast_artifact is not None:
+        if (f['history_id'] != plan['forecast']['history_id'] or f['issued_at_hour'] != plan['forecast']['issued_at_hour']
+                or [r['hour'] for r in f['rows']] != hours):
+            raise ValueError("forecast does not share the plan's history, cutoff and hours")
+        for r in f['rows']:
+            for k in ('lower_gpu_h', 'demand_gpu_h', 'upper_gpu_h'):
+                checked_number(r[k], k)
+            if not r['lower_gpu_h'] <= r['demand_gpu_h'] <= r['upper_gpu_h']:
+                raise ValueError('forecast bounds out of order')
+    bands = {r['hour']: r for r in f['rows']}
+    observed = [(r['hour'], r['inf_demand_gpu_h']) for r in actual['rows']]
+    complete = len(observed) == len(hours)
+    inside = sum(bands[h]['lower_gpu_h'] <= d <= bands[h]['upper_gpu_h'] for h, d in observed)
+    return {'method': f['method'], 'bias': f['bias'], 'scenario': actual['scenario'],
+            'plan_id': plan['plan_id'], 'actual_id': actual['actual_id'],
+            'expected_hours': len(hours), 'observed_hours': len(observed),
+            'hours_inside_band': inside if complete else None,
+            'coverage': inside / len(hours) if complete else None,
+            'scope': 'held-out frequency inside the band; not calibrated coverage' if complete
+                     else 'incomplete actual: coverage not computed'}
+
+
+def method_warning(backtests, chosen):
+    """A disclosed heuristic, not a significance test or a method choice: warn
+    when the chosen method's pooled p90 error is at least twice another's."""
+    mine = backtests[chosen]['p90_abs_error_gpu_h']
+    for other, result in backtests.items():
+        theirs = result['p90_abs_error_gpu_h']
+        if other != chosen and mine is not None and theirs is not None and mine > 0 and mine >= 2 * theirs:
+            return (f'{chosen} pooled historical p90 error {mine:.1f} GPU-h is at least twice '
+                    f'{other} ({theirs:.1f}); heuristic only, not calibrated significance')
+    return None
