@@ -96,10 +96,14 @@ ordinary variance reports compare actuals against each scenario's own plan.
   reports the requested horizon, origin count, lead range and observations.
   With 14 days of history the leads stop at 168 h, so a 384-hour plan gets a
   **pooled, truncated historical horizon**, labelled as such, not a validation
-  of 384 hours. Too little history gives 0 observations and null metrics.
+  of 384 hours. When only some origins are shortened by the cutoff, the scope
+  says **partly truncated** and how many. Too little history gives 0
+  observations and null metrics; history rows missing a field are refused.
 - `band_coverage` counts held-out baseline hours whose demand lies inside the
   band, after validating plan/actual identity; duplicate, unexpected or
   mismatched hours are refused and an incomplete actual gives null coverage.
+  A supplied comparator forecast must carry a known method, a bias in the
+  permitted range and well-formed rows, or it is refused.
   The comparator method has no replay of its own: its band is measured against
   the demand observed under the plan's baseline replay, and only when every
   demo plan observed identical demand. These are synthetic frequencies, not

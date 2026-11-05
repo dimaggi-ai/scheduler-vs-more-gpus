@@ -526,9 +526,13 @@ def test_horizon_backtest_matches_hand_oracle():
 
 def test_horizon_backtest_discloses_truncated_horizons_and_insufficient_history():
     hist = _step_history(120)
-    full = horizon_backtest(hist, 120, 48, method='last_value', first_origin=72)
-    assert (full['lead_range_h'], full['observations']) == ([1, 48], 72)  # leads 48 + 24
+    full = horizon_backtest(hist, 120, 24, method='last_value', first_origin=72)
+    assert (full['lead_range_h'], full['observations']) == ([1, 24], 48)  # two full 24 h horizons
     assert full['scope'].startswith('pooled historical horizons')
+    # Origin 96 reaches only 24 of 48 leads: the pooled result must say so.
+    partly = horizon_backtest(hist, 120, 48, method='last_value', first_origin=72)
+    assert (partly['lead_range_h'], partly['observations']) == ([1, 48], 72)  # leads 48 + 24
+    assert partly['scope'].startswith('pooled partly truncated') and '1 of them shortened' in partly['scope']
     short = horizon_backtest(hist, 120, 384, method='last_value', first_origin=72)
     assert (short['requested_horizon_h'], short['lead_range_h'], short['observations']) == (384, [1, 48], 72)
     assert 'truncated' in short['scope'] and 'not validation of the requested 384 h' in short['scope']
@@ -552,6 +556,9 @@ def test_horizon_backtest_ignores_everything_at_or_after_cutoff():
     {'history': _step_history(119)}, {'history': _step_history(120)[1:]},
     {'history': _step_history(120)[:60] + _step_history(120)[61:62] + _step_history(120)[60:61] + _step_history(120)[62:]},
     {'history': [dict(r, inf_demand_gpu_h=float('inf')) if r['hour'] == 5 else r for r in _step_history(120)]},
+    {'history': [{'hour': r['hour']} if r['hour'] == 5 else r for r in _step_history(120)]},
+    {'history': [{'inf_demand_gpu_h': 1.0} if r['hour'] == 5 else r for r in _step_history(120)]},
+    {'history': ['row' if r['hour'] == 5 else r for r in _step_history(120)]},
 ])
 def test_horizon_backtest_refuses_invalid_domains(kwargs):
     args = {'history': _step_history(120), 'cutoff': 120, 'horizon': 24, 'method': 'seasonal', 'first_origin': 72, **kwargs}
@@ -627,3 +634,16 @@ def test_demo_skill_failure_publishes_nothing_and_rerun_is_identical(tmp_path, m
     assert first['plan_id'] == second['plan_id']
     assert (tmp_path / 'one/forecast-skill.json').read_bytes() == (tmp_path / 'two/forecast-skill.json').read_bytes()
     assert 'Forecast error over frozen horizons' in (tmp_path / 'one/REPORT.md').read_text()
+
+
+def test_band_coverage_refuses_invalid_comparator_metadata(bundle):
+    history, plan, actual = bundle
+    other = forecast(history, 72, 144, method='last_value')
+    missing = {k: v for k, v in other.items() if k != 'bias'}
+    for bad in (dict(other, method='unknown'), dict(other, bias=float('nan')), dict(other, bias=True),
+                dict(other, bias=4), dict(other, bias='1.0'), missing, 'not a forecast',
+                dict(other, rows=[{'hour': r['hour']} for r in other['rows']])):
+        with pytest.raises(ValueError):
+            band_coverage(plan, actual, bad)
+    # The plan's own forecast copied with valid metadata is still accepted.
+    assert band_coverage(plan, actual, dict(plan['forecast']))['coverage'] == band_coverage(plan, actual)['coverage']

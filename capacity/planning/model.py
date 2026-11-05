@@ -349,21 +349,28 @@ def horizon_backtest(history, cutoff, horizon, *, method='seasonal', bias=1.0,
         raise ValueError('unknown forecast method')
     checked_number(bias, 'forecast bias', high=3)
     prefix = history[:cutoff]
+    if any(type(r) is not dict or 'hour' not in r or 'inf_demand_gpu_h' not in r for r in prefix):
+        raise ValueError('history rows need hour and inf_demand_gpu_h')
     if len(prefix) != cutoff or any(type(r['hour']) is not int for r in prefix) or [r['hour'] for r in prefix] != list(range(cutoff)):
         raise ValueError('history must contain the contiguous prefix before cutoff')
     values = [checked_number(r['inf_demand_gpu_h'], 'historical demand') for r in prefix]
     origins = list(range(first_origin, cutoff, origin_step))
-    errors, longest = [], 0
+    errors, longest, truncated = [], 0, 0
     for origin in origins:
         end = min(origin + horizon, cutoff)
         rows = forecast(prefix[:origin], origin, end, method=method, bias=bias)['rows']
         errors += [abs(values[r['hour']] - r['demand_gpu_h']) for r in rows]
         longest = max(longest, end - origin)
+        truncated += end - origin < horizon
     if not errors:
         scope = 'insufficient history: no origin before cutoff'
     elif longest < horizon:
         scope = (f'pooled truncated historical horizons: leads 1-{longest} h over {len(origins)} origins; '
                  f'not validation of the requested {horizon} h frozen horizon')
+    elif truncated:
+        scope = (f'pooled partly truncated historical horizons: leads 1-{longest} h over {len(origins)} origins, '
+                 f'{truncated} of them shortened by the cutoff; not validation of the requested {horizon} h '
+                 f'frozen horizon at every origin')
     else:
         scope = f'pooled historical horizons: leads 1-{horizon} h over {len(origins)} origins'
     return {'method': method, 'bias': bias, 'cutoff_hour': cutoff, 'requested_horizon_h': horizon,
@@ -391,6 +398,14 @@ def band_coverage(plan, actual, forecast_artifact=None):
     f = plan['forecast'] if forecast_artifact is None else forecast_artifact
     hours = [r['hour'] for r in plan['rows']]
     if forecast_artifact is not None:
+        if (type(f) is not dict or any(k not in f for k in ('method', 'bias', 'history_id', 'issued_at_hour', 'rows'))
+                or type(f['rows']) is not list
+                or any(type(r) is not dict or any(k not in r for k in ('hour', 'lower_gpu_h', 'demand_gpu_h', 'upper_gpu_h'))
+                       for r in f['rows'])):
+            raise ValueError('comparator forecast is malformed')
+        if f['method'] not in ('seasonal', 'last_value'):
+            raise ValueError('unknown forecast method')
+        checked_number(f['bias'], 'forecast bias', high=3)
         if (f['history_id'] != plan['forecast']['history_id'] or f['issued_at_hour'] != plan['forecast']['issued_at_hour']
                 or [r['hour'] for r in f['rows']] != hours):
             raise ValueError("forecast does not share the plan's history, cutoff and hours")
