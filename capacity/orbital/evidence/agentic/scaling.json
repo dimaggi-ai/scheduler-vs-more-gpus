@@ -1,0 +1,41 @@
+{
+  "schema": "capacity-orbital/agentic-scaling-v1",
+  "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+  "environment": {
+    "python": "3.12.6",
+    "platform": "macOS-27.0.1-arm64-arm-64bit"
+  },
+  "classification": "single local observation with tracemalloc; not total process memory or production SLO",
+  "rows": [
+    {
+      "scenarios": 2,
+      "jobs_per_scenario": 1,
+      "total_jobs": 2,
+      "request_bytes": 2180,
+      "response_bytes": 9545,
+      "elapsed_s": 0.011601542122662067,
+      "peak_traced_python_bytes": 63357,
+      "status": "proposed"
+    },
+    {
+      "scenarios": 10,
+      "jobs_per_scenario": 10,
+      "total_jobs": 100,
+      "request_bytes": 40847,
+      "response_bytes": 180089,
+      "elapsed_s": 0.1319053340703249,
+      "peak_traced_python_bytes": 981180,
+      "status": "proposed"
+    },
+    {
+      "scenarios": 20,
+      "jobs_per_scenario": 50,
+      "total_jobs": 1000,
+      "request_bytes": 359757,
+      "response_bytes": 1686727,
+      "elapsed_s": 1.1867717502173036,
+      "peak_traced_python_bytes": 8987124,
+      "status": "proposed"
+    }
+  ]
+}

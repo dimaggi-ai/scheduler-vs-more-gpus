@@ -1,0 +1,486 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Capacity Orbital planning-tool request v1",
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "capacity-orbital/scenario-v1"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "horizon_s": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 31557600
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "synthetic"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "licence": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "generated_on": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "required": [
+            "kind",
+            "source",
+            "licence",
+            "generated_on"
+          ],
+          "additionalProperties": false
+        },
+        "nodes": {
+          "type": "object",
+          "properties": {
+            "orbital": {
+              "type": "object",
+              "properties": {
+                "memory_gb": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "max_power_kw": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "max_heat_kw": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "energy_budget_kwh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "compute_usd_per_hour": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "electricity_usd_per_kwh": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "memory_gb",
+                "max_power_kw",
+                "max_heat_kw",
+                "energy_budget_kwh",
+                "compute_usd_per_hour",
+                "electricity_usd_per_kwh"
+              ],
+              "additionalProperties": false
+            },
+            "ground": {
+              "type": "object",
+              "properties": {
+                "memory_gb": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "max_power_kw": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "max_heat_kw": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "energy_budget_kwh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "compute_usd_per_hour": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "electricity_usd_per_kwh": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "memory_gb",
+                "max_power_kw",
+                "max_heat_kw",
+                "energy_budget_kwh",
+                "compute_usd_per_hour",
+                "electricity_usd_per_kwh"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "orbital",
+            "ground"
+          ],
+          "additionalProperties": false
+        },
+        "jobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "release_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "deadline_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "raw_gb": {
+                "type": "number",
+                "minimum": 0
+              },
+              "result_gb": {
+                "type": "number",
+                "minimum": 0
+              },
+              "compressed_gb": {
+                "type": "number",
+                "minimum": 0
+              },
+              "memory_gb": {
+                "type": "number",
+                "minimum": 0
+              },
+              "power_kw": {
+                "type": "number",
+                "minimum": 0
+              },
+              "ground_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "onboard_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "preprocess_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "hybrid_ground_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "required_quality": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "onboard_quality": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "hybrid_quality": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "id",
+              "release_s",
+              "deadline_s",
+              "raw_gb",
+              "result_gb",
+              "compressed_gb",
+              "memory_gb",
+              "power_kw",
+              "ground_s",
+              "onboard_s",
+              "preprocess_s",
+              "hybrid_ground_s",
+              "required_quality",
+              "onboard_quality",
+              "hybrid_quality"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 200
+        },
+        "contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "start_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "end_s": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "goodput_gbps": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "usd_per_gb": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "start_s",
+              "end_s",
+              "goodput_gbps",
+              "usd_per_gb"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 200
+        }
+      },
+      "required": [
+        "schema",
+        "name",
+        "horizon_s",
+        "provenance",
+        "nodes",
+        "jobs",
+        "contacts"
+      ],
+      "additionalProperties": false
+    },
+    "suite": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "capacity-orbital/evaluation-suite-v1"
+        },
+        "objective": {
+          "const": "failures_then_cost"
+        },
+        "cost_tolerance_usd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "train": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 19,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "scenario": {
+                "$ref": "#/$defs/scenario"
+              }
+            },
+            "required": [
+              "id",
+              "scenario"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "heldout": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 19,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "scenario": {
+                "$ref": "#/$defs/scenario"
+              }
+            },
+            "required": [
+              "id",
+              "scenario"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "objective",
+        "cost_tolerance_usd",
+        "train",
+        "heldout"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "capacity-orbital/agent-request-v1"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "tool": {
+          "const": "plan"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "scenario": {
+              "$ref": "#/$defs/scenario"
+            },
+            "route": {
+              "enum": [
+                "ground",
+                "onboard",
+                "hybrid"
+              ]
+            }
+          },
+          "required": [
+            "scenario",
+            "route"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "id",
+        "tool",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "capacity-orbital/agent-request-v1"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "tool": {
+          "const": "compare"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "scenario": {
+              "$ref": "#/$defs/scenario"
+            }
+          },
+          "required": [
+            "scenario"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "id",
+        "tool",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "capacity-orbital/agent-request-v1"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "tool": {
+          "const": "evaluate"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "suite": {
+              "$ref": "#/$defs/suite"
+            },
+            "baseline": {
+              "enum": [
+                "ground",
+                "onboard",
+                "hybrid"
+              ]
+            },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "ground",
+                  "onboard",
+                  "hybrid"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 3,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "suite",
+            "baseline",
+            "candidates"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema",
+        "id",
+        "tool",
+        "arguments"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

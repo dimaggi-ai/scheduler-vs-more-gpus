@@ -1,0 +1,436 @@
+{
+  "schema": "capacity-orbital/agent-response-v1",
+  "request_id": "demo-heldout-regression",
+  "request_sha256": "338a8bace5559495c53cac47e85d39f9a0f8f001fd538cb4bcb62252df399307",
+  "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+  "status": "proposed",
+  "code": "PROPOSAL_ONLY",
+  "message": "no action executed; baseline and permissions unchanged",
+  "authority_disposition": "planning_only",
+  "execution_performed": false,
+  "classification": "synthetic planning proposal, not a measured hardware outcome",
+  "result": {
+    "schema": "capacity-orbital/evaluation-result-v1",
+    "evaluator": "capacity-orbital/static-planner-v1",
+    "classification": "synthetic replay proposals; not measured execution or production improvement",
+    "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+    "suite_sha256": "d7b3dcb9f3ee46e97c0295051500510ad213f5ab85a82d0158168565cd9b5380",
+    "specification": {
+      "schema": "capacity-orbital/evaluation-suite-v1",
+      "objective": "failures_then_cost",
+      "cost_tolerance_usd": 1e-09
+    },
+    "baseline": "ground",
+    "candidates": [
+      "hybrid",
+      "onboard"
+    ],
+    "selected_on_train": "onboard",
+    "training": {
+      "ground": {
+        "route": "ground",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 2.0122222222222224,
+          "energy_kwh": 0.005555555555555556,
+          "downlink_gb": 10.0,
+          "failed": 0,
+          "cost_per_planned_result_usd": 2.0122222222222224,
+          "latency_p50_s": 100.0,
+          "latency_p95_s": 100.0,
+          "quality_min": 1.0,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "train-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "train-1",
+            "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
+            "outcome_sha256": "9cb02abf86148a2666dd1dcc40460e7a65d2f8b61930853b0543cd9e1c39aae6",
+            "report": {
+              "route": "ground",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "ground",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 1.0,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 100.0,
+                  "downlink_gb": 10,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 2.0122222222222224,
+                  "receipt_id": "b49a4fd8a642b419b58d2612604c3b963474980c77a2a06ff6d963bdb625b76a"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 0,
+                  "end_s": 80.0,
+                  "gb": 10,
+                  "cost_usd": 2.0
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "ground",
+                  "start_s": 80.0,
+                  "end_s": 100.0,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 0.012222222222222223
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 10,
+                "energy_kwh": 0.005555555555555556,
+                "cost_usd": 2.0122222222222224,
+                "cost_per_planned_result_usd": 2.0122222222222224
+              }
+            }
+          }
+        ]
+      },
+      "hybrid": {
+        "route": "hybrid",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 0.21222222222222223,
+          "energy_kwh": 0.005555555555555556,
+          "downlink_gb": 1.0,
+          "failed": 0,
+          "cost_per_planned_result_usd": 0.21222222222222223,
+          "latency_p50_s": 28.0,
+          "latency_p95_s": 28.0,
+          "quality_min": 0.98,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "train-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "train-1",
+            "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
+            "outcome_sha256": "25ab473c1d4473bd50ce06dc22214ff069a290a2dabb8b07264cdedee39c05ab",
+            "report": {
+              "route": "hybrid",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "hybrid",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 0.98,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 28.0,
+                  "downlink_gb": 1,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 0.21222222222222223,
+                  "receipt_id": "17a8dd09f260a701521e5efaeee489c4ddda34acb2788008d13293efa5ec1a53"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "orbital",
+                  "start_s": 0,
+                  "end_s": 10,
+                  "energy_kwh": 0.002777777777777778,
+                  "cost_usd": 0.006111111111111111
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 10,
+                  "end_s": 18.0,
+                  "gb": 1,
+                  "cost_usd": 0.2
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "ground",
+                  "start_s": 18.0,
+                  "end_s": 28.0,
+                  "energy_kwh": 0.002777777777777778,
+                  "cost_usd": 0.006111111111111111
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 1,
+                "energy_kwh": 0.005555555555555556,
+                "cost_usd": 0.21222222222222223,
+                "cost_per_planned_result_usd": 0.21222222222222223
+              }
+            }
+          }
+        ]
+      },
+      "onboard": {
+        "route": "onboard",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 0.03833333333333334,
+          "energy_kwh": 0.008333333333333333,
+          "downlink_gb": 0.1,
+          "failed": 0,
+          "cost_per_planned_result_usd": 0.03833333333333334,
+          "latency_p50_s": 30.8,
+          "latency_p95_s": 30.8,
+          "quality_min": 0.98,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "train-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "train-1",
+            "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
+            "outcome_sha256": "c45824ce6db135bad08d4d1c36a1005744ee7a365d4478c89fadabbc347b8e07",
+            "report": {
+              "route": "onboard",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "onboard",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 0.98,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 30.8,
+                  "downlink_gb": 0.1,
+                  "energy_kwh": 0.008333333333333333,
+                  "cost_usd": 0.03833333333333334,
+                  "receipt_id": "b35ed4f5f78c66a361d1d28f5ddc7193e9c5b8690b15dc0a20b20d84eebef49a"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "orbital",
+                  "start_s": 0,
+                  "end_s": 30,
+                  "energy_kwh": 0.008333333333333333,
+                  "cost_usd": 0.018333333333333333
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 30,
+                  "end_s": 30.8,
+                  "gb": 0.1,
+                  "cost_usd": 0.020000000000000004
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 0.1,
+                "energy_kwh": 0.008333333333333333,
+                "cost_usd": 0.03833333333333334,
+                "cost_per_planned_result_usd": 0.03833333333333334
+              }
+            }
+          }
+        ]
+      }
+    },
+    "heldout": {
+      "ground": {
+        "route": "ground",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 2.0122222222222224,
+          "energy_kwh": 0.005555555555555556,
+          "downlink_gb": 10.0,
+          "failed": 0,
+          "cost_per_planned_result_usd": 2.0122222222222224,
+          "latency_p50_s": 100.0,
+          "latency_p95_s": 100.0,
+          "quality_min": 1.0,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "heldout-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "heldout-1",
+            "input_sha256": "1fbb4d417cc0f02c12064729467db75968ed4a92ae580dec1390d31128b54345",
+            "outcome_sha256": "9bcc8d81a0ba5e85faf365491bb8023e86716a408828567904ebcfd7e5e70989",
+            "report": {
+              "route": "ground",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "ground",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 1.0,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 101.0,
+                  "downlink_gb": 10,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 2.0122222222222224,
+                  "receipt_id": "1ef9c65f456c530a37cc9a8812bdf2248809898d43916b3c4cc1abf96efb94fb"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 1,
+                  "end_s": 81.0,
+                  "gb": 10,
+                  "cost_usd": 2.0
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "ground",
+                  "start_s": 81.0,
+                  "end_s": 101.0,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 0.012222222222222223
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 10,
+                "energy_kwh": 0.005555555555555556,
+                "cost_usd": 2.0122222222222224,
+                "cost_per_planned_result_usd": 2.0122222222222224
+              }
+            }
+          }
+        ]
+      },
+      "onboard": {
+        "route": "onboard",
+        "metrics": {
+          "jobs": 1,
+          "planned": 0,
+          "refused": 1,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 0.0,
+          "energy_kwh": 0.0,
+          "downlink_gb": 0.0,
+          "failed": 1,
+          "cost_per_planned_result_usd": null,
+          "latency_p50_s": null,
+          "latency_p95_s": null,
+          "quality_min": null,
+          "required_quality_min": null,
+          "required_quality_max": null
+        },
+        "successful_jobs": [],
+        "outcomes": [
+          {
+            "scenario_id": "heldout-1",
+            "input_sha256": "1fbb4d417cc0f02c12064729467db75968ed4a92ae580dec1390d31128b54345",
+            "outcome_sha256": "7ec79c349d8b04ddcde5ae1358a92c9deef92c2f17aa56c1beb3a0273e9c3068",
+            "report": {
+              "route": "onboard",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "onboard",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 0.1,
+                  "status": "refused",
+                  "reason": "retained quality below requirement",
+                  "completion_s": null,
+                  "downlink_gb": 0.0,
+                  "energy_kwh": 0.0,
+                  "cost_usd": 0.0,
+                  "receipt_id": null
+                }
+              ],
+              "events": [],
+              "summary": {
+                "planned": 0,
+                "refused": 1,
+                "downlink_gb": 0.0,
+                "energy_kwh": 0.0,
+                "cost_usd": 0.0,
+                "cost_per_planned_result_usd": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    "training_excluded_for_lost_baseline_outcomes": [],
+    "heldout_disposition": "regression",
+    "reason": "candidate loses baseline useful outcomes",
+    "recommendation": "retain_baseline",
+    "active_policy": "ground",
+    "promoted": false,
+    "stopping_condition": "all_candidates_evaluated",
+    "assumptions": [
+      "Only registered whole-scenario ground/onboard/hybrid policies; no per-job optimizer.",
+      "Same immutable scenarios, quality requirements, prices and constraints for every route.",
+      "Ground quality 1.0 is an assumed reference, not measured perfect accuracy; retained quality differs by route.",
+      "Cost is partial planning cost, not lifecycle TCO; refused plans are not failed physical executions.",
+      "Training selects the candidate; held-out assessment never reselects it or promotes it.",
+      "Local content hashes are provenance bindings, not signatures or Tool Guard authorization.",
+      "Static planner only; task106 dynamic-state composition is not implemented or claimed."
+    ]
+  },
+  "outcome_sha256": "e6756161d3f2c35f884a3d3fe12d239fcb938c144d01bc63686a9b5397efe21b"
+}
