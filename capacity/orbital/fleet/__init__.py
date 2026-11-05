@@ -64,27 +64,38 @@ def evaluate(s):
             rows.append(row);useful.append(out);ideal.append(ontime);surviving.append(alive);failed.append(dead);retired.append(gone);not_yet.append(pending)
         capacity=math.fsum(useful);baseline=math.fsum(ideal)
         annual.append(dict(year_end=year,expected_useful_kw_years=capacity,average_useful_kw=capacity,demand_average_kw=s['demand_kw'][year-1],annual_average_capacity_shortfall_kw=max(0,s['demand_kw'][year-1]-capacity),ontime_useful_kw_years=baseline,delay_exposure_delta_kw_years=baseline-capacity,expected_surviving_nodes=math.fsum(surviving),expected_failed_nodes=math.fsum(failed),expected_retired_nodes=math.fsum(retired),uncommissioned_nodes=math.fsum(not_yet)))
-    result=dict(schema='capacity-orbital/fleet-result-v1',classification='synthetic expectation, not realized fleet or flight reliability',input_sha256=digest(s),source_sha256=source_digest(),annual=annual,cohort_periods=rows,total_useful_kw_years=math.fsum(x['expected_useful_kw_years'] for x in annual),total_annual_average_capacity_shortfall_kw_years=math.fsum(x['annual_average_capacity_shortfall_kw'] for x in annual),execution_performed=False,promoted=False)
+    result=dict(schema='capacity-orbital/fleet-result-v1',classification='synthetic expectation, not realized fleet or flight reliability',input_sha256=digest(s),source_sha256=source_digest(),annual=annual,cohort_periods=rows,total_useful_kw_years=math.fsum(x['expected_useful_kw_years'] for x in annual),total_annual_average_capacity_shortfall_kw_years=math.fsum(x['annual_average_capacity_shortfall_kw'] for x in annual),provenance=deepcopy(s['provenance']),execution_performed=False,promoted=False)
     finite_result(result);result['receipt_id']=digest(result);return result
 
-def compare(baseline,candidate):
+def compare(baseline,candidate,expected_baseline_sha256=None):
     validate(baseline);validate(candidate)
+    if expected_baseline_sha256 is not None and expected_baseline_sha256!=digest(baseline):raise Refuse('BASELINE_BINDING','baseline differs from independently supplied digest')
     def fixed(s):
         v=deepcopy(s);v.pop('id');v.pop('provenance');v['cohorts']=sorted(v['cohorts'],key=lambda c:c['id'])
         for c in v['cohorts']:c.pop('hazard_per_year');c.pop('delay_years')
-        return v
+        def normalized(value):
+            if type(value) in (int,float):return float(value)
+            if type(value) is list:return [normalized(x) for x in value]
+            if type(value) is dict:return {k:normalized(x) for k,x in value.items()}
+            return value
+        return normalized(v)
     if digest(fixed(baseline))!=digest(fixed(candidate)):raise Refuse('BASELINE_MISMATCH','only declared hazard and delay assumptions may vary; demand and capacity assumptions fixed')
     a=evaluate(baseline);b=evaluate(candidate)
-    return dict(schema='capacity-orbital/fleet-comparison-v1',baseline=a,candidate=b,useful_exposure_delta_kw_years=b['total_useful_kw_years']-a['total_useful_kw_years'],shortfall_delta_kw_years=b['total_annual_average_capacity_shortfall_kw_years']-a['total_annual_average_capacity_shortfall_kw_years'],recommendation='sensitivity only; no calibrated improvement or automatic promotion',execution_performed=False,promoted=False)
+    result=dict(schema='capacity-orbital/fleet-comparison-v1',baseline=a,candidate=b,useful_exposure_delta_kw_years=b['total_useful_kw_years']-a['total_useful_kw_years'],shortfall_delta_kw_years=b['total_annual_average_capacity_shortfall_kw_years']-a['total_annual_average_capacity_shortfall_kw_years'],recommendation='sensitivity only; no calibrated improvement or automatic promotion',baseline_binding='externally pinned' if expected_baseline_sha256 is not None else 'unbound caller-supplied pair',input_sha256=digest(dict(baseline=baseline,candidate=candidate,expected_baseline_sha256=expected_baseline_sha256)),source_sha256=source_digest(),execution_performed=False,promoted=False)
+    result['receipt_id']=digest(result);return result
 
 def project_economics(s,template):
     report=evaluate(s)
     if type(template) is not dict or template.get('cohorts')!=[] or template.get('horizon_years')!=s['horizon_years']:raise Refuse('INVALID_ARGUMENT','economics template must have empty cohorts and matching horizon')
-    projected=deepcopy(template);cohorts={c['id']:c for c in s['cohorts']};output=[]
+    projected=deepcopy(template);cohorts={c['id']:c for c in s['cohorts']};output=[];mapping=[]
     for row in report['cohort_periods']:
         if row['active_years']<=0:continue
         c=cohorts[row['cohort_id']];year=row['year_end'];mean=row['expected_node_years']/c['count']/row['active_years']
+        if mean>1+1e-12 or mean<0:raise Refuse('ARITHMETIC_RESOLUTION','projected mean survival exceeds physical bounds beyond roundoff')
+        mapping.append(dict(projection_id='projection-'+str(len(output)),source_cohort_id=c['id'],year_end=year,mean_survival=mean,active_years=row['active_years']))
         output.append(dict(id='projection-'+str(len(output)),count=c['count'],commission_year=max(year-1,row['commission_year']),retirement_year=min(year,c['retirement_year']),capacity_kw=c['capacity_kw'],utilization=c['utilization'],availability=min(1,mean)*c['availability']))
     if len(output)>200:raise Refuse('BUDGET_EXCEEDED','existing lifecycle calculator accepts at most 200 projected cohort-year rows')
     projected['cohorts']=output;economics=lifecycle_cost(projected)
-    return dict(schema='capacity-orbital/fleet-economics-v1',fleet=report,projected_lifecycle=projected,economics=economics,assumption='exact annual exposure projected as mean survival times nonfailure availability; supplied cashflows unchanged',execution_performed=False,promoted=False)
+    economics['assumptions']=[('For this fleet projection, interval availability is derived mean survival times declared nonfailure availability; utilization remains declared.' if x=='Utilization and availability are declared synthetic constants, not inferred survival probabilities.' else x) for x in economics['assumptions']]
+    result=dict(schema='capacity-orbital/fleet-economics-v1',fleet=report,projected_lifecycle=projected,economics=economics,assumption='exact annual exposure projected as mean survival times nonfailure availability; supplied cashflows unchanged',projection_mapping=mapping,scenario_provenance=deepcopy(s['provenance']),template_provenance=deepcopy(template['provenance']),input_sha256=digest(dict(scenario=s,template=template)),source_sha256=source_digest(),execution_performed=False,promoted=False)
+    result['receipt_id']=digest(result);return result

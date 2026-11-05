@@ -76,6 +76,31 @@ class FleetTests(unittest.TestCase):
                 self.assertTrue(math.isclose(fleet['expected_useful_kw_years'],econ['useful_kw_years'],rel_tol=2e-14,abs_tol=1e-15))
         self.assertEqual(integral({'hazard_per_year':5e-324},.25,1,.25),.75)
 
+    def test_pinned_baseline_numeric_equivalence_and_receipts(self):
+        from .contracts import digest
+        a=demo();b=copy.deepcopy(a);b['cohorts'][0]['capacity_kw']=2.0;b['demand_kw'][0]=16.0;b['cohorts'][0]['retirement_year']=3.0
+        result=compare(a,b,digest(a));self.assertEqual(result['baseline_binding'],'externally pinned')
+        self.assertEqual(result['receipt_id'],digest({k:v for k,v in result.items() if k!='receipt_id'}))
+        drift=copy.deepcopy(a);drift['demand_kw'][0]=100
+        response=dispatch(dict(request(),tool='compare',input=dict(baseline=drift,candidate=drift,expected_baseline_sha256=digest(a))))
+        self.assertEqual(response['code'],'BASELINE_BINDING');self.assertEqual(response['id'],'synthetic-evaluation');self.assertIsNotNone(response['input_sha256'])
+        self.assertEqual(compare(drift,drift)['baseline_binding'],'unbound caller-supplied pair')
+    def test_economics_complete_binding_mapping_and_assumptions(self):
+        from .contracts import digest
+        s=demo();t=lifecycle_example();t.update(horizon_years=3,cohorts=[])
+        result=project_economics(s,t)
+        self.assertEqual(result['input_sha256'],digest(dict(scenario=s,template=t)))
+        self.assertEqual(result['receipt_id'],digest({k:v for k,v in result.items() if k!='receipt_id'}))
+        self.assertEqual(len(result['projection_mapping']),len(result['projected_lifecycle']['cohorts']))
+        self.assertEqual(result['scenario_provenance'],s['provenance']);self.assertEqual(result['template_provenance'],t['provenance'])
+        self.assertFalse(any('not inferred survival probabilities' in x for x in result['economics']['assumptions']))
+        t['cash_flows'][0]['amount']+=1
+        other=project_economics(s,t);self.assertNotEqual(result['input_sha256'],other['input_sha256']);self.assertNotEqual(result['receipt_id'],other['receipt_id'])
+        from unittest.mock import patch
+        fake=evaluate(s);fake['cohort_periods'][0]['expected_node_years']*=2
+        with patch('capacity.orbital.fleet.evaluate',return_value=fake):
+            with self.assertRaisesRegex(ValueError,'beyond roundoff'):project_economics(s,t)
+
     def test_real_cli_success_refusal_recovery_overwrite(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'input.json';out=Path(d)/'out.json'

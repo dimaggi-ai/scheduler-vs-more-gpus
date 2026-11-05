@@ -82,6 +82,7 @@
           "availability": 0.95
         }
       ]
-    }
+    },
+    "expected_baseline_sha256": "19b56990ee77dbde48325e017955954c22da3ff47dad6342848436312cad0b86"
   }
 }
