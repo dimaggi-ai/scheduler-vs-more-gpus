@@ -124,6 +124,18 @@ class PlatformTests(unittest.TestCase):
         m['diligence']['mission_id']='different'
         with self.assertRaises(ValueError):plan_mission(m,'onboard')
 
+    def test_tool_refusal_codes_and_source_failure(self):
+        from unittest.mock import patch
+        request=dict(schema='capacity-orbital/mission-tool-v1',id='recoverable',tool='unknown',arguments={})
+        r=dispatch(request);self.assertEqual(r['code'],'UNKNOWN_TOOL');self.assertEqual(r['request_id'],'recoverable')
+        request['schema']='bad';self.assertEqual(dispatch(request)['code'],'UNSUPPORTED_SCHEMA')
+        request['schema']='capacity-orbital/mission-tool-v1';request['tool']='compare';request['arguments']={'mission':demo()}
+        with patch('capacity.orbital.platform.tools.source_digest',side_effect=OSError('unavailable')):
+            self.assertEqual(dispatch(request)['code'],'SOURCE_UNAVAILABLE')
+        with patch('capacity.orbital.platform.tools.compare_mission',return_value={'oversized':'x'*8000001}):
+            result=dispatch(request);self.assertEqual(result['code'],'BUDGET_EXCEEDED');self.assertLess(len(json.dumps(result)),3000)
+        self.assertEqual(dispatch(request)['status'],'evaluated')
+
     def test_mismatched_bundles_and_cli(self):
         m=demo();m['dynamics']['horizon_s']=100
         with self.assertRaises(ValueError):compare_mission(m)

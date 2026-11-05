@@ -2,7 +2,7 @@
   "schema": "capacity-orbital/mission-evaluation-v1",
   "evaluator": "coupled-mission-v1",
   "static_evaluator": "task107 remains separate and unchanged",
-  "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+  "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
   "suite_sha256": "45ae33a994001b22dd16bd65500690c514b323817df647bfe9eb470bb7840c0b",
   "baseline": "ground",
   "candidates": [
@@ -23,7 +23,7 @@
           true
         ],
         "receipts": [
-          "4252d48892456c20a9f491a0295e050b96ad9939c369c49045ec055b2b9f0b81"
+          "1e38206d19397e2fe60d790a0890ab6d5cb9300a9c986706c3f1e2f7769b48ca"
         ]
       },
       "onboard": {
@@ -35,7 +35,7 @@
           true
         ],
         "receipts": [
-          "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35"
+          "9667cec653748985ad51928da8f8859afad5894ba146d313413137268838beeb"
         ]
       },
       "hybrid": {
@@ -47,7 +47,7 @@
           true
         ],
         "receipts": [
-          "3d667cf0edf7e2fa3e78a96953a580d56db3c721f805cbb0c55a61d30adb9971"
+          "22cad1c28e73f90dbc2bf234320a18a43531876c61d8fbe8da42affd2f34ef25"
         ]
       }
     },
@@ -61,7 +61,7 @@
           true
         ],
         "receipts": [
-          "dbd3abb7a43ab8df7f473dd5f8689a0459a6cd6ef706921654ffcf7f9bbe684a"
+          "6603c1cc0f722cfcd4f87d086cdae84ab841fc31df46e7f1590c7d537bd750d0"
         ]
       },
       "onboard": {
@@ -73,7 +73,7 @@
           true
         ],
         "receipts": [
-          "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5"
+          "ffe15674b9f961b12a81e8ca5d417cac0769d3ba3722c06854b32c1100345430"
         ]
       },
       "hybrid": {
@@ -85,7 +85,7 @@
           true
         ],
         "receipts": [
-          "66a519f81ddd517c301e552a656fe859ae66383007926fe236aba3c080d82ee1"
+          "481b54a554e609283f3db0d46d680e3b17eb94effd6d5ff2cfc638b5bc5489bc"
         ]
       }
     }

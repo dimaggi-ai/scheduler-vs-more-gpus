@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Capacity Orbital mission tool envelope",
+  "description": "Stateless planning only. Nested mission/evaluation contracts are additionally checked by the strict Python validators.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "tool", "arguments"],
+  "properties": {
+    "schema": {"const": "capacity-orbital/mission-tool-v1"},
+    "id": {"type": "string", "minLength": 1},
+    "tool": {"enum": ["compare", "verify", "evaluate", "feedback"]},
+    "arguments": {"type": "object"}
+  },
+  "allOf": [
+    {"if": {"properties": {"tool": {"const": "compare"}}}, "then": {"properties": {"arguments": {"required": ["mission"], "properties": {"mission": {"type": "object"}}, "additionalProperties": false}}}},
+    {"if": {"properties": {"tool": {"const": "verify"}}}, "then": {"properties": {"arguments": {"required": ["mission", "report"], "properties": {"mission": {"type": "object"}, "report": {"type": "object"}}, "additionalProperties": false}}}},
+    {"if": {"properties": {"tool": {"const": "evaluate"}}}, "then": {"properties": {"arguments": {"required": ["suite", "baseline", "candidates"], "properties": {"suite": {"type": "object"}, "baseline": {"enum": ["ground", "onboard", "hybrid"]}, "candidates": {"type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true, "items": {"enum": ["ground", "onboard", "hybrid"]}}}, "additionalProperties": false}}}},
+    {"if": {"properties": {"tool": {"const": "feedback"}}}, "then": {"properties": {"arguments": {"required": ["suite"], "properties": {"suite": {"type": "object"}}, "additionalProperties": false}}}}
+  ]
+}

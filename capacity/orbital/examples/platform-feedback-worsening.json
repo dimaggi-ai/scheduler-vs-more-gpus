@@ -315,7 +315,7 @@
             "mission_id": "synthetic-EO",
             "route": "onboard",
             "input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-            "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+            "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
             "classification": "synthetic coupled prediction; no execution or billing",
             "execution_performed": false,
             "promoted": false,
@@ -453,7 +453,7 @@
             "network": {
               "schema": "capacity-orbital/network-report-v1",
               "input_sha256": "f13ef07cac4c15cae90b14556c0f485657ebac90fddec247237fc8366bebd803",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
               "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
               "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
               "jobs": [
@@ -693,7 +693,7 @@
                 }
               ],
               "operations": 137,
-              "receipt_id": "6a88bf1f86dfb6a530fe0f919f21b38dd68da9570fc3eb53a7376ec59b265f0a"
+              "receipt_id": "276e81ad163b49e1abd368c072fc3a2d39a5ae6632c9f7d856aec4837683d22b"
             },
             "proposal": {
               "schema": "capacity-orbital/proposal-v1",
@@ -802,7 +802,7 @@
               "schema": "capacity-orbital/dynamics-report-v1",
               "proposal_id": "synthetic-EO:onboard",
               "input_sha256": "20bab3d553e102083c0661c3c716cf96d17c921322c7c0a766e2aea9cd7e5778",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
               "source_binding": "caller-supplied",
               "classification": "synthetic predicted feasibility; no observed or executed outcomes",
               "authority": {
@@ -1258,7 +1258,7 @@
                 }
               },
               "violations": [],
-              "receipt_id": "082442434466c1f739dfeee44c97ca08d6b251ba01761531a2800ff4bffce0a0"
+              "receipt_id": "b665187e188f72e748ff1410184bcf452af7e9af42aa71b091cb7a43018dbef1"
             },
             "processing_buffers": [
               {
@@ -1296,7 +1296,7 @@
             "diligence": {
               "mission_id": "synthetic-EO",
               "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-              "network_receipt_id": "6a88bf1f86dfb6a530fe0f919f21b38dd68da9570fc3eb53a7376ec59b265f0a",
+              "network_receipt_id": "276e81ad163b49e1abd368c072fc3a2d39a5ae6632c9f7d856aec4837683d22b",
               "lifecycle": {
                 "schema": "capacity-orbital/diligence-response-v1",
                 "request_id": "synthetic-EO:lifecycle",
@@ -1694,7 +1694,7 @@
                 "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
               ]
             },
-            "receipt_id": "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35"
+            "receipt_id": "9667cec653748985ad51928da8f8859afad5894ba146d313413137268838beeb"
           },
           "records": [
             {
@@ -1702,8 +1702,8 @@
               "id": "train:job-0",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
-              "proposal_receipt_id": "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
+              "proposal_receipt_id": "9667cec653748985ad51928da8f8859afad5894ba146d313413137268838beeb",
               "job_id": "job-0",
               "completion_s": 7.2600000000000025,
               "energy_kwh": 0.002505555555555557,
@@ -1715,8 +1715,8 @@
               "id": "train:job-1",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
-              "proposal_receipt_id": "56d9b55579d58fd70702802ac35ae33e512a15813d49647b15bc84d05af7dc35",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
+              "proposal_receipt_id": "9667cec653748985ad51928da8f8859afad5894ba146d313413137268838beeb",
               "job_id": "job-1",
               "completion_s": 12.760000000000003,
               "energy_kwh": 0.002505555555555557,
@@ -2036,7 +2036,7 @@
             "mission_id": "heldout-EO",
             "route": "onboard",
             "input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-            "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+            "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
             "classification": "synthetic coupled prediction; no execution or billing",
             "execution_performed": false,
             "promoted": false,
@@ -2174,7 +2174,7 @@
             "network": {
               "schema": "capacity-orbital/network-report-v1",
               "input_sha256": "c634e6a2732e0d0a921d60b5e125f2f08c9b3feaddec17a2d44355fd1ed4bb45",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
               "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
               "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
               "jobs": [
@@ -2414,7 +2414,7 @@
                 }
               ],
               "operations": 137,
-              "receipt_id": "397551e7e56b37365b5c07b505a55466473f57ea7ada9c1836684dc1e0165949"
+              "receipt_id": "809cbe13082b17f0bb55343ec63f98abd5b1e06dce544a8ec40c8ed36d3fc42a"
             },
             "proposal": {
               "schema": "capacity-orbital/proposal-v1",
@@ -2523,7 +2523,7 @@
               "schema": "capacity-orbital/dynamics-report-v1",
               "proposal_id": "heldout-EO:onboard",
               "input_sha256": "2498a20c374a268ec1cb5eecf5b62312c61ff223aa54caf0398d809582880ea9",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
               "source_binding": "caller-supplied",
               "classification": "synthetic predicted feasibility; no observed or executed outcomes",
               "authority": {
@@ -3039,7 +3039,7 @@
                 }
               },
               "violations": [],
-              "receipt_id": "16035e562a5a087a6e61a16d8cb52d03623909ac5cc868d499625a506d6c8ddc"
+              "receipt_id": "ed249ad03babf0b168b4c031d71934655bca3340aadc641ca78973e7269061aa"
             },
             "processing_buffers": [
               {
@@ -3077,7 +3077,7 @@
             "diligence": {
               "mission_id": "heldout-EO",
               "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-              "network_receipt_id": "397551e7e56b37365b5c07b505a55466473f57ea7ada9c1836684dc1e0165949",
+              "network_receipt_id": "809cbe13082b17f0bb55343ec63f98abd5b1e06dce544a8ec40c8ed36d3fc42a",
               "lifecycle": {
                 "schema": "capacity-orbital/diligence-response-v1",
                 "request_id": "heldout-EO:lifecycle",
@@ -3475,7 +3475,7 @@
                 "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
               ]
             },
-            "receipt_id": "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5"
+            "receipt_id": "ffe15674b9f961b12a81e8ca5d417cac0769d3ba3722c06854b32c1100345430"
           },
           "records": [
             {
@@ -3483,8 +3483,8 @@
               "id": "heldout:job-0",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
-              "proposal_receipt_id": "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
+              "proposal_receipt_id": "ffe15674b9f961b12a81e8ca5d417cac0769d3ba3722c06854b32c1100345430",
               "job_id": "job-0",
               "completion_s": 8.940000000000001,
               "energy_kwh": 0.002050000000000001,
@@ -3496,8 +3496,8 @@
               "id": "heldout:job-1",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-              "source_sha256": "abd66c3fba75ebc8376d1c0f12fa49d8c9321dab51e1ca843cde9e9b4169a5c4",
-              "proposal_receipt_id": "1c4d88d79788ab11d35c35fd38b1d61b44005bf511bf9d4585c822fc30fbb6b5",
+              "source_sha256": "03d5b191fae36906f4f2f2d4c9c8db08e938fc599b7896e3bc1285bd22dd67d0",
+              "proposal_receipt_id": "ffe15674b9f961b12a81e8ca5d417cac0769d3ba3722c06854b32c1100345430",
               "job_id": "job-1",
               "completion_s": 13.440000000000001,
               "energy_kwh": 0.002050000000000001,
