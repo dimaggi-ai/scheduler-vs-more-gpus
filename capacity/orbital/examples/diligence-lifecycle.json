@@ -1,0 +1,52 @@
+{
+  "schema": "capacity-orbital/diligence-request-v1",
+  "id": "lifecycle",
+  "tool": "lifecycle_cost",
+  "input": {
+    "schema": "capacity-orbital/lifecycle-v1",
+    "name": "Two-year synthetic capacity sensitivity",
+    "currency": "USD",
+    "horizon_years": 2,
+    "discount_rate": 0.1,
+    "cash_flows": [
+      {
+        "id": "payload",
+        "category": "payload",
+        "year": 0,
+        "amount": 1000,
+        "currency": "USD"
+      },
+      {
+        "id": "operation1",
+        "category": "operation",
+        "year": 1,
+        "amount": 100,
+        "currency": "USD"
+      },
+      {
+        "id": "operation2",
+        "category": "operation",
+        "year": 2,
+        "amount": 100,
+        "currency": "USD"
+      }
+    ],
+    "cohorts": [
+      {
+        "id": "cohort1",
+        "count": 1,
+        "commission_year": 0,
+        "retirement_year": 2,
+        "capacity_kw": 1,
+        "utilization": 1,
+        "availability": 1
+      }
+    ],
+    "provenance": {
+      "kind": "synthetic",
+      "source": "DIMAGGI task109 authored hand-computable fixture",
+      "licence": "MIT (repository licence)",
+      "generated_on": "2026-11-05"
+    }
+  }
+}

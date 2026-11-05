@@ -1,0 +1,153 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capacity Orbital — diligence</title><style>body{font:17px/1.5 system-ui,sans-serif;max-width:960px;margin:auto;padding:24px;color:#172438;background:#f8fafc}h1,h2{line-height:1.2}dt{font-weight:650}dd{margin:0 0 12px;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;border:1px solid #bac7d8;padding:16px}aside{background:#e9eff7;padding:16px;border-left:4px solid #285c98}code{overflow-wrap:anywhere}</style>
+<h1>Capacity Orbital: diligence</h1><aside>Synthetic planning sensitivity and mathematical consistency only. Not physical verification, vendor certification, investment advice or execution authorization.</aside>
+<p>Status: screened · COMPUTED_SYNTHETIC</p><h2>Lifecycle sensitivity</h2><dl><dt>undiscounted_cost</dt><dd>1200</dd><dt>discounted_cost</dt><dd>1173.5537190082646</dd><dt>undiscounted_useful_kw_years</dt><dd>2.0</dd><dt>discounted_useful_kw_years</dt><dd>1.7355371900826446</dd><dt>cost_per_discounted_useful_kw_year</dt><dd>676.1904761904763</dd></dl><h2>Reproducible evidence</h2><p>Input: <code>37cae57f2dd700f128ed141bf784e263d78d9b91687752250a55db69cf38bb67</code><br>Source: <code>20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8</code></p><pre>{
+  &quot;schema&quot;: &quot;capacity-orbital/diligence-response-v1&quot;,
+  &quot;request_id&quot;: &quot;lifecycle&quot;,
+  &quot;input_sha256&quot;: &quot;37cae57f2dd700f128ed141bf784e263d78d9b91687752250a55db69cf38bb67&quot;,
+  &quot;source_sha256&quot;: &quot;20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8&quot;,
+  &quot;status&quot;: &quot;screened&quot;,
+  &quot;reason_code&quot;: &quot;COMPUTED_SYNTHETIC&quot;,
+  &quot;reason&quot;: &quot;synthetic assumption-bound result&quot;,
+  &quot;result&quot;: {
+    &quot;schema&quot;: &quot;capacity-orbital/lifecycle-result-v1&quot;,
+    &quot;model&quot;: &quot;event-cashflows/year-end-capacity-v1&quot;,
+    &quot;status&quot;: &quot;computed&quot;,
+    &quot;reason_code&quot;: &quot;COMPUTED_SYNTHETIC&quot;,
+    &quot;currency&quot;: &quot;USD&quot;,
+    &quot;totals&quot;: {
+      &quot;undiscounted_cost&quot;: 1200,
+      &quot;discounted_cost&quot;: 1173.5537190082646,
+      &quot;undiscounted_useful_kw_years&quot;: 2.0,
+      &quot;discounted_useful_kw_years&quot;: 1.7355371900826446,
+      &quot;cost_per_discounted_useful_kw_year&quot;: 676.1904761904763
+    },
+    &quot;cash_flows&quot;: [
+      {
+        &quot;amount&quot;: 1000,
+        &quot;category&quot;: &quot;payload&quot;,
+        &quot;currency&quot;: &quot;USD&quot;,
+        &quot;id&quot;: &quot;payload&quot;,
+        &quot;year&quot;: 0,
+        &quot;discount_factor&quot;: 1.0,
+        &quot;discounted_amount&quot;: 1000.0
+      },
+      {
+        &quot;amount&quot;: 100,
+        &quot;category&quot;: &quot;operation&quot;,
+        &quot;currency&quot;: &quot;USD&quot;,
+        &quot;id&quot;: &quot;operation1&quot;,
+        &quot;year&quot;: 1,
+        &quot;discount_factor&quot;: 0.9090909090909091,
+        &quot;discounted_amount&quot;: 90.9090909090909
+      },
+      {
+        &quot;amount&quot;: 100,
+        &quot;category&quot;: &quot;operation&quot;,
+        &quot;currency&quot;: &quot;USD&quot;,
+        &quot;id&quot;: &quot;operation2&quot;,
+        &quot;year&quot;: 2,
+        &quot;discount_factor&quot;: 0.8264462809917356,
+        &quot;discounted_amount&quot;: 82.64462809917356
+      }
+    ],
+    &quot;cohort_output&quot;: [
+      {
+        &quot;cohort_id&quot;: &quot;cohort1&quot;,
+        &quot;year_end&quot;: 1,
+        &quot;active_years&quot;: 1,
+        &quot;useful_kw_years&quot;: 1,
+        &quot;discounted_useful_kw_years&quot;: 0.9090909090909091
+      },
+      {
+        &quot;cohort_id&quot;: &quot;cohort1&quot;,
+        &quot;year_end&quot;: 2,
+        &quot;active_years&quot;: 1,
+        &quot;useful_kw_years&quot;: 1,
+        &quot;discounted_useful_kw_years&quot;: 0.8264462809917356
+      }
+    ],
+    &quot;annual_output&quot;: [
+      {
+        &quot;year_end&quot;: 1,
+        &quot;useful_kw_years&quot;: 1.0,
+        &quot;discount_factor&quot;: 0.9090909090909091,
+        &quot;discounted_useful_kw_years&quot;: 0.9090909090909091
+      },
+      {
+        &quot;year_end&quot;: 2,
+        &quot;useful_kw_years&quot;: 1.0,
+        &quot;discount_factor&quot;: 0.8264462809917356,
+        &quot;discounted_useful_kw_years&quot;: 0.8264462809917356
+      }
+    ],
+    &quot;by_category&quot;: {
+      &quot;development&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;payload&quot;: {
+        &quot;undiscounted&quot;: 1000.0,
+        &quot;discounted&quot;: 1000.0
+      },
+      &quot;platform&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;launch&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;insurance&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;operation&quot;: {
+        &quot;undiscounted&quot;: 200.0,
+        &quot;discounted&quot;: 173.55371900826447
+      },
+      &quot;replacement&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;disposal&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;residual&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;downlink_marginal&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      },
+      &quot;downlink_allocated&quot;: {
+        &quot;undiscounted&quot;: 0.0,
+        &quot;discounted&quot;: 0.0
+      }
+    },
+    &quot;provenance&quot;: {
+      &quot;generated_on&quot;: &quot;2026-11-05&quot;,
+      &quot;kind&quot;: &quot;synthetic&quot;,
+      &quot;licence&quot;: &quot;MIT (repository licence)&quot;,
+      &quot;source&quot;: &quot;DIMAGGI task109 authored hand-computable fixture&quot;
+    },
+    &quot;assumptions&quot;: [
+      &quot;Positive cash flows are expenditures; residual entries are nonpositive credits. No revenue or financing cash flows.&quot;,
+      &quot;Cash flows are discounted at their declared year offset; useful capacity accrues over active interval intersections and is discounted at each year-end.&quot;,
+      &quot;Both numerator and denominator use the same annual discount factor and time origin; partial-year output is credited at the containing year-end.&quot;,
+      &quot;No output before commissioning or after retirement. Replacements require their own cohorts and cash flows.&quot;,
+      &quot;Utilization and availability are declared synthetic constants, not inferred survival probabilities.&quot;,
+      &quot;Discount rate is a supplied cost-of-capital assumption; interest, debt proceeds, repayments and principal are excluded to avoid financing double-counting.&quot;,
+      &quot;Allocated/prepaid downlink expense and incremental marginal downlink expense are separate categories; callers must not enter the same invoice twice.&quot;,
+      &quot;Single declared currency only; no FX lookup/conversion, inflation model, tax model or investment suitability conclusion.&quot;,
+      &quot;Alternatives are sensitivity scenarios, not forecasts, accepted improvements or automatic calibration.&quot;
+    ]
+  },
+  &quot;classification&quot;: &quot;synthetic sensitivity/screening; not investment advice or physical verification&quot;,
+  &quot;authority_disposition&quot;: &quot;no_authorization_granted&quot;,
+  &quot;execution_performed&quot;: false,
+  &quot;promoted&quot;: false,
+  &quot;outcome_sha256&quot;: &quot;bc38c6006525518b67f4d42d3ab71fb71c1201134045846d5b5cfd11cc6a8da4&quot;
+}</pre></html>

@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capacity Orbital — diligence</title><style>body{font:17px/1.5 system-ui,sans-serif;max-width:960px;margin:auto;padding:24px;color:#172438;background:#f8fafc}h1,h2{line-height:1.2}dt{font-weight:650}dd{margin:0 0 12px;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;border:1px solid #bac7d8;padding:16px}aside{background:#e9eff7;padding:16px;border-left:4px solid #285c98}code{overflow-wrap:anywhere}</style>
+<h1>Capacity Orbital: diligence</h1><aside>Synthetic planning sensitivity and mathematical consistency only. Not physical verification, vendor certification, investment advice or execution authorization.</aside>
+<p>Status: screened · WITHIN_STATED_MODEL</p><h2>Claim screen: consistent</h2><p>WITHIN_STATED_MODEL</p><dl><dt>total_emitting_area_m2</dt><dd>1</dd><dt>radiative_flux_w_m2</dt><dd>459.300327939</dd><dt>net_heat_rejection_w</dt><dd>459.300327939</dd><dt>margin_w</dt><dd>59.300327939</dd></dl><h2>Reproducible evidence</h2><p>Input: <code>3d710fb24db9e40a1041946894d5a7958eedb6ab34e72402ef36d2e7a6fdf20c</code><br>Source: <code>20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8</code></p><pre>{
+  &quot;schema&quot;: &quot;capacity-orbital/diligence-response-v1&quot;,
+  &quot;request_id&quot;: &quot;thermal&quot;,
+  &quot;input_sha256&quot;: &quot;3d710fb24db9e40a1041946894d5a7958eedb6ab34e72402ef36d2e7a6fdf20c&quot;,
+  &quot;source_sha256&quot;: &quot;20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8&quot;,
+  &quot;status&quot;: &quot;screened&quot;,
+  &quot;reason_code&quot;: &quot;WITHIN_STATED_MODEL&quot;,
+  &quot;reason&quot;: &quot;synthetic assumption-bound result&quot;,
+  &quot;result&quot;: {
+    &quot;schema&quot;: &quot;capacity-orbital/claim-result-v1&quot;,
+    &quot;model&quot;: &quot;thermal-synthetic-screen-v1&quot;,
+    &quot;status&quot;: &quot;consistent&quot;,
+    &quot;reason_code&quot;: &quot;WITHIN_STATED_MODEL&quot;,
+    &quot;prediction&quot;: {
+      &quot;total_emitting_area_m2&quot;: 1,
+      &quot;radiative_flux_w_m2&quot;: 459.300327939,
+      &quot;net_heat_rejection_w&quot;: 459.300327939,
+      &quot;margin_w&quot;: 59.300327939
+    },
+    &quot;missing_assumptions&quot;: [],
+    &quot;assumptions&quot;: {
+      &quot;absorbed_flux_w_m2&quot;: 0,
+      &quot;area_basis&quot;: &quot;emitting&quot;,
+      &quot;area_m2&quot;: 1,
+      &quot;emissivity&quot;: 1,
+      &quot;fin_efficiency&quot;: 1,
+      &quot;heat_w&quot;: 400,
+      &quot;sink_temperature_k&quot;: 0,
+      &quot;temperature_k&quot;: 300,
+      &quot;view_factor&quot;: 1
+    },
+    &quot;provenance&quot;: {
+      &quot;generated_on&quot;: &quot;2026-11-05&quot;,
+      &quot;kind&quot;: &quot;synthetic&quot;,
+      &quot;licence&quot;: &quot;MIT (repository licence)&quot;,
+      &quot;source&quot;: &quot;DIMAGGI task109 authored hand-computable fixture&quot;
+    },
+    &quot;limitations&quot;: [
+      &quot;Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.&quot;,
+      &quot;No permission, flight qualification, reliability prediction or production guarantee is granted.&quot;,
+      &quot;Transient thermal behaviour and radiation qualification are unsupported.&quot;,
+      &quot;Steady uniform temperature and supplied view factor; absorbed flux per emitting area; no transient storage, pump/coolant limit or mission environment validation.&quot;
+    ]
+  },
+  &quot;classification&quot;: &quot;synthetic sensitivity/screening; not investment advice or physical verification&quot;,
+  &quot;authority_disposition&quot;: &quot;no_authorization_granted&quot;,
+  &quot;execution_performed&quot;: false,
+  &quot;promoted&quot;: false,
+  &quot;outcome_sha256&quot;: &quot;8ac537af41ddb0a40f981e329c56c0a30df5b0ee195443246b5b5179ef293e70&quot;
+}</pre></html>

@@ -1,0 +1,150 @@
+{
+  "schema": "capacity-orbital/diligence-response-v1",
+  "request_id": "zero-output",
+  "input_sha256": "7e5d489b713ccdcac11cb253a999212c2e4f752fe564981a9ed98573b64f55b4",
+  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+  "status": "screened",
+  "reason_code": "ZERO_USEFUL_OUTPUT",
+  "reason": "synthetic assumption-bound result",
+  "result": {
+    "schema": "capacity-orbital/lifecycle-result-v1",
+    "model": "event-cashflows/year-end-capacity-v1",
+    "status": "unknown",
+    "reason_code": "ZERO_USEFUL_OUTPUT",
+    "currency": "USD",
+    "totals": {
+      "undiscounted_cost": 1200,
+      "discounted_cost": 1173.5537190082646,
+      "undiscounted_useful_kw_years": 0.0,
+      "discounted_useful_kw_years": 0.0,
+      "cost_per_discounted_useful_kw_year": null
+    },
+    "cash_flows": [
+      {
+        "amount": 1000,
+        "category": "payload",
+        "currency": "USD",
+        "id": "payload",
+        "year": 0,
+        "discount_factor": 1.0,
+        "discounted_amount": 1000.0
+      },
+      {
+        "amount": 100,
+        "category": "operation",
+        "currency": "USD",
+        "id": "operation1",
+        "year": 1,
+        "discount_factor": 0.9090909090909091,
+        "discounted_amount": 90.9090909090909
+      },
+      {
+        "amount": 100,
+        "category": "operation",
+        "currency": "USD",
+        "id": "operation2",
+        "year": 2,
+        "discount_factor": 0.8264462809917356,
+        "discounted_amount": 82.64462809917356
+      }
+    ],
+    "cohort_output": [
+      {
+        "cohort_id": "cohort1",
+        "year_end": 1,
+        "active_years": 1,
+        "useful_kw_years": 0,
+        "discounted_useful_kw_years": 0.0
+      },
+      {
+        "cohort_id": "cohort1",
+        "year_end": 2,
+        "active_years": 1,
+        "useful_kw_years": 0,
+        "discounted_useful_kw_years": 0.0
+      }
+    ],
+    "annual_output": [
+      {
+        "year_end": 1,
+        "useful_kw_years": 0.0,
+        "discount_factor": 0.9090909090909091,
+        "discounted_useful_kw_years": 0.0
+      },
+      {
+        "year_end": 2,
+        "useful_kw_years": 0.0,
+        "discount_factor": 0.8264462809917356,
+        "discounted_useful_kw_years": 0.0
+      }
+    ],
+    "by_category": {
+      "development": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "payload": {
+        "undiscounted": 1000.0,
+        "discounted": 1000.0
+      },
+      "platform": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "launch": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "insurance": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "operation": {
+        "undiscounted": 200.0,
+        "discounted": 173.55371900826447
+      },
+      "replacement": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "disposal": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "residual": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "downlink_marginal": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      },
+      "downlink_allocated": {
+        "undiscounted": 0.0,
+        "discounted": 0.0
+      }
+    },
+    "provenance": {
+      "generated_on": "2026-11-05",
+      "kind": "synthetic",
+      "licence": "MIT (repository licence)",
+      "source": "DIMAGGI task109 authored hand-computable fixture"
+    },
+    "assumptions": [
+      "Positive cash flows are expenditures; residual entries are nonpositive credits. No revenue or financing cash flows.",
+      "Cash flows are discounted at their declared year offset; useful capacity accrues over active interval intersections and is discounted at each year-end.",
+      "Both numerator and denominator use the same annual discount factor and time origin; partial-year output is credited at the containing year-end.",
+      "No output before commissioning or after retirement. Replacements require their own cohorts and cash flows.",
+      "Utilization and availability are declared synthetic constants, not inferred survival probabilities.",
+      "Discount rate is a supplied cost-of-capital assumption; interest, debt proceeds, repayments and principal are excluded to avoid financing double-counting.",
+      "Allocated/prepaid downlink expense and incremental marginal downlink expense are separate categories; callers must not enter the same invoice twice.",
+      "Single declared currency only; no FX lookup/conversion, inflation model, tax model or investment suitability conclusion.",
+      "Alternatives are sensitivity scenarios, not forecasts, accepted improvements or automatic calibration."
+    ]
+  },
+  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+  "authority_disposition": "no_authorization_granted",
+  "execution_performed": false,
+  "promoted": false,
+  "outcome_sha256": "8b9547ee11349c9069b38e57987a9ff5a657d1ab66b567d84163569a91bb01da"
+}

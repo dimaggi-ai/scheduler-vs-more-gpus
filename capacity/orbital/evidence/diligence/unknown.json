@@ -1,0 +1,46 @@
+{
+  "schema": "capacity-orbital/diligence-response-v1",
+  "request_id": "unknown-area",
+  "input_sha256": "d0c5f503dce07d14fa013543a8ffd49aeba94622fa0ce8a0e5fadf127ff2b1ab",
+  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+  "status": "screened",
+  "reason_code": "MISSING_ASSUMPTIONS",
+  "reason": "synthetic assumption-bound result",
+  "result": {
+    "schema": "capacity-orbital/claim-result-v1",
+    "model": "thermal-synthetic-screen-v1",
+    "status": "unknown",
+    "reason_code": "MISSING_ASSUMPTIONS",
+    "prediction": null,
+    "missing_assumptions": [
+      "emitting_faces"
+    ],
+    "assumptions": {
+      "absorbed_flux_w_m2": 0,
+      "area_basis": "panel_footprint",
+      "area_m2": 1,
+      "emissivity": 1,
+      "fin_efficiency": 1,
+      "heat_w": 400,
+      "sink_temperature_k": 0,
+      "temperature_k": 300,
+      "view_factor": 1
+    },
+    "provenance": {
+      "generated_on": "2026-11-05",
+      "kind": "synthetic",
+      "licence": "MIT (repository licence)",
+      "source": "DIMAGGI task109 authored hand-computable fixture"
+    },
+    "limitations": [
+      "Consistency only against supplied mathematical assumptions; not physical verification or vendor certification.",
+      "No permission, flight qualification, reliability prediction or production guarantee is granted.",
+      "Transient thermal behaviour and radiation qualification are unsupported."
+    ]
+  },
+  "classification": "synthetic sensitivity/screening; not investment advice or physical verification",
+  "authority_disposition": "no_authorization_granted",
+  "execution_performed": false,
+  "promoted": false,
+  "outcome_sha256": "e2abe84a89609a45467e89fa41e8e4b56c252a28fd812dff3913d15a2a04f3fa"
+}

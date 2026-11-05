@@ -1,0 +1,27 @@
+{
+  "schema": "capacity-orbital/diligence-request-v1",
+  "id": "thermal",
+  "tool": "check_claim",
+  "input": {
+    "schema": "capacity-orbital/claim-v1",
+    "name": "Synthetic uniform-temperature emitting-area screen",
+    "kind": "thermal",
+    "parameters": {
+      "heat_w": 400,
+      "temperature_k": 300,
+      "sink_temperature_k": 0,
+      "emissivity": 1,
+      "fin_efficiency": 1,
+      "absorbed_flux_w_m2": 0,
+      "area_m2": 1,
+      "area_basis": "emitting",
+      "view_factor": 1
+    },
+    "provenance": {
+      "kind": "synthetic",
+      "source": "DIMAGGI task109 authored hand-computable fixture",
+      "licence": "MIT (repository licence)",
+      "generated_on": "2026-11-05"
+    }
+  }
+}
