@@ -1,0 +1,460 @@
+{
+  "schema": "capacity-orbital/agent-response-v1",
+  "request_id": "demo-evaluate",
+  "request_sha256": "2afb77f1de335530b82724f0250c5396cf91419c9e48935884ca87e608dfcb9c",
+  "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+  "status": "proposed",
+  "code": "PROPOSAL_ONLY",
+  "message": "no action executed; baseline and permissions unchanged",
+  "authority_disposition": "planning_only",
+  "execution_performed": false,
+  "classification": "synthetic planning proposal, not a measured hardware outcome",
+  "result": {
+    "schema": "capacity-orbital/evaluation-result-v1",
+    "evaluator": "capacity-orbital/static-planner-v1",
+    "classification": "synthetic replay proposals; not measured execution or production improvement",
+    "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+    "suite_sha256": "9a666d941b6d18378011b3fc71843f889cf76e68670c0c84bb9563d847844de8",
+    "specification": {
+      "schema": "capacity-orbital/evaluation-suite-v1",
+      "objective": "failures_then_cost",
+      "cost_tolerance_usd": 1e-09
+    },
+    "baseline": "ground",
+    "candidates": [
+      "hybrid",
+      "onboard"
+    ],
+    "selected_on_train": "onboard",
+    "training": {
+      "ground": {
+        "route": "ground",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 2.0122222222222224,
+          "energy_kwh": 0.005555555555555556,
+          "downlink_gb": 10.0,
+          "failed": 0,
+          "cost_per_planned_result_usd": 2.0122222222222224,
+          "latency_p50_s": 100.0,
+          "latency_p95_s": 100.0,
+          "quality_min": 1.0,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "train-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "train-1",
+            "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
+            "outcome_sha256": "9cb02abf86148a2666dd1dcc40460e7a65d2f8b61930853b0543cd9e1c39aae6",
+            "report": {
+              "route": "ground",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "ground",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 1.0,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 100.0,
+                  "downlink_gb": 10,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 2.0122222222222224,
+                  "receipt_id": "b49a4fd8a642b419b58d2612604c3b963474980c77a2a06ff6d963bdb625b76a"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 0,
+                  "end_s": 80.0,
+                  "gb": 10,
+                  "cost_usd": 2.0
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "ground",
+                  "start_s": 80.0,
+                  "end_s": 100.0,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 0.012222222222222223
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 10,
+                "energy_kwh": 0.005555555555555556,
+                "cost_usd": 2.0122222222222224,
+                "cost_per_planned_result_usd": 2.0122222222222224
+              }
+            }
+          }
+        ]
+      },
+      "hybrid": {
+        "route": "hybrid",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 0.21222222222222223,
+          "energy_kwh": 0.005555555555555556,
+          "downlink_gb": 1.0,
+          "failed": 0,
+          "cost_per_planned_result_usd": 0.21222222222222223,
+          "latency_p50_s": 28.0,
+          "latency_p95_s": 28.0,
+          "quality_min": 0.98,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "train-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "train-1",
+            "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
+            "outcome_sha256": "25ab473c1d4473bd50ce06dc22214ff069a290a2dabb8b07264cdedee39c05ab",
+            "report": {
+              "route": "hybrid",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "hybrid",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 0.98,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 28.0,
+                  "downlink_gb": 1,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 0.21222222222222223,
+                  "receipt_id": "17a8dd09f260a701521e5efaeee489c4ddda34acb2788008d13293efa5ec1a53"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "orbital",
+                  "start_s": 0,
+                  "end_s": 10,
+                  "energy_kwh": 0.002777777777777778,
+                  "cost_usd": 0.006111111111111111
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 10,
+                  "end_s": 18.0,
+                  "gb": 1,
+                  "cost_usd": 0.2
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "ground",
+                  "start_s": 18.0,
+                  "end_s": 28.0,
+                  "energy_kwh": 0.002777777777777778,
+                  "cost_usd": 0.006111111111111111
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 1,
+                "energy_kwh": 0.005555555555555556,
+                "cost_usd": 0.21222222222222223,
+                "cost_per_planned_result_usd": 0.21222222222222223
+              }
+            }
+          }
+        ]
+      },
+      "onboard": {
+        "route": "onboard",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 0.03833333333333334,
+          "energy_kwh": 0.008333333333333333,
+          "downlink_gb": 0.1,
+          "failed": 0,
+          "cost_per_planned_result_usd": 0.03833333333333334,
+          "latency_p50_s": 30.8,
+          "latency_p95_s": 30.8,
+          "quality_min": 0.98,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "train-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "train-1",
+            "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
+            "outcome_sha256": "c45824ce6db135bad08d4d1c36a1005744ee7a365d4478c89fadabbc347b8e07",
+            "report": {
+              "route": "onboard",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "onboard",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 0.98,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 30.8,
+                  "downlink_gb": 0.1,
+                  "energy_kwh": 0.008333333333333333,
+                  "cost_usd": 0.03833333333333334,
+                  "receipt_id": "b35ed4f5f78c66a361d1d28f5ddc7193e9c5b8690b15dc0a20b20d84eebef49a"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "orbital",
+                  "start_s": 0,
+                  "end_s": 30,
+                  "energy_kwh": 0.008333333333333333,
+                  "cost_usd": 0.018333333333333333
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 30,
+                  "end_s": 30.8,
+                  "gb": 0.1,
+                  "cost_usd": 0.020000000000000004
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 0.1,
+                "energy_kwh": 0.008333333333333333,
+                "cost_usd": 0.03833333333333334,
+                "cost_per_planned_result_usd": 0.03833333333333334
+              }
+            }
+          }
+        ]
+      }
+    },
+    "heldout": {
+      "ground": {
+        "route": "ground",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 2.0122222222222224,
+          "energy_kwh": 0.005555555555555556,
+          "downlink_gb": 10.0,
+          "failed": 0,
+          "cost_per_planned_result_usd": 2.0122222222222224,
+          "latency_p50_s": 100.0,
+          "latency_p95_s": 100.0,
+          "quality_min": 1.0,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "heldout-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "heldout-1",
+            "input_sha256": "17bf54728e231afa619a0d25f138b0369aa285b072c3b0fbe959518463374a76",
+            "outcome_sha256": "3ea7902526713ffe49a0d0f12d86244267c092ab7899a36b72f448773cdbf771",
+            "report": {
+              "route": "ground",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "ground",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 1.0,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 101.0,
+                  "downlink_gb": 10,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 2.0122222222222224,
+                  "receipt_id": "29a7819236db899a0ad0bea7c82d9100b0b876086a42759684977c438cc315ba"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 1,
+                  "end_s": 81.0,
+                  "gb": 10,
+                  "cost_usd": 2.0
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "ground",
+                  "start_s": 81.0,
+                  "end_s": 101.0,
+                  "energy_kwh": 0.005555555555555556,
+                  "cost_usd": 0.012222222222222223
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 10,
+                "energy_kwh": 0.005555555555555556,
+                "cost_usd": 2.0122222222222224,
+                "cost_per_planned_result_usd": 2.0122222222222224
+              }
+            }
+          }
+        ]
+      },
+      "onboard": {
+        "route": "onboard",
+        "metrics": {
+          "jobs": 1,
+          "planned": 1,
+          "refused": 0,
+          "late": 0,
+          "quality_failing": 0,
+          "cost_usd": 0.03833333333333334,
+          "energy_kwh": 0.008333333333333333,
+          "downlink_gb": 0.1,
+          "failed": 0,
+          "cost_per_planned_result_usd": 0.03833333333333334,
+          "latency_p50_s": 30.8,
+          "latency_p95_s": 30.8,
+          "quality_min": 0.98,
+          "required_quality_min": 0.95,
+          "required_quality_max": 0.95
+        },
+        "successful_jobs": [
+          [
+            "heldout-1",
+            "image-00000"
+          ]
+        ],
+        "outcomes": [
+          {
+            "scenario_id": "heldout-1",
+            "input_sha256": "17bf54728e231afa619a0d25f138b0369aa285b072c3b0fbe959518463374a76",
+            "outcome_sha256": "16813e4bbf3bcd6670ac0b8a4b397ee33915730a26eb5432069cbd4796f8c27e",
+            "report": {
+              "route": "onboard",
+              "jobs": [
+                {
+                  "job_id": "image-00000",
+                  "route": "onboard",
+                  "deadline_s": 180,
+                  "required_quality": 0.95,
+                  "quality": 0.98,
+                  "status": "planned",
+                  "reason": null,
+                  "completion_s": 31.8,
+                  "downlink_gb": 0.1,
+                  "energy_kwh": 0.008333333333333333,
+                  "cost_usd": 0.03833333333333334,
+                  "receipt_id": "f6c460cd0213d7f021154ecd3227a027b40a2ad6c3e612dcd652570b22affb69"
+                }
+              ],
+              "events": [
+                {
+                  "job_id": "image-00000",
+                  "kind": "compute",
+                  "resource": "orbital",
+                  "start_s": 1,
+                  "end_s": 31,
+                  "energy_kwh": 0.008333333333333333,
+                  "cost_usd": 0.018333333333333333
+                },
+                {
+                  "job_id": "image-00000",
+                  "kind": "downlink",
+                  "resource": "continuous",
+                  "start_s": 31,
+                  "end_s": 31.8,
+                  "gb": 0.1,
+                  "cost_usd": 0.020000000000000004
+                }
+              ],
+              "summary": {
+                "planned": 1,
+                "refused": 0,
+                "downlink_gb": 0.1,
+                "energy_kwh": 0.008333333333333333,
+                "cost_usd": 0.03833333333333334,
+                "cost_per_planned_result_usd": 0.03833333333333334
+              }
+            }
+          }
+        ]
+      }
+    },
+    "training_excluded_for_lost_baseline_outcomes": [],
+    "heldout_disposition": "improvement",
+    "reason": "lower partial cost at equal useful output and unchanged quality requirements",
+    "recommendation": "independent_review",
+    "active_policy": "ground",
+    "promoted": false,
+    "stopping_condition": "all_candidates_evaluated",
+    "assumptions": [
+      "Only registered whole-scenario ground/onboard/hybrid policies; no per-job optimizer.",
+      "Same immutable scenarios, quality requirements, prices and constraints for every route.",
+      "Ground quality 1.0 is an assumed reference, not measured perfect accuracy; retained quality differs by route.",
+      "Cost is partial planning cost, not lifecycle TCO; refused plans are not failed physical executions.",
+      "Training selects the candidate; held-out assessment never reselects it or promotes it.",
+      "Local content hashes are provenance bindings, not signatures or Tool Guard authorization.",
+      "Static planner only; task106 dynamic-state composition is not implemented or claimed."
+    ]
+  },
+  "outcome_sha256": "030304d49548ec387127ca82e7252eaa0e4bc588f70a1f4d1004590b061ab772"
+}

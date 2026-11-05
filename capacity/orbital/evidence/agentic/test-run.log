@@ -1,0 +1,55 @@
+test_adapter_swap_and_replay (capacity.orbital.test_orbital.OrbitalTests.test_adapter_swap_and_replay) ... ok
+test_cli_success_error_recovery_and_no_overwrite (capacity.orbital.test_orbital.OrbitalTests.test_cli_success_error_recovery_and_no_overwrite) ... ok
+test_compare_validates_once (capacity.orbital.test_orbital.OrbitalTests.test_compare_validates_once) ... ok
+test_compute_serial_and_energy_conserved (capacity.orbital.test_orbital.OrbitalTests.test_compute_serial_and_energy_conserved) ... ok
+test_contact_bisect_keeps_boundary_and_rollback (capacity.orbital.test_orbital.OrbitalTests.test_contact_bisect_keeps_boundary_and_rollback) ... ok
+test_contract_schema_units_duplicates (capacity.orbital.test_orbital.OrbitalTests.test_contract_schema_units_duplicates) ... ok
+test_deadline_failed_reservation_rolls_back (capacity.orbital.test_orbital.OrbitalTests.test_deadline_failed_reservation_rolls_back) ... ok
+test_hand_oracle (capacity.orbital.test_orbital.OrbitalTests.test_hand_oracle) ... ok
+test_html_escapes_untrusted_fields (capacity.orbital.test_orbital.OrbitalTests.test_html_escapes_untrusted_fields) ... ok
+test_missed_contact_and_no_tiny_transfer_bypass (capacity.orbital.test_orbital.OrbitalTests.test_missed_contact_and_no_tiny_transfer_bypass) ... ok
+test_missing_directory_produces_no_partial_report (capacity.orbital.test_orbital.OrbitalTests.test_missing_directory_produces_no_partial_report) ... ok
+test_multiwindow_transfer_and_gap (capacity.orbital.test_orbital.OrbitalTests.test_multiwindow_transfer_and_gap) ... ok
+test_nonfinite_and_wrong_types_refuse (capacity.orbital.test_orbital.OrbitalTests.test_nonfinite_and_wrong_types_refuse) ... ok
+test_overflow_refuses (capacity.orbital.test_orbital.OrbitalTests.test_overflow_refuses) ... ok
+test_publish_preflight_and_staging_failure_cleanup (capacity.orbital.test_orbital.OrbitalTests.test_publish_preflight_and_staging_failure_cleanup) ... ok
+test_publish_rollback_preserves_concurrent_file (capacity.orbital.test_orbital.OrbitalTests.test_publish_rollback_preserves_concurrent_file) ... ok
+test_quality_refusal (capacity.orbital.test_orbital.OrbitalTests.test_quality_refusal) ... ok
+test_receipts_bind_source_outcome_and_events (capacity.orbital.test_orbital.OrbitalTests.test_receipts_bind_source_outcome_and_events) ... ok
+test_resource_refusal_and_corrected_recovery (capacity.orbital.test_orbital.OrbitalTests.test_resource_refusal_and_corrected_recovery) ... ok
+test_scenario_with_jobs_refused (capacity.orbital.test_orbital.OrbitalTests.test_scenario_with_jobs_refused) ... ok
+test_shared_terminal_not_double_booked (capacity.orbital.test_orbital.OrbitalTests.test_shared_terminal_not_double_booked) ... ok
+test_jsonl_duplicate_agent_journey (capacity.orbital.test_agentic.CliTest.test_jsonl_duplicate_agent_journey) ... ok
+test_jsonl_stops_at_line_budget (capacity.orbital.test_agentic.CliTest.test_jsonl_stops_at_line_budget) ... ok
+test_safe_file_output_and_refused_contract (capacity.orbital.test_agentic.CliTest.test_safe_file_output_and_refused_contract) ... ok
+test_all_refused_not_free_improvement (capacity.orbital.test_agentic.EvaluationTest.test_all_refused_not_free_improvement) ... ok
+test_candidate_order_does_not_matter (capacity.orbital.test_agentic.EvaluationTest.test_candidate_order_does_not_matter) ... ok
+test_cost_cannot_win_by_dropping_jobs (capacity.orbital.test_agentic.EvaluationTest.test_cost_cannot_win_by_dropping_jobs) ... ok
+test_duplicate_id_refused (capacity.orbital.test_agentic.EvaluationTest.test_duplicate_id_refused) ... ok
+test_empty_invalid_and_overbudget_suite (capacity.orbital.test_agentic.EvaluationTest.test_empty_invalid_and_overbudget_suite) ... ok
+test_fixed_tolerance_prefers_baseline_on_tie (capacity.orbital.test_agentic.EvaluationTest.test_fixed_tolerance_prefers_baseline_on_tie) ... ok
+test_hand_aggregate_and_improvement (capacity.orbital.test_agentic.EvaluationTest.test_hand_aggregate_and_improvement) ... ok
+test_heldout_cannot_select_the_winner (capacity.orbital.test_agentic.EvaluationTest.test_heldout_cannot_select_the_winner) ... ok
+test_rename_content_leakage_refused (capacity.orbital.test_agentic.EvaluationTest.test_rename_content_leakage_refused) ... ok
+test_semantic_fingerprint_preserves_physics_and_requirements (capacity.orbital.test_agentic.EvaluationTest.test_semantic_fingerprint_preserves_physics_and_requirements) ... ok
+test_training_winner_regresses_heldout (capacity.orbital.test_agentic.EvaluationTest.test_training_winner_regresses_heldout) ... ok
+test_worse_candidate_does_not_win (capacity.orbital.test_agentic.EvaluationTest.test_worse_candidate_does_not_win) ... ok
+test_agent_no_ui_journey_and_hand_values (capacity.orbital.test_agentic.ToolsTest.test_agent_no_ui_journey_and_hand_values) ... ok
+test_budgets (capacity.orbital.test_agentic.ToolsTest.test_budgets) ... ok
+test_cache_exhaustion_stops_new_evaluation (capacity.orbital.test_agentic.ToolsTest.test_cache_exhaustion_stops_new_evaluation) ... ok
+test_deterministic_sources_and_outcomes (capacity.orbital.test_agentic.ToolsTest.test_deterministic_sources_and_outcomes) ... ok
+test_idempotency_conflict_and_result_isolation (capacity.orbital.test_agentic.ToolsTest.test_idempotency_conflict_and_result_isolation) ... ok
+test_immutability (capacity.orbital.test_agentic.ToolsTest.test_immutability) ... ok
+test_invalid_then_corrected_retry (capacity.orbital.test_agentic.ToolsTest.test_invalid_then_corrected_retry) ... ok
+test_json_parser_duplicates_and_nonfinite (capacity.orbital.test_agentic.ToolsTest.test_json_parser_duplicates_and_nonfinite) ... ok
+test_manifest (capacity.orbital.test_agentic.ToolsTest.test_manifest) ... ok
+test_no_callbacks_or_authority_fields (capacity.orbital.test_agentic.ToolsTest.test_no_callbacks_or_authority_fields) ... ok
+test_response_and_cache_budget (capacity.orbital.test_agentic.ToolsTest.test_response_and_cache_budget) ... ok
+test_source_manifest_covers_dependencies (capacity.orbital.test_agentic.ToolsTest.test_source_manifest_covers_dependencies) ... ok
+test_unavailable_source_fails_closed (capacity.orbital.test_agentic.ToolsTest.test_unavailable_source_fails_closed) ... ok
+test_unknown_schema_and_tool (capacity.orbital.test_agentic.ToolsTest.test_unknown_schema_and_tool) ... ok
+
+----------------------------------------------------------------------
+Ran 50 tests in 0.586s
+
+OK
