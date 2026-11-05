@@ -1,0 +1,52 @@
+{
+  "schema": "capacity-orbital/dynamics-report-v1",
+  "proposal_id": "demo-reserve",
+  "input_sha256": "0f653e48f1202712247d5faf3ac3c724f675dbfdfb571a48630745869c364c82",
+  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "source_binding": "caller-supplied",
+  "classification": "synthetic predicted feasibility; no observed or executed outcomes",
+  "authority": {
+    "disposition": "allowed",
+    "reason_code": null,
+    "enforcement": "caller-supplied planning capability; not actual Tool Guard enforcement"
+  },
+  "admissible": false,
+  "nodes": {
+    "orbital": {
+      "completed_horizon": false,
+      "evaluated_until_s": 720.0,
+      "final_kwh": 0.2,
+      "final_k": 290.0074658580838,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 720.0,
+          "planned_end_s": 1800,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 1000.0,
+          "initial_k": 300,
+          "final_k": 290.0074658580838,
+          "energy": {
+            "initial_kwh": 0.4,
+            "final_kwh": 0.2,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.2,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    }
+  },
+  "violations": [
+    {
+      "code": "BATTERY_RESERVE",
+      "node": "orbital",
+      "at_s": 720.0
+    }
+  ],
+  "receipt_id": "7ccb5c2f080d82f4a16ecd96c6735017c52e53da41dc6398e9157ff7ae0d9dfe"
+}

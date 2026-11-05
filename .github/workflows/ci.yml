@@ -22,6 +22,8 @@ jobs:
           python -m pytest capacity/tests -q
       - name: Orbital planner contracts
         run: python3 -m unittest capacity.orbital.test_orbital -v
+      - name: Orbital coupled-state contracts
+        run: python3 -m unittest capacity.orbital.test_dynamics -v
       - name: Simulator invariants
         run: cd sim && python3 test_sim.py
       - name: Validation registry (model vs public record)

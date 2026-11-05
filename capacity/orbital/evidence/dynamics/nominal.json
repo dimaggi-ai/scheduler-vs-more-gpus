@@ -1,0 +1,66 @@
+{
+  "schema": "capacity-orbital/dynamics-report-v1",
+  "proposal_id": "demo-nominal",
+  "input_sha256": "8e2e3f53ca0b56715979427bc430e779cae7ab098e6074b371b2ea0512bdaa12",
+  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "source_binding": "caller-supplied",
+  "classification": "synthetic predicted feasibility; no observed or executed outcomes",
+  "authority": {
+    "disposition": "allowed",
+    "reason_code": null,
+    "enforcement": "caller-supplied planning capability; not actual Tool Guard enforcement"
+  },
+  "admissible": true,
+  "nodes": {
+    "orbital": {
+      "completed_horizon": true,
+      "evaluated_until_s": 3600,
+      "final_kwh": 0.4,
+      "final_k": 309.9999996954004,
+      "intervals": [
+        {
+          "start_s": 0,
+          "end_s": 1800,
+          "planned_end_s": 1800,
+          "solar_kw": 0,
+          "load_kw": 0.2,
+          "heat_w": 1000.0,
+          "initial_k": 300,
+          "final_k": 290.0000001522998,
+          "energy": {
+            "initial_kwh": 1,
+            "final_kwh": 0.9,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.1,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        },
+        {
+          "start_s": 1800,
+          "end_s": 3600,
+          "planned_end_s": 3600,
+          "solar_kw": 0,
+          "load_kw": 1.0,
+          "heat_w": 3000.0,
+          "initial_k": 290.0000001522998,
+          "final_k": 309.9999996954004,
+          "energy": {
+            "initial_kwh": 0.9,
+            "final_kwh": 0.4,
+            "solar_kwh": 0.0,
+            "load_kwh": 0.5,
+            "conversion_loss_kwh": 0.0,
+            "curtailed_kwh": 0.0,
+            "residual_kwh": 0.0,
+            "residual_tolerance_kwh": 1e-10
+          }
+        }
+      ]
+    }
+  },
+  "violations": [],
+  "receipt_id": "e443026183e711b1a423f7867a77aadd06eb339ebcef50ffea3489fb995be8a2"
+}
