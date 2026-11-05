@@ -36,7 +36,11 @@ def validate(s):
 def integral(c,a,b,start):
     if b<=a:return 0.0
     rate=c['hazard_per_year'];duration=b-a
-    value=duration if rate==0 else math.exp(-rate*(a-start))*(-math.expm1(-rate*duration))/rate
+    scaled=rate*duration
+    # Normalize by the rounded product, not the subnormal rate itself.
+    # When the product rounds to zero the continuous exprel limit is one.
+    mean=1.0 if scaled==0 else -math.expm1(-scaled)/scaled
+    value=math.exp(-rate*(a-start))*duration*mean
     if value==0:raise Refuse('ARITHMETIC_RESOLUTION','positive survival exposure below numeric resolution')
     return value
 

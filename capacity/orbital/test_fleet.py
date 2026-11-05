@@ -58,6 +58,24 @@ class FleetTests(unittest.TestCase):
         s=demo();s['cohorts'][0].update(utilization=1e-300,availability=1e-300)
         self.assertEqual(dispatch(request(s))['code'],'ARITHMETIC_RESOLUTION')
 
+    def test_nearzero_hazard_partial_interval_and_projection(self):
+        from .fleet import integral
+        from decimal import Decimal,localcontext
+        for rate in [0,5e-324,1e-323,1e-320,1e-310,1e-200,1e-100,1e-20,1e-12,1e-6,.1,1,10]:
+            with localcontext() as context:
+                context.prec=380
+                r=Decimal.from_float(rate);a=Decimal('.25');b=Decimal('1');start=Decimal('0')
+                oracle=b-a if not r else ((-r*(a-start)).exp()-(-r*(b-start)).exp())/r
+            actual=integral({'hazard_per_year':rate},.25,1,0)
+            self.assertTrue(math.isclose(actual,float(oracle),rel_tol=2e-14,abs_tol=1e-15),(rate,actual,float(oracle)))
+            self.assertLessEqual(actual,.75)
+            s=demo();s['cohorts']=s['cohorts'][:1];s['cohorts'][0].update(planned_commission_year=.25,retirement_year=2.5,hazard_per_year=rate)
+            template=lifecycle_example();template.update(horizon_years=3,cohorts=[])
+            result=project_economics(s,template)
+            for fleet,econ in zip(result['fleet']['annual'],result['economics']['annual_output']):
+                self.assertTrue(math.isclose(fleet['expected_useful_kw_years'],econ['useful_kw_years'],rel_tol=2e-14,abs_tol=1e-15))
+        self.assertEqual(integral({'hazard_per_year':5e-324},.25,1,.25),.75)
+
     def test_real_cli_success_refusal_recovery_overwrite(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'input.json';out=Path(d)/'out.json'

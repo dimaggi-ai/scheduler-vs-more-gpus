@@ -1,0 +1,10 @@
+{
+  "source": "79f968561be2684293fa578b6356ff30b8269743",
+  "hazard_per_year": 5e-324,
+  "a_year": 0.25,
+  "b_year": 1,
+  "commission_year": 0.25,
+  "observed_integral_years": 1,
+  "independent_limit_years": 0.75,
+  "finding": "subnormal numerator/rate division inflated exposure"
+}

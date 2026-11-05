@@ -11,3 +11,9 @@ Candidate base: `176b7f5a6fb9f380d0d3cad2d2893a1e4805036a`. New fleet module onl
 The new Ubuntu/macOS workflow runs fleet and existing diligence tests without installing dependencies. Hosted execution, independent Claude review and designated acceptance remain pending. Local test counts are not release acceptance. No production controls, network qualification or new failure calibration is claimed.
 
 Full composed modules plus bundle and fleet: **138 tests passed in 7.362 s**. Existing committed bundle fixture remained valid, confirming this additive module did not alter its source-bound parent graph.
+
+## Near-zero hazard correction
+
+At79f9685, hazard5e-324 over[0.25,1] with commissioning0.25 returned1.0 node-year per node instead of0.75. Baseline failure is retained in nearzero-baseline.json. The correction uses duration × normalized exprel(hazard × duration), with the continuous value1 when the product rounds to zero, retaining the exponential age factor and genuine output-underflow refusal. Regression covers13 hazard levels (zero, subnormal, log-spaced and ordinary), a380-digit Decimal exponential oracle, partial commissioning and economics projection agreement. Corrected source-bound evaluate/compare receipts are regenerated; earlier scaling timings remain dated to the prior implementation.
+
+Corrected validation:40 fleet+diligence tests passed in0.284s;139 composed tests passed in4.999s. These are local checks, not independent acceptance.
