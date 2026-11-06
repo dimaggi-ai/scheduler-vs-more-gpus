@@ -1,4 +1,5 @@
 """Directed validation and energy-resolution controls for accepted parent verifier."""
+import math
 import copy
 import unittest
 from .platform.fixtures import demo
@@ -31,5 +32,13 @@ class PlatformVerifierGuards(unittest.TestCase):
         self.assertTrue(_energy_matches(energy,1,start,end))
         self.assertFalse(_energy_matches(energy+1e-8,1,start,end))
         self.assertFalse(_energy_matches(float('inf'),1,start,end))
+
+    def test_energy_value_ulps_supply_only_bounded_roundoff_allowance(self):
+        measured=1.0
+        for _ in range(4):measured=math.nextafter(measured,math.inf)
+        timestamp_allowance=(math.ulp(0.0)+math.ulp(3600.0))/3600
+        self.assertGreater(measured-1.0,timestamp_allowance)
+        self.assertTrue(_energy_matches(measured,1.0,0.0,3600.0))
+        self.assertFalse(_energy_matches(math.nextafter(measured,math.inf),1.0,0.0,3600.0))
 
 if __name__=='__main__':unittest.main()

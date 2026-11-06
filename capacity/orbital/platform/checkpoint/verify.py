@@ -2,16 +2,27 @@
 from copy import deepcopy
 from fractions import Fraction as F
 from ...contracts import digest,canonical
-from .contracts import Refuse,bound,size,MAX_REPORT,view,fraction,validate,exact,enc
+from .contracts import Refuse,bound,size,MAX_REPORT,view,fraction,validate,exact,enc,declaration_bytes
+
+def prepare_report(report):
+    """Transport failures refuse; parsed structurally invalid evidence returns None."""
+    try:bound(report,verify=True)
+    except UnicodeError:raise Refuse('INVALID_ARGUMENT','surrogate report text') from None
+    declaration_bytes(report,maximum=MAX_REPORT)
+    if type(report) is not dict or report.get('route') not in ('ground','onboard','hybrid'):return None
+    for name,kind in (('jobs',list),('stages',list),('proposal',dict),('network',dict),('network_input',dict),('dynamics',dict),('processing_buffers',list),('energy',dict),('cost',dict),('replay_event_map',list),('transfer_event_map',list),('failures',list)):
+        if type(report.get(name)) is not kind:return None
+    try:result=view(report,'report')
+    except Refuse as ex:
+        if ex.code=='BUDGET_EXCEEDED':raise
+        return None
+    size(result,MAX_REPORT,'report');return result
 
 def verify_checkpoint_mission(scenario,report):
     from . import plan_checkpoint_mission,source_digest
     source_digest()
-    try:
-        bound(report,verify=True);report=view(report,'report');size(report,MAX_REPORT,'report')
-    except (Refuse,UnicodeError) as ex:
-        return dict(valid=False,errors=['INVALID_EVIDENCE: '+str(ex)],source_sha256=source_digest(),execution_performed=False)
-    if type(report) is not dict or report.get('route') not in ('ground','onboard','hybrid'):
+    report=prepare_report(report)
+    if report is None:
         return dict(valid=False,errors=['INVALID_EVIDENCE'],source_sha256=source_digest(),execution_performed=False)
     expected=plan_checkpoint_mission(scenario,report['route']);errors=[]
     if canonical(expected)!=canonical(report):errors.append('REPLAY_MISMATCH')
@@ -21,7 +32,7 @@ def verify_checkpoint_mission(scenario,report):
     # all supplied fields; these checks independently enforce mapping relationships.
     m,_=validate(scenario,expected['route']);job=m['jobs'][0];route=expected['route']
     from ...network import dynamics_proposal
-    from ...network.planner import storage_ok,Budget
+    from ...network.planner import storage_ok,Budget,available
     from ...dynamics import evaluate
     from . import call
     required=set();buffers=[]
@@ -48,6 +59,11 @@ def verify_checkpoint_mission(scenario,report):
         required.update(stage['failures'])
         role=stage['role'];node=m[role]
         if job['memory_gb']>m['compute'][node]['memory_gb']:required.add('COMPUTE_MEMORY')
+        work=job[('onboard_s' if route=='onboard' else 'preprocess_s') if role=='origin' else ('ground_s' if route=='ground' else 'hybrid_ground_s')]
+        if work==0 and job['memory_gb']<=m['compute'][node]['memory_gb']:
+            terminal=float(fraction(stage['terminal_s']))
+            if terminal<=job['deadline_s'] and not available(m['network']['nodes'][node],terminal,terminal):required.add('COMPUTE_UNAVAILABLE')
+            if terminal>job['deadline_s']:required.add('DEADLINE')
         if role=='origin':start=job['release_s'];amount=job['raw_gb']
         else:
             if not delivered:errors.append('GROUND_WITHOUT_DELIVERY');continue
