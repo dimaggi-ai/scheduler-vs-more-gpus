@@ -1,5 +1,6 @@
 """Relationship checks supplement source/input binding and deterministic replay."""
 import math
+from bisect import bisect_right
 from ..contracts import digest,canonical
 from .contracts import validate
 from .mission import plan_mission,source_digest
@@ -43,12 +44,39 @@ def _ground_schedule(m,route,network_jobs):
         else:expected[job['id']]=end;cursor=end
     return expected
 
+class VerificationBudget(ValueError):pass
+
+def _index(rows,label):
+    result={}
+    for row in rows:
+        ident=row['id']
+        if type(ident) is not str or ident in result:raise ValueError(label+' requires unique string IDs')
+        result[ident]=row
+    return result
+
+def _active_at(rows,times,charge):
+    # Preserve original row order in every fsum; never subtract running totals.
+    boundaries=[]
+    for index,row in enumerate(rows):
+        a,b=row['start_s'],row['end_s']
+        if type(a) not in (int,float) or type(b) not in (int,float) or not math.isfinite(a) or not math.isfinite(b) or b<a:raise ValueError('invalid indexed interval')
+        if b>a:boundaries.extend(((a,1,index),(b,0,index)))
+    boundaries.sort();active=set();cursor=0
+    for time in times:
+        while cursor<len(boundaries) and boundaries[cursor][0]<=time:
+            _,kind,index=boundaries[cursor]
+            if kind:active.add(index)
+            else:active.discard(index)
+            cursor+=1
+        charge(len(active)+1)
+        yield [rows[i] for i in sorted(active)]
+
 def verify_mission(m,r):
     errors=set();work=0
     def charge(amount):
         nonlocal work
         work+=amount
-        if work>2_000_000:raise ValueError('verification work budget exceeded')
+        if work>2_000_000:raise VerificationBudget('verification work budget exceeded')
     try:
         validate(m)
         if len(canonical(r).encode())>4000000:raise ValueError('report exceeds4MB')
@@ -63,9 +91,10 @@ def verify_mission(m,r):
         if r['execution_performed'] or r['promoted']:errors.add('AUTHORITY_CLAIM')
         route=r['route'];jobs={j['id']:j for j in m['jobs']};events=r['proposal']['events']
         if route not in ('ground','onboard','hybrid'):raise ValueError('unknown report route')
-        ground_schedule=_ground_schedule(m,route,{j['id']:j for j in r['network']['jobs']}) if route!='onboard' else {}
-        charge(len(events)*(len(r['jobs'])+len(m['compute'])))
-        if set(x['id'] for x in r['jobs'])!=set(jobs) or len(r['jobs'])!=len(jobs):errors.add('JOB_COVERAGE')
+        outputs=_index(r['jobs'],'output jobs');network_jobs=_index(r['network']['jobs'],'network jobs');transfer_jobs=_index(r['network_input']['jobs'],'transfer jobs');event_ids=_index(events,'events')
+        if set(outputs)!=set(jobs):errors.add('JOB_COVERAGE');raise ValueError('output job coverage differs')
+        if not set(network_jobs)<=set(jobs) or not set(transfer_jobs)<=set(jobs):raise ValueError('unknown network/transfer job')
+        ground_schedule=_ground_schedule(m,route,network_jobs) if route!='onboard' else {}
         for node in m['compute']:
             lane=sorted([e for e in events if e['kind']=='compute' and e['node']==node],key=lambda e:e['start_s'])
             if any(a['end_s']>b['start_s'] for a,b in zip(lane,lane[1:])):errors.add('COMPUTE_OVERLAP')
@@ -73,8 +102,8 @@ def verify_mission(m,r):
             j=jobs[job['id']]
             if job['quality']!=j[route+'_quality'] or job['required_quality']!=j['required_quality']:errors.add('QUALITY_RELATIONSHIP')
             if r['admissible'] and (job['completion_s'] is None or job['completion_s']>j['deadline_s'] or job['quality']<j['required_quality']):errors.add('USEFUL_COMPLETION')
-            nj=next((x for x in r['network']['jobs'] if x['id']==j['id']),None)
-            compute=[e for e in events if e['id'] in (f"compute:{j['id']}:origin",f"compute:{j['id']}:ground")]
+            nj=network_jobs.get(j['id'])
+            compute=[event_ids[key] for key in (f"compute:{j['id']}:origin",f"compute:{j['id']}:ground") if key in event_ids]
             for e in compute:
                 duration=j['onboard_s' if route=='onboard' else 'preprocess_s'] if e['node']==m['origin'] else j['ground_s' if route=='ground' else 'hybrid_ground_s']
                 if not math.isclose(e['end_s']-e['start_s'],duration,rel_tol=1e-12,abs_tol=1e-12):errors.add('COMPUTE_DURATION')
@@ -110,13 +139,14 @@ def verify_mission(m,r):
             reservations=[b for b in all_buffers if b['node']==node]
             charge(len(all_buffers))
             times={b[k] for b in reservations for k in ('start_s','end_s')}
-            charge(len(times)*len(reservations)+len(reservations)*len(n['unavailable']))
-            for time in times:
-                used=math.fsum(b['data_gb'] for b in reservations if b['start_s']<=time<b['end_s'])
+            for active in _active_at(reservations,sorted(times),charge):
+                used=math.fsum(b['data_gb'] for b in active)
                 if used>n['buffer_gb']:errors.add('STORAGE_CAPACITY')
+            outage_ends=[o['end_s'] for o in n['unavailable']]
             for b in reservations:
                 if b['start_s']<n['commissioned_s'] or b['end_s']>n['retired_s']:errors.add('STORAGE_LIFETIME')
-                if not n['preserve_storage'] and any(b['start_s']<o['end_s'] and o['start_s']<b['end_s'] for o in n['unavailable']):errors.add('STORAGE_RETENTION')
+                oi=bisect_right(outage_ends,b['start_s'])
+                if not n['preserve_storage'] and oi<len(outage_ends) and n['unavailable'][oi]['start_s']<b['end_s']:errors.add('STORAGE_RETENTION')
         # In a refused report, a storage violation is expected diagnostic evidence,
         # not corruption. Replay below still binds its exact refused disposition.
         if not r['admissible']:
@@ -124,26 +154,28 @@ def verify_mission(m,r):
         if r['admissible']:
             expected_buffers=[]
             for j in m['jobs']:
-                nj=next(x for x in r['network']['jobs'] if x['id']==j['id'])
-                transfer=next(x for x in r['network_input']['jobs'] if x['id']==j['id'])
-                out=next(x for x in r['jobs'] if x['id']==j['id'])
+                nj=network_jobs[j['id']]
+                transfer=transfer_jobs[j['id']]
+                out=outputs[j['id']]
                 if route!='ground':expected_buffers.append(dict(node=m['origin'],start_s=j['release_s'],end_s=transfer['release_s'],data_gb=j['raw_gb']))
                 if route!='onboard':expected_buffers.append(dict(node=m['destination'],start_s=nj['arrival_s'],end_s=out['completion_s'],data_gb=j['raw_gb' if route=='ground' else 'compressed_gb']))
             if sorted(expected_buffers,key=canonical)!=sorted(r['processing_buffers'],key=canonical):errors.add('PROCESSING_BUFFER_RELATIONSHIP')
-        charge(sum(len(j['hops']) for j in r['network']['jobs'])*2*len(events))
         for nj in r['network']['jobs']:
             for index,h in enumerate(nj['hops']):
                 for role,node,start,end in (('tx',h['source'],h['start_s'],h['tx_end_s']),('rx',h['destination'],h['rx_start_s'],h['arrival_s'])):
-                    event=next((x for x in events if x['id']==f"{nj['id']}:{index}:{role}"),None)
+                    event=event_ids.get(f"{nj['id']}:{index}:{role}")
                     n=m['network']['nodes'][node]
                     expected=dict(id=f"{nj['id']}:{index}:{role}",node=node,kind='transfer',start_s=start,end_s=end,power_kw=n[role+'_kw'],heat_w=n[role+'_heat_w'])
                     if event!=expected:errors.add('TRANSFER_EVENT_RELATIONSHIP')
         for node,state in r['dynamics']['nodes'].items():
             config=m['dynamics']['nodes'][node]
-            charge(len(state['intervals'])*(len(config['profiles'])+len(events)))
-            for row in state['intervals']:
-                profile=next(p for p in config['profiles'] if p['start_s']<=row['start_s']<p['end_s'])
-                active=[e for e in events if e['node']==node and e['start_s']<=row['start_s']<e['end_s']]
+            rows=sorted(state['intervals'],key=lambda row:row['start_s'])
+            profiles=config['profiles'];starts=[p['start_s'] for p in profiles]
+            node_events=[e for e in events if e['node']==node]
+            for row,active in zip(rows,_active_at(node_events,[r['start_s'] for r in rows],charge)):
+                pi=bisect_right(starts,row['start_s'])-1
+                if pi<0 or not row['start_s']<profiles[pi]['end_s']:raise ValueError('interval has no profile')
+                profile=profiles[pi]
                 expected=profile['background_kw']+math.fsum(e['power_kw'] for e in active)
                 if not math.isclose(row['load_kw'],expected,rel_tol=1e-12,abs_tol=1e-12):errors.add('POWER_RELATIONSHIP')
                 ledger=row['energy'];seconds=row['end_s']-row['start_s']
@@ -156,6 +188,8 @@ def verify_mission(m,r):
         if r['admissible'] and (r['failures'] or not r['dynamics']['admissible'] or any(j['status']!='delivered' for j in r['network']['jobs'])):errors.add('ADMISSIBILITY')
         # Full reconstruction catches omissions and unsupported/extra evidence fields.
         if digest(plan_mission(m,route))!=digest(r):errors.add('REPLAY_MISMATCH')
+    except VerificationBudget as exc:
+        errors.add('VERIFICATION_BUDGET:'+str(exc))
     except (ValueError,TypeError,KeyError,StopIteration,OverflowError,RecursionError) as exc:
         errors.add('MALFORMED_EVIDENCE:'+str(exc)[:500])
     return dict(schema='capacity-orbital/verification-v1',valid=not errors,errors=sorted(set(errors)),classification='offline consistency, not authenticity or acceptance')

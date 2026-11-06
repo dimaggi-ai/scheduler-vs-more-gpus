@@ -287,9 +287,38 @@ class PlatformTests(unittest.TestCase):
             self.assertEqual('SHARED_RESOURCE_OVERLAP' in errors,overlapping);self.assertEqual(len(errors),len(set(errors)));self.assertLess(len(errors),10)
         huge=copy.deepcopy(original);huge['processing_buffers']=[dict(node=m['origin'],start_s=i,end_s=i+1,data_gb=0) for i in range(2000)]
         huge['receipt_id']=digest({k:v for k,v in huge.items() if k!='receipt_id'})
-        self.assertTrue(any('verification work budget' in e for e in verify_mission(m,huge)['errors']))
+        self.assertIn('REPLAY_MISMATCH',verify_mission(m,huge)['errors'])
+        for i,b in enumerate(huge['processing_buffers']):b.update(start_s=i/10000,end_s=100+i/10000)
+        huge['receipt_id']=digest({k:v for k,v in huge.items() if k!='receipt_id'})
+        self.assertTrue(any(e.startswith('VERIFICATION_BUDGET:') for e in verify_mission(m,huge)['errors']))
         result=copy.deepcopy(original);result['network']['resource_reservations']=[dict(resource=['r'],start_s=0,end_s=1),dict(resource=['r'],start_s=1,end_s=2),dict(resource=['r'],start_s=.5,end_s=.5)]
         result['receipt_id']=digest({k:v for k,v in result.items() if k!='receipt_id'})
         self.assertNotIn('SHARED_RESOURCE_OVERLAP',verify_mission(m,result)['errors'])
+
+    def test_large_mismatched_job_coverage_refuses_before_relationships(self):
+        m=demo();r=plan_mission(m,'ground');template=r['jobs'][0];network=r['network']['jobs'][0]
+        r['jobs']=[dict(template,id='output-'+str(i)) for i in range(2000)]
+        r['network']['jobs']=[dict(network,id='other-'+str(i),hops=[]) for i in range(2000)]
+        r['receipt_id']=digest({k:v for k,v in r.items() if k!='receipt_id'})
+        result=verify_mission(m,r);self.assertIn('JOB_COVERAGE',result['errors']);self.assertTrue(any('coverage differs' in e for e in result['errors']))
+
+    def test_maximum_legal_profiles_and_memory_cursor(self):
+        from .contracts import canonical
+        m=demo()
+        for index,node in enumerate(m['dynamics']['nodes'].values()):
+            count=3333
+            base=node['profiles'][0]
+            node['profiles']=[dict(base,start_s=300*i/count,end_s=300*(i+1)/count) for i in range(count)]
+            if index==0:
+                first=node['profiles'].pop(0);mid=first['end_s']/2
+                node['profiles'][:0]=[dict(first,end_s=mid),dict(first,start_s=mid)]
+        self.assertEqual(sum(len(n['profiles']) for n in m['dynamics']['nodes'].values()),10000)
+        r=plan_mission(m,'hybrid');self.assertLess(len(canonical(r).encode()),4000000)
+        self.assertTrue(r['admissible']);self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
+        # A long admitted stage sets the cursor; a later memory refusal must
+        # not reset it backward to that refused job's arrival.
+        m=demo();base=copy.deepcopy(m['jobs'][0]);m['jobs']=[dict(base,id='a',ground_s=100),dict(base,id='b',ground_s=0,memory_gb=10000),dict(base,id='c',ground_s=0)]
+        r=plan_mission(m,'ground');self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
+        self.assertEqual(r['jobs'][0]['completion_s'],r['jobs'][2]['completion_s'])
 
 if __name__=='__main__':unittest.main()
