@@ -212,4 +212,113 @@ class PlatformTests(unittest.TestCase):
             p=subprocess.run([sys.executable,'-m','capacity.orbital.platform','--demo',kind],capture_output=True,text=True)
             self.assertEqual(p.returncode,code,p.stderr);self.assertIn('comparisons',json.loads(p.stdout))
 
+    def test_queued_zero_ground_and_hybrid_verify_lane(self):
+        for route,field in (('ground','ground_s'),('hybrid','hybrid_ground_s')):
+            for outage in (False,True):
+                m=demo();m['jobs'][0][field]=20;m['jobs'][1][field]=0
+                if outage:m['network']['nodes'][m['destination']]['unavailable']=[dict(start_s=20,end_s=30)]
+                r=plan_mission(m,route)
+                self.assertEqual(r['jobs'][1]['completion_s'],r['jobs'][0]['completion_s'])
+                self.assertGreater(r['jobs'][1]['completion_s'],r['network']['jobs'][1]['arrival_s'])
+                self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
+                bad=copy.deepcopy(r);bad['jobs'][1]['completion_s']=bad['network']['jobs'][1]['arrival_s'];bad['receipt_id']=digest({k:v for k,v in bad.items() if k!='receipt_id'})
+                self.assertIn('FINAL_COMPLETION',verify_mission(m,bad)['errors'])
+                m['jobs'].reverse();self.assertTrue(verify_mission(m,plan_mission(m,route))['valid'])
+            m=demo()
+            for j in m['jobs']:j[field]=0
+            self.assertTrue(verify_mission(m,plan_mission(m,route))['valid'])
+        m=demo();m['jobs'][0]['onboard_s']=20;m['jobs'][1]['onboard_s']=0
+        self.assertTrue(verify_mission(m,plan_mission(m,'onboard'))['valid'])
+
+    def test_malformed_report_references_all_boundaries(self):
+        import tempfile
+        from pathlib import Path
+        m=demo();original=plan_mission(m,'ground')
+        mutations=[lambda r:r['network']['jobs'][0]['hops'][0].update(contact_id='missing'),lambda r:r['dynamics'].update(nodes=[]),lambda r:r.update(dynamics=[]),lambda r:r['network'].update(jobs={}),lambda r:r['proposal'].update(events={}),lambda r:r['network']['jobs'][0].update(hops=[[]])]
+        for mutate in mutations:
+            r=copy.deepcopy(original);mutate(r);r['receipt_id']=digest({k:v for k,v in r.items() if k!='receipt_id'})
+            result=verify_mission(m,r);self.assertFalse(result['valid']);self.assertTrue(any(e.startswith('MALFORMED_EVIDENCE:') for e in result['errors']))
+            req=dict(schema='capacity-orbital/mission-tool-v1',id='malformed-report',tool='verify',arguments=dict(mission=m,report=r))
+            reply=dispatch(req);self.assertEqual(reply['status'],'evaluated');self.assertFalse(reply['result']['valid'])
+            with tempfile.TemporaryDirectory() as temp:
+                path=Path(temp)/'request.json';path.write_text(json.dumps(req))
+                proc=subprocess.run([sys.executable,'-m','capacity.orbital.platform','--request',str(path)],capture_output=True,text=True)
+                self.assertEqual(proc.returncode,0,proc.stderr);self.assertNotIn('Traceback',proc.stderr);self.assertFalse(json.loads(proc.stdout)['result']['valid'])
+
+    def test_honest_queue_branch_regressions(self):
+        for adjustment in ('outage-at-cursor','retired-at-cursor','retired-mid','memory','rounding','unavailable-cursor'):
+            m=demo();m['jobs'][0]['ground_s']=20;m['jobs'][1]['ground_s']=0;g=m['network']['nodes'][m['destination']]
+            if adjustment=='outage-at-cursor':g['unavailable']=[dict(start_s=36,end_s=40)]
+            elif adjustment=='retired-at-cursor':g['retired_s']=36
+            elif adjustment=='retired-mid':g['retired_s']=30
+            elif adjustment=='memory':m['jobs'][0]['memory_gb']=m['compute'][m['destination']]['memory_gb']+1
+            elif adjustment=='rounding':m['jobs'][0]['ground_s']=.1;m['jobs'][1]['ground_s']=.3
+            else:m['jobs'][0]['ground_s']=300
+            result=plan_mission(m,'ground');self.assertTrue(verify_mission(m,result)['valid'],(adjustment,verify_mission(m,result)))
+        import random
+        rng=random.Random(773)
+        for _ in range(60):
+            m=demo();template=copy.deepcopy(m['jobs'][0]);m['jobs']=[]
+            for i in range(4):
+                j=copy.deepcopy(template);j.update(id=f'j{3-i}',release_s=rng.choice([0,1,5,20]),memory_gb=rng.choice([1,10000]))
+                for key in ('ground_s','hybrid_ground_s','onboard_s','preprocess_s'):j[key]=rng.choice([0,.1,.3,5,20])
+                m['jobs'].append(j)
+            rng.shuffle(m['jobs'])
+            if rng.randrange(2):m['network']['nodes'][m['destination']]['unavailable']=[dict(start_s=20,end_s=30)]
+            for route in ('ground','hybrid','onboard'):
+                result=plan_mission(m,route);self.assertTrue(verify_mission(m,result)['valid'],verify_mission(m,result))
+
+    def test_replay_extra_fields_and_reason_codes(self):
+        m=demo();original=plan_mission(m,'ground')
+        for kind in ('extra','reason'):
+            result=copy.deepcopy(original)
+            if kind=='extra':result['extra_unverified_claim']=1
+            else:result['network']['jobs'][0]['reason_code']='altered'
+            result['receipt_id']=digest({k:v for k,v in result.items() if k!='receipt_id'})
+            self.assertIn('REPLAY_MISMATCH',verify_mission(m,result)['errors'])
+
+    def test_resource_sweep_bounded_diagnostics_and_halfopen(self):
+        m=demo();original=plan_mission(m,'ground')
+        for overlapping in (True,False):
+            result=copy.deepcopy(original)
+            result['network']['resource_reservations']=[dict(resource=['synthetic','r'],start_s=0 if overlapping else i,end_s=1 if overlapping else i+1) for i in range(4000)]
+            result['receipt_id']=digest({k:v for k,v in result.items() if k!='receipt_id'})
+            errors=verify_mission(m,result)['errors']
+            self.assertEqual('SHARED_RESOURCE_OVERLAP' in errors,overlapping);self.assertEqual(len(errors),len(set(errors)));self.assertLess(len(errors),10)
+        huge=copy.deepcopy(original);huge['processing_buffers']=[dict(node=m['origin'],start_s=i,end_s=i+1,data_gb=0) for i in range(2000)]
+        huge['receipt_id']=digest({k:v for k,v in huge.items() if k!='receipt_id'})
+        self.assertIn('REPLAY_MISMATCH',verify_mission(m,huge)['errors'])
+        for i,b in enumerate(huge['processing_buffers']):b.update(start_s=i/10000,end_s=100+i/10000)
+        huge['receipt_id']=digest({k:v for k,v in huge.items() if k!='receipt_id'})
+        self.assertTrue(any(e.startswith('VERIFICATION_BUDGET:') for e in verify_mission(m,huge)['errors']))
+        result=copy.deepcopy(original);result['network']['resource_reservations']=[dict(resource=['r'],start_s=0,end_s=1),dict(resource=['r'],start_s=1,end_s=2),dict(resource=['r'],start_s=.5,end_s=.5)]
+        result['receipt_id']=digest({k:v for k,v in result.items() if k!='receipt_id'})
+        self.assertNotIn('SHARED_RESOURCE_OVERLAP',verify_mission(m,result)['errors'])
+
+    def test_large_mismatched_job_coverage_refuses_before_relationships(self):
+        m=demo();r=plan_mission(m,'ground');template=r['jobs'][0];network=r['network']['jobs'][0]
+        r['jobs']=[dict(template,id='output-'+str(i)) for i in range(2000)]
+        r['network']['jobs']=[dict(network,id='other-'+str(i),hops=[]) for i in range(2000)]
+        r['receipt_id']=digest({k:v for k,v in r.items() if k!='receipt_id'})
+        result=verify_mission(m,r);self.assertIn('JOB_COVERAGE',result['errors']);self.assertTrue(any('coverage differs' in e for e in result['errors']))
+
+    def test_maximum_legal_profiles_and_memory_cursor(self):
+        from .contracts import canonical
+        m=demo()
+        for index,node in enumerate(m['dynamics']['nodes'].values()):
+            count=3333
+            base=node['profiles'][0]
+            node['profiles']=[dict(base,start_s=300*i/count,end_s=300*(i+1)/count) for i in range(count)]
+            if index==0:
+                first=node['profiles'].pop(0);mid=first['end_s']/2
+                node['profiles'][:0]=[dict(first,end_s=mid),dict(first,start_s=mid)]
+        self.assertEqual(sum(len(n['profiles']) for n in m['dynamics']['nodes'].values()),10000)
+        r=plan_mission(m,'hybrid');self.assertLess(len(canonical(r).encode()),4000000)
+        self.assertTrue(r['admissible']);self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
+        # A long admitted stage sets the cursor; a later memory refusal must
+        # not reset it backward to that refused job's arrival.
+        m=demo();base=copy.deepcopy(m['jobs'][0]);m['jobs']=[dict(base,id='a',ground_s=100),dict(base,id='b',ground_s=0,memory_gb=10000),dict(base,id='c',ground_s=0)]
+        r=plan_mission(m,'ground');self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
+        self.assertEqual(r['jobs'][0]['completion_s'],r['jobs'][2]['completion_s'])
+
 if __name__=='__main__':unittest.main()
