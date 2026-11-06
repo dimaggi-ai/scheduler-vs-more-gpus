@@ -1,0 +1,28 @@
+{
+  "environment": "macOS-27.0.1-arm64-arm-64bit",
+  "python": "3.12.6",
+  "measurements": [
+    {
+      "cohorts": 1,
+      "years": 3,
+      "rows": 3,
+      "seconds": 0.003877958981320262,
+      "peak_tracemalloc_bytes": 50059
+    },
+    {
+      "cohorts": 50,
+      "years": 20,
+      "rows": 1000,
+      "seconds": 0.0383921661414206,
+      "peak_tracemalloc_bytes": 991430
+    },
+    {
+      "cohorts": 200,
+      "years": 100,
+      "rows": 20000,
+      "seconds": 0.6539806670043617,
+      "peak_tracemalloc_bytes": 19291956
+    }
+  ],
+  "classification": "single local synthetic run; not benchmark guarantee"
+}
