@@ -108,6 +108,20 @@ def selected(v,path,*,time=False,maximum=31_557_600,positive=False):
 def size(value,maximum,scope):
     if len(canonical(value).encode('utf-8'))+1>maximum:raise Refuse('BUDGET_EXCEEDED',scope+' serialized byte budget')
 
+def declaration_bytes(value):
+    """Compact declaration bytes without Fraction allocation or numeric expansion."""
+    total=1;stack=[value]
+    while stack:
+        v=stack.pop()
+        if type(v) is dict:
+            total+=2+max(0,len(v)-1)
+            for k,x in v.items():total+=len(canonical(k).encode('utf-8'))+1;stack.append(x)
+        elif type(v) is list:total+=2+max(0,len(v)-1);stack.extend(v)
+        elif type(v) in (int,float,Decimal,Token):total+=len(token(v))
+        else:total+=len(canonical(v).encode('utf-8'))
+        if total>MAX_INPUT:raise Refuse('BUDGET_EXCEEDED','scenario declaration byte budget')
+    return total
+
 def parse(raw):
     if isinstance(raw,str):raw=raw.encode('utf-8')
     if len(raw)>MAX_VERIFY:raise Refuse('BUDGET_EXCEEDED','raw request byte budget')
@@ -125,7 +139,10 @@ def parse(raw):
     verify=type(v) is dict and v.get('tool')=='verify'
     try:
         if len(raw)>(MAX_VERIFY if verify else MAX_INPUT):raise Refuse('BUDGET_EXCEEDED','raw request byte budget')
-        try:bound(v,verify=verify)
+        try:
+            if verify and type(v.get('input')) is dict and 'scenario' in v['input']:
+                bound(v['input']['scenario']);declaration_bytes(v['input']['scenario'])
+            bound(v,verify=verify)
         except UnicodeError:raise Refuse('INVALID_ARGUMENT','surrogate text') from None
     except Refuse as ex:
         try:ex.request_id=text(v.get('id'),128) if type(v) is dict else None
@@ -147,6 +164,7 @@ def normalized(s):
 def validate(s,route):
     try:bound(s)
     except UnicodeError:raise Refuse('INVALID_ARGUMENT','surrogate text') from None
+    declaration_bytes(s)
     fields(s,'schema id mission replay');text(s['id'],128)
     if s['schema']!='capacity-orbital/checkpoint-mission-v2':raise Refuse('UNSUPPORTED_SCHEMA','unsupported wrapper schema')
     if route not in ROUTES:raise Refuse('INVALID_ARGUMENT','unknown route')

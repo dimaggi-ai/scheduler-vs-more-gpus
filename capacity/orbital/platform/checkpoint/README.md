@@ -58,3 +58,17 @@ Mission number tokens are limited to768 characters/coefficient digits, exponent 
 This package hashes its code and imported local parent modules/initializers. It requires the reviewed v1 parent source hash `dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e`. It does not register in or change v1. Hashes establish source consistency, not signatures, execution authenticity or technical acceptance. Version updates require explicit reviewed composition and refreshed evidence. Cross-tool review, CI and designated acceptance remain separate delivery gates.
 
 The source receipt uses an explicit required-file inventory as well as discovery of additional source files. Removing an already imported module therefore refuses `SOURCE_UNAVAILABLE`; it cannot silently yield an incomplete digest. This is a completeness check at evaluation time, not executable attestation or protection against concurrent filesystem modification.
+
+## Source-guarded startup
+
+For structured missing-source handling **before imports**, use the standalone launcher:
+
+```sh
+python3 capacity/orbital/platform/checkpoint/cli.py --request capacity/orbital/examples/checkpoint-mission-plan.json --output /tmp/fresh-guarded-mission.json
+```
+
+It reads every path in the single `source_inventory.json` (including itself and the inventory), then imports from the preflighted repository tree. Missing/unreadable source returns the normal refusal JSON with null unknown ID and exit2, without publishing output. A narrow missing-module race guard rechecks the corresponding inventoried path; unrelated import/programmer errors propagate. This assumes the launcher and Python standard library can start. It is not executable attestation or a filesystem transaction.
+
+The `-m capacity.orbital.platform.checkpoint` convenience interface still depends on Python successfully initializing parent packages and checkpoint imports before `__main__` runs. It cannot promise structured refusal for files missing during that earlier initialization; use the standalone launcher for that startup contract. Parent package initialization is unchanged.
+
+Verification separately reconstructs transfer inputs, processing buffers and storage checks, reevaluates dynamics, checks required failure coverage/admissibility, exact map cardinalities and declared resource mappings. This supplements full replay equality: dropping a buffer or failure in a shared planner must not make a failed mission verify as admissible. Invalid report numeric views return `valid:false` consistently through the API/tool/CLI. Scenario depth/node/declaration-byte limits are checked before exact rational normalization.

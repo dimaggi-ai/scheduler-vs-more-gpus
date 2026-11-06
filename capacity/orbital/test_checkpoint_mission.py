@@ -50,11 +50,88 @@ class CheckpointMission(unittest.TestCase):
         self.assertTrue(verify(s,plan(s,'hybrid'))['valid'])
         self.assertEqual(compare(s,s,'hybrid',pin)['outcome'],'both_admissible')
 
+    def test_failure_coverage_and_shared_planner_defects(self):
+        scenarios=[]
+        for code,change,route in [
+            ('PROCESSING_BUFFER_CAPACITY',lambda m:m['network']['nodes']['A'].update(buffer_gb=.5),'onboard'),
+            ('DYNAMICS_BATTERY_RESERVE',lambda m:m['dynamics']['nodes']['A']['battery'].update(initial_kwh=.0001),'onboard'),
+            ('QUALITY',lambda m:m['jobs'][0].update(onboard_quality=.1),'onboard'),
+            ('COMPUTE_MEMORY',lambda m:m['compute']['A'].update(memory_gb=.5),'onboard'),
+            ('NETWORK_',lambda m:m['network'].update(contacts=[]),'ground')]:
+            scenario=demo();change(scenario['mission']);report=plan(scenario,route)
+            self.assertFalse(report['admissible']);self.assertTrue(any(f['code'].startswith(code) for f in report['failures']));self.assertTrue(verify(scenario,report)['valid'])
+            bad=copy.deepcopy(report);bad['failures']=[];bad['admissible']=True
+            if code=='PROCESSING_BUFFER_CAPACITY':bad['processing_buffers']=[]
+            bad.pop('receipt_id');bad['receipt_id']=digest(bad)
+            # A shared planner bug also appears on replan. Relationship checks must
+            # reject it even though whole-report replay equality now succeeds.
+            with patch('capacity.orbital.platform.checkpoint.plan_checkpoint_mission',return_value=bad):
+                self.assertFalse(verify(scenario,bad)['valid'],code)
+        s=demo();r=plan(s,'hybrid')
+        for collection in ('events','replay_event_map'):
+            bad=copy.deepcopy(r);bad['stages'][0][collection].pop();bad.pop('receipt_id');bad['receipt_id']=digest(bad)
+            with patch('capacity.orbital.platform.checkpoint.plan_checkpoint_mission',return_value=bad):
+                self.assertIn('TRACE_CARDINALITY',verify(s,bad)['errors'])
+        bad=copy.deepcopy(r);event=bad['stages'][0]['events'][0];ident=event['id'];event['start_s']+=1;event['end_s']+=1
+        for e in bad['proposal']['events']:
+            if e['id']==ident:e.update(start_s=event['start_s'],end_s=event['end_s'])
+        with patch('capacity.orbital.platform.checkpoint.plan_checkpoint_mission',return_value=bad):
+            self.assertIn('DECLARED_EVENT_MAPPING',verify(s,bad)['errors'])
+        with patch('capacity.orbital.platform.checkpoint.parent_source_digest',return_value='0'*64):
+            self.refusal(lambda:plan(s,'hybrid'),'SOURCE_MISMATCH')
+
+    def test_report_numeric_view_and_scenario_preflight(self):
+        from .platform.checkpoint.contracts import Token
+        for badvalue in (Token('1e-400'),Token('1e400')):
+            s=demo();r=plan(s,'hybrid');r['jobs'][0]['completion_s']=badvalue
+            self.assertFalse(verify(s,r)['valid'])
+            result=dispatch(dict(schema=request()['schema'],id='evidence',tool='verify',input=dict(scenario=s,report=r)))
+            self.assertEqual(result['status'],'ok');self.assertFalse(result['result']['valid'])
+        req=dict(schema=request()['schema'],id='oversized-scenario',tool='verify',input=dict(scenario={'values':[1]*50_001},report={}))
+        with patch('capacity.orbital.platform.checkpoint.tools.normalize',side_effect=AssertionError('must not normalize oversized scenario')):
+            # Envelope normalization is small; guard scenario before any normalization.
+            result=dispatch(req)
+        self.assertEqual(result['code'],'BUDGET_EXCEEDED')
+        self.refusal(lambda:parse(b'{"tool":"verify","id":"bad-unicode","input":{"scenario":{"x":"\\ud800"}}}'),'INVALID_ARGUMENT')
+
+    def test_source_inventory_import_coverage_and_guarded_startup(self):
+        import shutil
+        from .platform.checkpoint import REQUIRED_SOURCE
+        root=Path(__file__).resolve().parent.parent
+        code="""import json,sys
+from pathlib import Path
+from capacity.orbital.platform.checkpoint import plan_checkpoint_mission,verify_checkpoint_mission,compare_checkpoint_missions
+from capacity.orbital.platform.checkpoint.fixtures import demo
+from capacity.orbital.platform.checkpoint.tools import dispatch
+from capacity.orbital.platform.checkpoint.contracts import enc,normalized
+from capacity.orbital.contracts import digest
+s=demo();r=plan_checkpoint_mission(s,'hybrid');verify_checkpoint_mission(s,r);compare_checkpoint_missions(s,s,'hybrid',digest(enc(normalized(s))))
+root=Path('capacity').resolve()
+print(json.dumps(sorted(str(Path(m.__file__).resolve().relative_to(root)) for m in list(sys.modules.values()) if getattr(m,'__file__',None) and Path(m.__file__).resolve().is_relative_to(root))))
+"""
+        run=subprocess.run([sys.executable,'-c',code],capture_output=True,text=True,timeout=30)
+        self.assertEqual(run.returncode,0,run.stderr);self.assertLessEqual(set(json.loads(run.stdout)),set(REQUIRED_SOURCE))
+        with tempfile.TemporaryDirectory() as td:
+            target=Path(td)/'capacity';shutil.copytree(root,target,ignore=shutil.ignore_patterns('__pycache__'))
+            launcher=target/'orbital/platform/checkpoint/cli.py'
+            for name in ('orbital/platform/checkpoint/contracts.py','orbital/platform/checkpoint/tools.py','orbital/platform/mission.py'):
+                path=target/name;hidden=path.with_suffix('.hidden');path.rename(hidden)
+                try:
+                    run=subprocess.run([sys.executable,str(launcher),'--request','unused','--output',str(target/'must-not-publish.json')],capture_output=True,text=True,timeout=20)
+                    self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE');self.assertNotIn('Traceback',run.stderr);self.assertFalse((target/'must-not-publish.json').exists())
+                finally:hidden.rename(path)
+            import os
+            foreign=Path(td)/'foreign/capacity';foreign.mkdir(parents=True)
+            (foreign/'__init__.py').write_text("raise RuntimeError('wrong source tree')\n")
+            env=dict(os.environ,PYTHONPATH=str(foreign.parent))
+            run=subprocess.run([sys.executable,str(launcher),'--request',str(target/'orbital/examples/checkpoint-mission-plan.json')],env=env,capture_output=True,text=True,timeout=30)
+            self.assertEqual(run.returncode,0,run.stderr);self.assertEqual(json.loads(run.stdout)['status'],'ok')
+
     def test_parent_and_nominal_routes(self):
         self.assertEqual(v1_source(),PARENT_SOURCE)
         s=demo();old=copy.deepcopy(s)
         for route,completion in [('ground',26),('hybrid',F(54887,4096)),('onboard',6.600000000000001)]:
-            r=plan(s,route);self.assertTrue(r['admissible']);self.assertEqual(r['jobs'][0]['completion_s'],float(completion));self.assertTrue(verify(s,r)['valid'])
+            r=plan(s,route);self.assertTrue(r['admissible']);self.assertIs(r['execution_performed'],False);self.assertIs(r['promoted'],False);self.assertEqual(r['jobs'][0]['completion_s'],float(completion));self.assertTrue(verify(s,r)['valid'])
             self.assertEqual(r['parent_view_sha256'],digest(s['mission']))
             self.assertAlmostEqual(r['cost']['partial_operating_usd'],plan_mission(s['mission'],route)['cost']['partial_operating_usd'],delta=.000002)
         self.assertEqual(s,old)
@@ -97,7 +174,7 @@ class CheckpointMission(unittest.TestCase):
             s['mission']['network']['nodes']['A']['unavailable']=[dict(start_s=5,end_s=7)]+([dict(start_s=7,end_s=9)] if adjacent else [])
             r=plan(s,'onboard');self.assertEqual(fraction(r['stages'][0]['completion_s']),9 if adjacent else 7);self.assertIsNone(r['stages'][0]['replay'])
         s=demo();s['mission']['jobs'][0].update(preprocess_s=0,hybrid_ground_s=0,deadline_s=6.4)
-        r=plan(s,'hybrid');self.assertTrue(r['admissible']);self.assertEqual(r['jobs'][0]['completion_s'],6.4);self.assertEqual(fraction(r['stages'][1]['quantization_delay_s']),0)
+        r=plan(s,'hybrid');self.assertTrue(r['admissible']);self.assertIs(r['execution_performed'],False);self.assertIs(r['promoted'],False);self.assertEqual(r['jobs'][0]['completion_s'],6.4);self.assertEqual(fraction(r['stages'][1]['quantization_delay_s']),0)
 
     def test_long_identifiers_remap_and_tampering(self):
         s=demo();s['mission']['jobs'][0]['id']='j'*200;r=plan(s,'ground')
@@ -158,11 +235,19 @@ class CheckpointMission(unittest.TestCase):
         r=dispatch(dict(schema=request()['schema'],id='decimal-horizon',tool='plan',input=dict(scenario=s,route='ground')))
         self.assertEqual(r['status'],'ok')
 
+    def test_regression_summary_and_weighted_energy(self):
+        s=self.loss();s['mission']['jobs'][0]['deadline_s']=20
+        candidate=copy.deepcopy(s);candidate['replay']['origin']['policy']['checkpoint_every_work_s']=1
+        result=compare(s,candidate,'onboard',digest(enc(normalized(s))))
+        self.assertEqual(result['outcome'],'regression');self.assertIsNone(result['deltas']['completion_s']);self.assertIs(result['promoted'],False)
+        s=self.loss();s['replay']['origin']['power_kw'].update(checkpoint=3,restart=2)
+        self.assertEqual(fraction(plan(s,'onboard')['energy']['declared_replay_kwh']),F(23,3600))
+
     def test_fixed_comparison_and_allowed_descriptions(self):
         s=demo();pin=digest(enc(normalized(s)));c=copy.deepcopy(s);c['id']='candidate';c['mission']['id']='new';c['mission']['diligence']['mission_id']='new';c['replay']['origin']['policy'].update(version='new',checkpoint_every_work_s=4)
         self.assertEqual(compare(s,c,'onboard',pin)['outcome'],'both_admissible')
         self.refusal(lambda:compare(s,c,'onboard','0'*64),'BASELINE_BINDING')
-        changes=[lambda x:x['mission']['compute']['A'].update(cost_per_s_usd=.02),lambda x:x['replay']['origin']['policy'].update(restart_duration_s=3),lambda x:x['mission']['jobs'][0].update(raw_gb=2),lambda x:x['replay']['origin']['heat_w'].update(down=99)]
+        changes=[lambda x:x['mission']['compute']['A'].update(cost_per_s_usd=.02),lambda x:x['replay']['origin']['policy'].update(restart_duration_s=3),lambda x:x['replay']['origin']['policy'].update(checkpoint_duration_s=3),lambda x:x['mission']['jobs'][0].update(raw_gb=2),lambda x:x['replay']['origin']['heat_w'].update(down=99)]
         for change in changes:
             c=copy.deepcopy(s);change(c);self.refusal(lambda:compare(s,c,'onboard',pin),'BASELINE_MISMATCH')
 
@@ -186,8 +271,18 @@ class CheckpointMission(unittest.TestCase):
             p,r=run(request(),True);self.assertEqual(p.returncode,0);self.assertEqual(out.read_text(),canonical(r)+'\n');before=out.read_bytes()
             _,bad=run(request(),True);self.assertEqual(bad['code'],'IO_ERROR');self.assertEqual(bad['id'],'demo-plan');self.assertEqual(before,out.read_bytes())
             _,v=run(dict(schema=request()['schema'],id='verify',tool='verify',input=dict(scenario=demo(),report=r['result'])));self.assertTrue(v['result']['valid'])
+            for numeric in ('1e-400','1e400'):
+                evidence=copy.deepcopy(r['result']);evidence['jobs'][0]['completion_s']='RAW_NUMBER'
+                envelope=dict(schema=request()['schema'],id='invalid-evidence',tool='verify',input=dict(scenario=demo(),report=evidence))
+                path.write_text(canonical(envelope).replace('"RAW_NUMBER"',numeric)+'\n')
+                proc=subprocess.run([sys.executable,'-m','capacity.orbital.platform.checkpoint','--request',str(path)],capture_output=True,text=True,timeout=20)
+                value=json.loads(proc.stdout);self.assertEqual(proc.returncode,0);self.assertEqual(value['status'],'ok');self.assertFalse(value['result']['valid'])
             req=request();req['input']['scenario']['mission']['jobs'][0]['preprocess_s']=2.1
-            _,refused=run(req);self.assertEqual(refused['code'],'UNSUPPORTED_NUMERIC_DOMAIN');self.assertEqual(refused['id'],'demo-plan')
+            proc,refused=run(req);self.assertEqual(proc.returncode,2);self.assertEqual(refused['code'],'UNSUPPORTED_NUMERIC_DOMAIN');self.assertEqual(refused['id'],'demo-plan')
+            refused_path=Path(td)/'must-not-exist.json'
+            path.write_text(canonical(req)+'\n')
+            proc=subprocess.run([sys.executable,'-m','capacity.orbital.platform.checkpoint','--request',str(path),'--output',str(refused_path)],capture_output=True,text=True,timeout=20)
+            self.assertEqual(proc.returncode,2);self.assertFalse(refused_path.exists())
             _,good=run(request());self.assertEqual(good['status'],'ok')
 
 if __name__=='__main__':unittest.main()

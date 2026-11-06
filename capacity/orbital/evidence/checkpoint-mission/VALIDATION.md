@@ -1,5 +1,15 @@
 # Checkpoint mission candidate validation
 
+## Current Claude205 correction
+
+The F1–F5 follow-up adds independent data/buffer/storage/dynamics/failure and map-cardinality checks, invalid-evidence result consistency, early verify-scenario budgets, and a standalone source-guarded launcher. Seventeen checkpoint methods plus two parent numeric-guard methods pass. The composed eleven-module suite passed189 tests in29.959s before the final narrow surrogate-preflight classification correction; focused tests rerun after that correction. Startup controls run under Python3.12,3.14 and3.9, including missing own/parent files and a hostile PYTHONPATH.
+
+Nine directed harmful source mutants in disposable copies are caught (review205-mutations.json): origin buffer, storage failure, dynamics failure, quality failure, promotion, CLI exit, inventory omission, parent event numeric guard and parent timestamp-energy ULP allowance. These are targeted controls, not a mutation-coverage percentage or a claim to kill equivalent mutations. Parent production bytes remain exact86ab0c5. The added parent test file and workflow step change no accepted parent algorithm.
+
+CLI plan/verify/compare receipts were regenerated via the standalone launcher. Current-head hosted CI, cross-tool re-review and designated acceptance are pending. The not-yet-run statements below describe historical local checkpoints only; they are not current claims about earlier heads.
+
+## Historical first source checkpoint
+
 First source candidate on composed base aa7afc9. Twelve focused test methods pass, including 2,047-row compact report transport and a retained 4,095-row serialized-report budget refusal. Real CLI plan, verify and fixed-baseline comparison receipts are beside this file. Tests also exercise no-overwrite refusal and explicit corrected retry. Initial hand-oracle fixture incorrectly specified work10 for finish17; corrected to work6, with loss4, busy15 and finish17. No algorithm change was made to force the expected timeline.
 
 Parent source remains349c7248ae57391cbd12007938a464fbc8d75707547ea74afdc14beff7842dd9 at this checkpoint. A subsequent explicitly authorized parent composition will regenerate these receipts. The new Ubuntu/macOS workflow is committed but has not run. Independent review and designated acceptance are pending; these are synthetic predictions, not qualification of a physical mission.

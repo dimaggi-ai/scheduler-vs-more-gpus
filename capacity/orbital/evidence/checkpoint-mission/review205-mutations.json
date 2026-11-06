@@ -1,0 +1,68 @@
+{
+  "scope": "directed harmful mutants in disposable source copies; no completeness claim",
+  "results": [
+    {
+      "mutation": "origin buffer",
+      "caught": true,
+      "test": "test_failure_coverage_and_shared_planner_defects",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_failure_coverage_and_shared_planner_defects (capacity.orbital.test_checkpoint_mission.CheckpointMission.test_failure_coverage_and_shared_planner_defects)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpcxr9qmme/origin-buffer/capacity/orbital/test_checkpoint_mission.py\", line 62, in test_failure_coverage_and_shared_planner_defects\n    self.assertFalse(report['admissible']);self.assertTrue(any(f['code'].startswith(code) for f in report['failures']));self.assertTrue(verify(scenario,report)['valid'])\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.031s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "storage failure",
+      "caught": true,
+      "test": "test_failure_coverage_and_shared_planner_defects",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_failure_coverage_and_shared_planner_defects (capacity.orbital.test_checkpoint_mission.CheckpointMission.test_failure_coverage_and_shared_planner_defects)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpcxr9qmme/storage-failure/capacity/orbital/test_checkpoint_mission.py\", line 62, in test_failure_coverage_and_shared_planner_defects\n    self.assertFalse(report['admissible']);self.assertTrue(any(f['code'].startswith(code) for f in report['failures']));self.assertTrue(verify(scenario,report)['valid'])\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.031s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "dynamics failure",
+      "caught": true,
+      "test": "test_failure_coverage_and_shared_planner_defects",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_failure_coverage_and_shared_planner_defects (capacity.orbital.test_checkpoint_mission.CheckpointMission.test_failure_coverage_and_shared_planner_defects)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpcxr9qmme/dynamics-failure/capacity/orbital/test_checkpoint_mission.py\", line 62, in test_failure_coverage_and_shared_planner_defects\n    self.assertFalse(report['admissible']);self.assertTrue(any(f['code'].startswith(code) for f in report['failures']));self.assertTrue(verify(scenario,report)['valid'])\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.110s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "quality failure",
+      "caught": true,
+      "test": "test_failure_coverage_and_shared_planner_defects",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_failure_coverage_and_shared_planner_defects (capacity.orbital.test_checkpoint_mission.CheckpointMission.test_failure_coverage_and_shared_planner_defects)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpcxr9qmme/quality-failure/capacity/orbital/test_checkpoint_mission.py\", line 62, in test_failure_coverage_and_shared_planner_defects\n    self.assertFalse(report['admissible']);self.assertTrue(any(f['code'].startswith(code) for f in report['failures']));self.assertTrue(verify(scenario,report)['valid'])\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 1 test in 0.190s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "promotion",
+      "caught": true,
+      "test": "test_parent_and_nominal_routes",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_parent_and_nominal_routes (capacity.orbital.test_checkpoint_mission.CheckpointMission.test_parent_and_nominal_routes)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpcxr9qmme/promotion/capacity/orbital/test_checkpoint_mission.py\", line 122, in test_parent_and_nominal_routes\n    r=plan(s,route);self.assertTrue(r['admissible']);self.assertIs(r['execution_performed'],False);self.assertIs(r['promoted'],False);self.assertEqual(r['jobs'][0]['completion_s'],float(completion));self.assertTrue(verify(s,r)['valid'])\n                                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: True is not False\n\n----------------------------------------------------------------------\nRan 1 test in 0.035s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "CLI exit",
+      "caught": true,
+      "test": "test_real_cli_roundtrip_refusal_and_recovery",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_real_cli_roundtrip_refusal_and_recovery (capacity.orbital.test_checkpoint_mission.CheckpointMission.test_real_cli_roundtrip_refusal_and_recovery)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpcxr9qmme/CLI-exit/capacity/orbital/test_checkpoint_mission.py\", line 269, in test_real_cli_roundtrip_refusal_and_recovery\n    proc,refused=run(req);self.assertEqual(proc.returncode,2);self.assertEqual(refused['code'],'UNSUPPORTED_NUMERIC_DOMAIN');self.assertEqual(refused['id'],'demo-plan')\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 0 != 2\n\n----------------------------------------------------------------------\nRan 1 test in 0.475s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "inventory omission",
+      "caught": true,
+      "test": "test_source_inventory_import_coverage_and_guarded_startup",
+      "returncode": 1,
+      "evidence": "latform/diligence.py', 'orbital/network/fixtures.py', 'orbital/agentic/__init__.py', 'orbital/contacts.py', 'orbital/__init__.py', 'orbital/diligence/__init__.py', 'orbital/platform/__init__.py', 'orbital/reliability/__init__.py'} not less than or equal to {'orbital/reliability/contracts.py', 'orbital/diligence/api.py', 'orbital/platform/mission.py', 'orbital/output.py', 'orbital/dynamics/physics.py', 'orbital/agentic/__main__.py', 'orbital/platform/evaluation.py', 'orbital/platform/verify.py', 'orbital/platform/checkpoint/fixtures.py', 'orbital/reliability/fixtures.py', 'orbital/network/adapter.py', 'orbital/platform/checkpoint/verify.py', 'orbital/agentic/request.schema.json', 'orbital/dynamics/__init__.py', 'orbital/planner.py', 'orbital/diligence/__main__.py', '__init__.py', 'orbital/contracts.py', 'orbital/dynamics/report.py', 'orbital/network/__init__.py', 'orbital/platform/checkpoint/source_inventory.json', 'orbital/platform/fixtures.py', 'orbital/platform/semantic.py', 'orbital/__main__.py', 'orbital/reliability/__main__.py', 'orbital/diligence/report.py', 'orbital/dynamics/kernel.py', 'orbital/platform/checkpoint/tools.py', 'orbital/diligence/fixtures.py', 'orbital/platform/request.schema.json', 'orbital/network/__main__.py', 'orbital/network/contracts.py', 'orbital/resources.py', 'orbital/report.py', 'orbital/platform/contracts.py', 'orbital/benchmark.py', 'orbital/diligence/lifecycle.py', 'orbital/reliability/api.py', 'orbital/platform/checkpoint/__main__.py', 'orbital/agentic/dispatcher.py', 'orbital/diligence/contracts.py', 'orbital/network/planner.py', 'orbital/adapters.py', 'orbital/dynamics/fixtures.py', 'orbital/agentic/benchmark.py', 'orbital/platform/__main__.py', 'orbital/agentic/contracts.py', 'orbital/diligence/claims.py', 'orbital/platform/tools.py', 'orbital/dynamics/contracts.py', 'orbital/platform/checkpoint/__init__.py', 'orbital/platform/checkpoint/cli.py', 'orbital/agentic/evaluation.py', 'orbital/platform/report.py', 'orbital/platform/diligence.py', 'orbital/network/fixtures.py', 'orbital/agentic/__init__.py', 'orbital/contacts.py', 'orbital/__init__.py', 'orbital/diligence/__init__.py', 'orbital/platform/feedback.py', 'orbital/dynamics/__main__.py', 'orbital/platform/__init__.py', 'orbital/network/report.py', 'orbital/platform/composition.json', 'orbital/diligence/benchmark.py', 'orbital/reliability/__init__.py'}\n\n----------------------------------------------------------------------\nRan 1 test in 0.204s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "parent event numeric guard",
+      "caught": true,
+      "test": "test_numeric_rows_refuse_before_derived_arithmetic",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_numeric_rows_refuse_before_derived_arithmetic (capacity.orbital.test_platform_verifier_guards.PlatformVerifierGuards.test_numeric_rows_refuse_before_derived_arithmetic)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpms1dl2z5/parent-event-numeric-guard/capacity/orbital/test_platform_verifier_guards.py\", line 24, in test_numeric_rows_refuse_before_derived_arithmetic\n    with self.assertRaises(ValueError,msg=(index,key,type(invalid))):_report_shapes(changed)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ValueError not raised : (2, 'power_kw', <class 'str'>)\n\n----------------------------------------------------------------------\nRan 1 test in 0.030s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "mutation": "parent timestamp energy ULP",
+      "caught": true,
+      "test": "test_energy_accounts_for_timestamp_resolution_not_large_tolerance",
+      "returncode": 1,
+      "evidence": "======================================================================\nFAIL: test_energy_accounts_for_timestamp_resolution_not_large_tolerance (capacity.orbital.test_platform_verifier_guards.PlatformVerifierGuards.test_energy_accounts_for_timestamp_resolution_not_large_tolerance)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/q4/spdpsshx64721kgrlqbkfx4m0000gn/T/tmpms1dl2z5/parent-timestamp-energy-ULP/capacity/orbital/test_platform_verifier_guards.py\", line 31, in test_energy_accounts_for_timestamp_resolution_not_large_tolerance\n    self.assertTrue(_energy_matches(energy,1,start,end))\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nFAILED (failures=1)\n"
+    }
+  ]
+}

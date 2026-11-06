@@ -22,74 +22,8 @@ BUDGETS={'proposal':{'dynamics adapter event budget exceeds10000'},'dynamics':{'
 
 # Explicit reviewed inventory: globs additionally bind newly present source files,
 # but can never silently erase a required cached module from the source receipt.
-REQUIRED_SOURCE = tuple("""
-__init__.py
-orbital/__init__.py
-orbital/__main__.py
-orbital/adapters.py
-orbital/agentic/__init__.py
-orbital/agentic/__main__.py
-orbital/agentic/benchmark.py
-orbital/agentic/contracts.py
-orbital/agentic/dispatcher.py
-orbital/agentic/evaluation.py
-orbital/agentic/request.schema.json
-orbital/benchmark.py
-orbital/contacts.py
-orbital/contracts.py
-orbital/diligence/__init__.py
-orbital/diligence/__main__.py
-orbital/diligence/api.py
-orbital/diligence/benchmark.py
-orbital/diligence/claims.py
-orbital/diligence/contracts.py
-orbital/diligence/fixtures.py
-orbital/diligence/lifecycle.py
-orbital/diligence/report.py
-orbital/dynamics/__init__.py
-orbital/dynamics/__main__.py
-orbital/dynamics/contracts.py
-orbital/dynamics/fixtures.py
-orbital/dynamics/kernel.py
-orbital/dynamics/physics.py
-orbital/dynamics/report.py
-orbital/network/__init__.py
-orbital/network/__main__.py
-orbital/network/adapter.py
-orbital/network/contracts.py
-orbital/network/fixtures.py
-orbital/network/planner.py
-orbital/network/report.py
-orbital/output.py
-orbital/planner.py
-orbital/platform/__init__.py
-orbital/platform/__main__.py
-orbital/platform/checkpoint/__init__.py
-orbital/platform/checkpoint/__main__.py
-orbital/platform/checkpoint/contracts.py
-orbital/platform/checkpoint/fixtures.py
-orbital/platform/checkpoint/tools.py
-orbital/platform/checkpoint/verify.py
-orbital/platform/composition.json
-orbital/platform/contracts.py
-orbital/platform/diligence.py
-orbital/platform/evaluation.py
-orbital/platform/feedback.py
-orbital/platform/fixtures.py
-orbital/platform/mission.py
-orbital/platform/report.py
-orbital/platform/request.schema.json
-orbital/platform/semantic.py
-orbital/platform/tools.py
-orbital/platform/verify.py
-orbital/reliability/__init__.py
-orbital/reliability/__main__.py
-orbital/reliability/api.py
-orbital/reliability/contracts.py
-orbital/reliability/fixtures.py
-orbital/report.py
-orbital/resources.py
-""".split())
+import json
+REQUIRED_SOURCE = tuple(json.loads((Path(__file__).parent/'source_inventory.json').read_text()))
 
 def source_digest():
     root=Path(__file__).resolve().parents[2]
@@ -234,6 +168,7 @@ def plan_checkpoint_mission(scenario,route):
     try:operating=math.fsum((float(cost),network['estimated_cost']))
     except OverflowError:raise Refuse('UNSUPPORTED_NUMERIC_DOMAIN','derived operating cost overflow') from None
     if not all(math.isfinite(x) for x in (proposed,operating)):raise Refuse('UNSUPPORTED_NUMERIC_DOMAIN','derived resource/cost float overflow')
+    fail=list({f['code']:f for f in reversed(fail)}.values())
     from ..diligence import screen
     result=dict(schema='capacity-orbital/checkpoint-mission-report-v2',scenario_id=scenario['id'],input_sha256=input_hash,parent_view_sha256=digest(m),parent_source_sha256=PARENT_SOURCE,source_sha256=source,route=route,admissible=not fail,failures=fail,jobs=[dict(id=job['id'],completion_s=completion,quality=job[route+'_quality'],required_quality=job['required_quality'])],stages=stages,network_input=net,network=network,proposal=proposal,original_proposal_id=original['id'],transfer_event_map=transfer_map,replay_event_map=maps,dynamics=physics,processing_buffers=[dict(node=n,start_s=a,end_s=b,data_gb=v) for n,a,b,v in buffers],energy=dict(declared_replay_kwh=declared,mapped_replay_kwh=mapped,signed_conversion_difference_kwh=mapped-declared,proposed_event_kwh=proposed,scope='conditional stages entirely excluded; mapped parent float whole-proposal prediction, not measured energy; dynamics may evaluate only prefix'),cost=dict(compute_exact_usd=cost,network_approximate_usd=network['estimated_cost'],partial_operating_usd=operating,scope='mixed precision synthetic USD; down unbilled; no billing'),diligence=screen(m,network),classification='synthetic conditional mission prediction; no geometry, checkpoint image bytes or execution',execution_performed=False,promoted=False)
     return finish(result)
