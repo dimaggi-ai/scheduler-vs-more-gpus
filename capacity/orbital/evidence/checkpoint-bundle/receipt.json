@@ -1,12 +1,12 @@
 {
   "classification": "synthetic two-process export/verify, not physical qualification",
-  "provisional_base": "55792ab6d7f4c61d7528b95204e5e0cb728bfe20",
-  "bundle_source_sha256": "6dcb2d7d50ab53ab62783e0c34c8c2bb03b3633ed88e8a040ad024be58f7ce35",
-  "checkpoint_source_sha256": "e6553c039be697a5157dfb1e0c62596f2570c8b43df1e92a8220228db14a47cf",
-  "envelope_sha256": "ef6c18a3cd40ac901e5c7a23bbcbeb0680e529f36406edeca2ac28ab74338df1",
+  "provisional_base": "73d0e28fd954bd479beeda4f8950124aa00d4361",
+  "bundle_source_sha256": "eeb6bfbedcfb528a7b00193c157ecf066e7b4e3d770148a596df8d1e26c4d546",
+  "checkpoint_source_sha256": "d44b77ac4b085d83e8234bb282d486f023cd17cb3bb4d09583e3720a0328d3aa",
+  "envelope_sha256": "d2947b4357c0aa2b9f10c198c39fa2f4eb264634326c405651b763f45da45500",
   "request_bytes": 5103,
   "bundle_bytes": 37222,
-  "elapsed_s": 0.24591595912352204,
+  "elapsed_s": 0.25644133309833705,
   "python": "3.12.6",
   "verification": {
     "admissible": true,
@@ -16,5 +16,5 @@
     "execution_performed": false,
     "valid": true
   },
-  "correction": "ancestor directory identity guard for reserved own subtree"
+  "correction": "review206 F1-F6"
 }

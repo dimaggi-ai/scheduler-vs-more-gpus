@@ -1,0 +1,87 @@
+{
+  "comment_only_control_passed": true,
+  "fixture_test_excluded": true,
+  "scope": "targeted guard behavior, not source hash tripwire or coverage percentage",
+  "results": [
+    {
+      "guard": "classification",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "authenticity",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "bundle source",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "selected route",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "inner schema",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "plan-only",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "inner fields",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "report cap",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "dependency pin",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "own globs",
+      "behavioral_test": "test_source_globs_alias_import_and_bad_inventories",
+      "caught": true
+    },
+    {
+      "guard": "duplicate keys",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "tool fields",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "tool schema",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "verify fields",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "response cap",
+      "behavioral_test": "test_behavioral_contract_guards_without_fixture_tripwire",
+      "caught": true
+    },
+    {
+      "guard": "parent identity",
+      "behavioral_test": "test_sibling_source_and_loop_paths",
+      "caught": true
+    }
+  ]
+}

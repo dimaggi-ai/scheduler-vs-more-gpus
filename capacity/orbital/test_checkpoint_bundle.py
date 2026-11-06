@@ -106,6 +106,83 @@ class CheckpointBundle(unittest.TestCase):
         self.refused(lambda:export(canonical(req)),'BUDGET_EXCEEDED')
         self.refused(lambda:parse('{"x":"'+'é'*400_000+'"}',1_000_000),'BUDGET_EXCEEDED')
 
+    def test_behavioral_contract_guards_without_fixture_tripwire(self):
+        original=export(self.inner());base=json.loads(original['bundle_json'])
+        for field,value,code in [('classification','accepted','CLASSIFICATION_OR_AUTHORITY'),('authenticity_established',True,'CLASSIFICATION_OR_AUTHORITY'),('bundle_source_sha256','0'*64,'SOURCE_BINDING')]:
+            env=copy.deepcopy(base);env['content'][field]=value
+            self.assertIn(code,verify(self.seal(env))['errors'])
+        env=copy.deepcopy(base);inner=json.loads(env['content']['request_json']);inner['input']['route']='onboard';env['content']['request_json']=canonical(inner)
+        self.assertIn('SELECTED_ROUTE',verify(self.seal(env))['errors'])
+        for mutation,code in [(lambda r:r.update(schema='unknown'),'UNSUPPORTED_SCHEMA'),(lambda r:r.update(tool='compare'),'UNSUPPORTED_TOOL'),(lambda r:r['input'].update(extra=1),'INVALID_ARGUMENT')]:
+            env=copy.deepcopy(base);inner=json.loads(env['content']['request_json']);mutation(inner);env['content']['request_json']=canonical(inner)
+            self.refused(lambda:verify(self.seal(env)),code)
+        with patch('capacity.orbital.platform.checkpoint.tools.dispatch',return_value=dict(status='ok',result=dict(input_sha256='0'*64,padding='x'*8_100_000))):
+            self.refused(lambda:export(self.inner()),'BUDGET_EXCEEDED')
+        with patch('capacity.orbital.platform.checkpoint.source_digest',return_value='0'*64):
+            self.refused(lambda:export(self.inner()),'SOURCE_MISMATCH')
+        req=self.tool('export',dict(request_json=self.inner()))
+        duplicate=canonical(req).replace('"id":"delivery"','"id":"delivery","id":"delivery"')
+        self.assertEqual(dispatch_json(duplicate)['code'],'INVALID_ARGUMENT')
+        for mutate,code in [(lambda r:r.update(extra=1),'INVALID_ARGUMENT'),(lambda r:r.update(schema='wrong'),'UNSUPPORTED_SCHEMA')]:
+            value=copy.deepcopy(req);mutate(value);self.assertEqual(dispatch(value)['code'],code)
+        req=self.tool('verify',dict(bundle_json=original['bundle_json'],expected_sha256=None,extra=1))
+        self.assertEqual(dispatch(req)['code'],'INVALID_ARGUMENT')
+        with patch('capacity.orbital.checkpoint_bundle.tools.export_checkpoint_bundle',return_value=dict(bundle_json='x'*22_000_000,sha256='0'*64)):
+            self.assertEqual(dispatch(self.tool('export',dict(request_json=self.inner())))['code'],'BUDGET_EXCEEDED')
+
+    def test_early_numeric_count_report_shape_and_publication_failure(self):
+        with patch('capacity.orbital.checkpoint_bundle.contracts.bounded',side_effect=AssertionError('numeric count must refuse during parsing')):
+            self.refused(lambda:parse('['+'0,'*1_000_001+'0]',TOOL),'BUDGET_EXCEEDED')
+        env=json.loads(export(self.inner())['bundle_json']);env['content']['report']=[]
+        self.assertFalse(verify(self.seal(env))['valid'])
+        import io
+        from contextlib import redirect_stdout
+        from .checkpoint_bundle.__main__ import main
+        with tempfile.TemporaryDirectory() as td:
+            src=Path(td)/'request.json';src.write_text(self.inner());dest=Path(td)/'output.json';output=io.StringIO()
+            with patch('capacity.orbital.checkpoint_bundle.__main__.publish',side_effect=OSError('synthetic failure')),redirect_stdout(output):
+                code=main(['export','--request',str(src),'--output',str(dest)])
+            self.assertEqual(code,2);self.assertEqual(json.loads(output.getvalue())['code'],'IO_ERROR');self.assertFalse(dest.exists())
+
+    def test_source_globs_alias_import_and_bad_inventories(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);real=root/'real';shutil.copytree(Path(__file__).resolve().parent.parent,real/'capacity',ignore=shutil.ignore_patterns('__pycache__'))
+            alias=root/'alias';alias.symlink_to(real,target_is_directory=True)
+            env=dict(os.environ,PYTHONPATH=str(alias));cwd=root
+            script="from capacity.orbital.checkpoint_bundle import source_digest;print(source_digest())"
+            def run(code=script):return subprocess.run([sys.executable,'-c',code],cwd=cwd,env=env,capture_output=True,text=True,timeout=30)
+            first=run();self.assertEqual(first.returncode,0,first.stderr)
+            for suffix in ('.py','.json'):
+                extra=real/'capacity/orbital/checkpoint_bundle'/('extra'+suffix);extra.write_text('{}' if suffix=='.json' else '# inert extra source\n')
+                changed=run();self.assertEqual(changed.returncode,0,changed.stderr);self.assertNotEqual(changed.stdout,first.stdout);extra.unlink()
+            inventory=real/'capacity/orbital/checkpoint_bundle/source_inventory.json';saved=inventory.read_bytes()
+            check="""from capacity.orbital.checkpoint_bundle import source_digest
+from capacity.orbital.checkpoint_bundle.contracts import Refuse
+try: source_digest()
+except Refuse as e: print(e.code)
+"""
+            for invalid in (b'\xff',b'["\\u0000"]',b'{}',json.dumps(['x']*1001).encode(),b' '*100001):
+                inventory.write_bytes(invalid);result=run(check);self.assertEqual(result.returncode,0,result.stderr);self.assertEqual(result.stdout.strip(),'SOURCE_UNAVAILABLE')
+            inventory.write_bytes(saved);self.assertEqual(run().stdout,first.stdout)
+
+    def test_sibling_source_and_loop_paths(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);capacity=root/'capacity';shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
+            launcher=capacity/'orbital/checkpoint_bundle/cli.py';src=root/'request.json';src.write_text(self.inner())
+            def run(source,dest):
+                return subprocess.run([sys.executable,str(launcher),'export','--request',str(source),'--output',str(dest)],capture_output=True,text=True,timeout=30)
+            targets=[capacity/'orbital/bundle/new.py',capacity/'orbital/fleet/new.py']
+            dependency=capacity/'orbital/platform/checkpoint';alias=dependency.with_name('CHECKPOINT')
+            if alias.exists() and os.path.samefile(alias,dependency):targets.append(alias/'new.json')
+            for dest in targets:
+                result=run(src,dest);self.assertEqual(result.returncode,2,result.stderr);self.assertEqual(json.loads(result.stdout)['code'],'FORBIDDEN_OUTPUT');self.assertFalse(dest.exists())
+            loop=root/'loop';loop.symlink_to(loop)
+            for source,dest in [(src,loop),(src,loop/'child.json'),(loop,root/'fresh.json')]:
+                result=run(source,dest);self.assertEqual(result.returncode,2,result.stderr);self.assertEqual(json.loads(result.stdout)['code'],'IO_ERROR')
+            from .checkpoint_bundle.__main__ import resolved_path
+            with patch('pathlib.Path.resolve',side_effect=RuntimeError('unrelated programmer error')):
+                with self.assertRaisesRegex(RuntimeError,'unrelated programmer error'):resolved_path('unused')
+
     def test_file_journey_and_hashed_directory_guards(self):
         launcher=Path('capacity/orbital/checkpoint_bundle/cli.py').resolve()
         with tempfile.TemporaryDirectory() as td:

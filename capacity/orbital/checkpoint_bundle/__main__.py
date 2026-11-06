@@ -7,10 +7,17 @@ from .contracts import Refuse,INNER,BUNDLE,TOOL,wire
 from .tools import refusal,SCHEMA
 from ..output import publish
 
+def resolved_path(path):
+    try:return Path(path).resolve()
+    except RuntimeError as ex:
+        if str(ex).startswith('Symlink loop'):raise Refuse('IO_ERROR','symlink loop in file path') from None
+        raise
+    except OSError:raise Refuse('IO_ERROR','file path could not be resolved') from None
+
 def destination(path,input_path):
-    output=Path(path);resolved=output.resolve();parent=resolved.parent
+    output=Path(path);resolved=resolved_path(output);parent=resolved.parent
     own=Path(__file__).resolve().parent
-    if resolved==Path(input_path).resolve():raise Refuse('INVALID_ARGUMENT','output cannot equal input')
+    if resolved==resolved_path(input_path):raise Refuse('INVALID_ARGUMENT','output cannot equal input')
     if resolved.is_relative_to(own):raise Refuse('FORBIDDEN_OUTPUT','output is inside bundle source')
     # resolve() can preserve case aliases on case-insensitive filesystems. Walk
     # identities, including existing ancestors above a not-yet-created directory.
@@ -19,11 +26,12 @@ def destination(path,input_path):
         except FileNotFoundError:continue
         except OSError:raise Refuse('IO_ERROR','output directory identity could not be checked') from None
         if inside:raise Refuse('FORBIDDEN_OUTPUT','output ancestor aliases the reserved bundle source subtree')
-    _,sources=required_sources()
+    capacity,sources=required_sources()
+    source_directories={p.parent for p in sources}|{p.parent for p in (capacity/'orbital').rglob('__init__.py')}
     # Existing checkpoint source discovery is nonrecursive. Evidence subdirectories
     # remain allowed; aliases of exact source directory identities do not.
-    for directory in {p.parent for p in sources}:
-        if parent==directory.resolve():raise Refuse('FORBIDDEN_OUTPUT','output parent is a hashed source directory')
+    for directory in source_directories:
+        if parent==resolved_path(directory):raise Refuse('FORBIDDEN_OUTPUT','output parent is a hashed source directory')
         try:same=os.path.samefile(parent,directory)
         except FileNotFoundError:same=False
         if same:raise Refuse('FORBIDDEN_OUTPUT','output parent aliases a hashed source directory')

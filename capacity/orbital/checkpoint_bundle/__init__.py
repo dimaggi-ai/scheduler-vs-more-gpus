@@ -7,21 +7,25 @@ from .contracts import Refuse,fields,raw,parse,wire,text,pin,INNER,REPORT,BUNDLE
 
 SCHEMA='capacity-orbital/checkpoint-evidence-bundle-v1'
 CLASSIFICATION='selected-route synthetic checkpoint evidence; consistency not authenticity or acceptance'
-CHECKPOINT_SOURCE='e6553c039be697a5157dfb1e0c62596f2570c8b43df1e92a8220228db14a47cf'
+CHECKPOINT_SOURCE='d44b77ac4b085d83e8234bb282d486f023cd17cb3bb4d09583e3720a0328d3aa'
 
 def required_sources():
     root=Path(__file__).resolve().parents[1];capacity=root.parent
     try:
-        own=json.loads((Path(__file__).parent/'source_inventory.json').read_text())
-        parent=json.loads((root/'platform/checkpoint/source_inventory.json').read_text())
+        def inventory(path):
+            data=path.read_bytes()
+            if len(data)>100_000:raise Refuse('SOURCE_UNAVAILABLE','source inventory byte budget')
+            return json.loads(data)
+        own=inventory(Path(__file__).resolve().parent/'source_inventory.json')
+        parent=inventory(root/'platform/checkpoint/source_inventory.json')
         for names in (own,parent):
-            if type(names) is not list or not names or len(names)>1000 or any(type(p) is not str or Path(p).is_absolute() or '..' in Path(p).parts for p in names):raise Refuse('SOURCE_UNAVAILABLE','invalid source inventory')
+            if type(names) is not list or not names or len(names)>1000 or any(type(p) is not str or not p or '\x00' in p or Path(p).is_absolute() or '..' in Path(p).parts for p in names):raise Refuse('SOURCE_UNAVAILABLE','invalid source inventory')
         return capacity,{capacity/p for p in own+parent}
-    except (OSError,json.JSONDecodeError):raise Refuse('SOURCE_UNAVAILABLE','required source inventory missing/unreadable') from None
+    except (OSError,UnicodeError,ValueError):raise Refuse('SOURCE_UNAVAILABLE','required source inventory missing/unreadable') from None
 
 def source_digest():
     capacity,required=required_sources()
-    paths=required|set(Path(__file__).parent.glob('*.py'))|set(Path(__file__).parent.glob('*.json'))
+    paths=required|set(Path(__file__).resolve().parent.glob('*.py'))|set(Path(__file__).resolve().parent.glob('*.json'))
     try:hashes={str(p.relative_to(capacity)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
     except OSError:raise Refuse('SOURCE_UNAVAILABLE','required source missing/unreadable') from None
     from ..platform.checkpoint import source_digest as checkpoint_source

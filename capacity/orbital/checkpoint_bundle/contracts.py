@@ -63,8 +63,15 @@ def parse(value,limit,*,canonical_outer=False):
             if k in result:raise Refuse('INVALID_ARGUMENT','duplicate JSON key')
             result[k]=v
         return result
+    from ..platform.checkpoint.contracts import token,Token,Refuse as CheckpointRefuse
+    numeric_count=0
     def number(s):
-        from ..platform.checkpoint.contracts import token,Token,Refuse as CheckpointRefuse
+        nonlocal numeric_count
+        numeric_count+=1
+        if numeric_count>1_000_000:raise Refuse('BUDGET_EXCEEDED','numeric node budget before conversion')
+        # json.loads already enforces the integer grammar. These short literals
+        # cannot exceed the shared lexical/coefficient/exponent bounds.
+        if len(s)<=16 and not any(c in s for c in '.eE'):return int(s)
         try:token(Token(s))
         except CheckpointRefuse as ex:raise Refuse(ex.code,str(ex)) from None
         result=float(s) if any(c in s for c in '.eE') else int(s)
