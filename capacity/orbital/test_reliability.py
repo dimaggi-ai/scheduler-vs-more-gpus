@@ -225,7 +225,8 @@ class CheckpointTests(unittest.TestCase):
             s=scenario();s['deadline_s']=5;p.write_text(json.dumps(request(s)))
             r=run();self.assertEqual(r.returncode,0);self.assertEqual(json.loads(r.stdout)['result']['status'],'deadline_exceeded')
             r=run(out);self.assertEqual(r.returncode,0);self.assertEqual(r.stdout,'')
-            r=run(out);self.assertEqual(json.loads(r.stdout)['id'],'r1')
+            r=run(out);failure=json.loads(r.stdout);self.assertEqual(failure['id'],'r1')
+            saved=json.loads(out.read_text());self.assertEqual(failure['input_sha256'],saved['input_sha256']);self.assertEqual(failure['source_sha256'],saved['source_sha256'])
             before=p.read_bytes();r=run(p);self.assertEqual(r.returncode,2);self.assertEqual(p.read_bytes(),before)
             req=request();v=0
             for _ in range(40):v=[v]

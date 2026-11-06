@@ -4,8 +4,8 @@ from .contracts import parse,Refuse,MAX_BYTES
 from ..contracts import canonical
 from ..output import publish
 
-def refusal(code,reason,ident=None):
-    print(canonical(dict(schema='capacity-orbital/checkpoint-tool-result-v1',status='refused',id=ident,input_sha256=None,source_sha256=None,code=code,reason=reason,execution_performed=False)))
+def refusal(code,reason,ident=None,input_hash=None,source_hash=None):
+    print(canonical(dict(schema='capacity-orbital/checkpoint-tool-result-v1',status='refused',id=ident,input_sha256=input_hash,source_sha256=source_hash,code=code,reason=reason,execution_performed=False)))
     return 2
 
 def main(argv=None):
@@ -21,7 +21,7 @@ def main(argv=None):
     result=dispatch(request);raw=canonical(result)+'\n'
     try:publish([(args.output,raw)],args.request)
     except (OSError,ValueError):
-        return refusal('OUTPUT_ERROR','output publication failed; choose a fresh writable path',result['id'])
+        return refusal('OUTPUT_ERROR','output publication failed; choose a fresh writable path',result['id'],result['input_sha256'],result['source_sha256'])
     if not args.output:print(raw,end='')
     return 2 if result['status']=='refused' else 0
 if __name__=='__main__':raise SystemExit(main())
