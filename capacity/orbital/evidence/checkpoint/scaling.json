@@ -1,0 +1,27 @@
+{
+  "python": "3.12.6",
+  "classification": "one local synthetic observation each, not an SLO",
+  "rows": [
+    {
+      "interval_s": "10",
+      "trace_intervals": 9,
+      "elapsed_s": 0.004822416929528117,
+      "peak_traced_bytes": 56872,
+      "status": "completed"
+    },
+    {
+      "interval_s": "1",
+      "trace_intervals": 99,
+      "elapsed_s": 0.025881291832774878,
+      "peak_traced_bytes": 580951,
+      "status": "completed"
+    },
+    {
+      "interval_s": "0.01",
+      "trace_intervals": 9999,
+      "elapsed_s": 2.739677125122398,
+      "peak_traced_bytes": 58596243,
+      "status": "completed"
+    }
+  ]
+}
