@@ -74,14 +74,14 @@ def compare(baseline,candidate,expected_baseline_sha256=None):
         v=deepcopy(s);v.pop('id');v.pop('provenance');v['cohorts']=sorted(v['cohorts'],key=lambda c:c['id'])
         for c in v['cohorts']:c.pop('hazard_per_year');c.pop('delay_years')
         def normalized(value):
-            if type(value) in (int,float):return float(value)
+            if type(value) in (int,float):return 0.0 if value==0 else float(value)
             if type(value) is list:return [normalized(x) for x in value]
             if type(value) is dict:return {k:normalized(x) for k,x in value.items()}
             return value
         return normalized(v)
     if digest(fixed(baseline))!=digest(fixed(candidate)):raise Refuse('BASELINE_MISMATCH','only declared hazard and delay assumptions may vary; demand and capacity assumptions fixed')
     a=evaluate(baseline);b=evaluate(candidate)
-    result=dict(schema='capacity-orbital/fleet-comparison-v1',baseline=a,candidate=b,useful_exposure_delta_kw_years=b['total_useful_kw_years']-a['total_useful_kw_years'],shortfall_delta_kw_years=b['total_annual_average_capacity_shortfall_kw_years']-a['total_annual_average_capacity_shortfall_kw_years'],recommendation='sensitivity only; no calibrated improvement or automatic promotion',baseline_binding='externally pinned' if expected_baseline_sha256 is not None else 'unbound caller-supplied pair',input_sha256=digest(dict(baseline=baseline,candidate=candidate,expected_baseline_sha256=expected_baseline_sha256)),source_sha256=source_digest(),execution_performed=False,promoted=False)
+    result=dict(schema='capacity-orbital/fleet-comparison-v1',baseline=a,candidate=b,useful_exposure_delta_kw_years=b['total_useful_kw_years']-a['total_useful_kw_years'],shortfall_delta_kw_years=b['total_annual_average_capacity_shortfall_kw_years']-a['total_annual_average_capacity_shortfall_kw_years'],recommendation='sensitivity only; no calibrated improvement or automatic promotion',baseline_binding='baseline matched supplied digest' if expected_baseline_sha256 is not None else 'unbound caller-supplied pair',input_sha256=digest(dict(baseline=baseline,candidate=candidate,expected_baseline_sha256=expected_baseline_sha256)),source_sha256=source_digest(),execution_performed=False,promoted=False)
     result['receipt_id']=digest(result);return result
 
 def project_economics(s,template):

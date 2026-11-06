@@ -79,8 +79,13 @@ class FleetTests(unittest.TestCase):
     def test_pinned_baseline_numeric_equivalence_and_receipts(self):
         from .contracts import digest
         a=demo();b=copy.deepcopy(a);b['cohorts'][0]['capacity_kw']=2.0;b['demand_kw'][0]=16.0;b['cohorts'][0]['retirement_year']=3.0
-        result=compare(a,b,digest(a));self.assertEqual(result['baseline_binding'],'externally pinned')
+        result=compare(a,b,digest(a));self.assertEqual(result['baseline_binding'],'baseline matched supplied digest')
         self.assertEqual(result['receipt_id'],digest({k:v for k,v in result.items() if k!='receipt_id'}))
+        self.assertEqual(result['input_sha256'],digest(dict(baseline=a,candidate=b,expected_baseline_sha256=digest(a))))
+        b['cohorts'][0]['planned_commission_year']=-0.0
+        self.assertEqual(compare(a,b)['candidate']['total_useful_kw_years'],result['candidate']['total_useful_kw_years'])
+        null=dispatch(dict(request(),tool='compare',input=dict(baseline=a,candidate=b,expected_baseline_sha256=None)))
+        self.assertEqual(null['code'],'BASELINE_BINDING')
         drift=copy.deepcopy(a);drift['demand_kw'][0]=100
         response=dispatch(dict(request(),tool='compare',input=dict(baseline=drift,candidate=drift,expected_baseline_sha256=digest(a))))
         self.assertEqual(response['code'],'BASELINE_BINDING');self.assertEqual(response['id'],'synthetic-evaluation');self.assertIsNotNone(response['input_sha256'])
@@ -92,6 +97,10 @@ class FleetTests(unittest.TestCase):
         self.assertEqual(result['input_sha256'],digest(dict(scenario=s,template=t)))
         self.assertEqual(result['receipt_id'],digest({k:v for k,v in result.items() if k!='receipt_id'}))
         self.assertEqual(len(result['projection_mapping']),len(result['projected_lifecycle']['cohorts']))
+        active=[r for r in result['fleet']['cohort_periods'] if r['active_years']>0]
+        counts={c['id']:c['count'] for c in s['cohorts']}
+        for mapping,row,projected in zip(result['projection_mapping'],active,result['projected_lifecycle']['cohorts']):
+            self.assertEqual(mapping,dict(projection_id=projected['id'],source_cohort_id=row['cohort_id'],year_end=row['year_end'],mean_survival=row['expected_node_years']/counts[row['cohort_id']]/row['active_years'],active_years=row['active_years']))
         self.assertEqual(result['scenario_provenance'],s['provenance']);self.assertEqual(result['template_provenance'],t['provenance'])
         self.assertFalse(any('not inferred survival probabilities' in x for x in result['economics']['assumptions']))
         t['cash_flows'][0]['amount']+=1
@@ -100,6 +109,23 @@ class FleetTests(unittest.TestCase):
         fake=evaluate(s);fake['cohort_periods'][0]['expected_node_years']*=2
         with patch('capacity.orbital.fleet.evaluate',return_value=fake):
             with self.assertRaisesRegex(ValueError,'beyond roundoff'):project_economics(s,t)
+
+    def test_dispatch_hashes_underflow_and_roundoff_clamp(self):
+        from .contracts import digest
+        from .fleet import source_digest,integral
+        from unittest.mock import patch
+        req=request();done=dispatch(req)
+        self.assertEqual(done['input_sha256'],digest(req));self.assertEqual(done['source_sha256'],source_digest())
+        req['input']['cohorts'][0]['hazard_per_year']=-1
+        refused=dispatch(req)
+        self.assertEqual(refused['source_sha256'],source_digest());self.assertEqual(refused['input_sha256'],digest(req))
+        with self.assertRaisesRegex(ValueError,'below numeric resolution'):integral({'hazard_per_year':100},99,100,0)
+        s=demo();s['cohorts']=s['cohorts'][:1];s['cohorts'][0].update(hazard_per_year=0,availability=1)
+        t=lifecycle_example();t.update(horizon_years=3,cohorts=[])
+        fake=evaluate(s);fake['cohort_periods'][0]['expected_node_years']*=1+1e-13
+        with patch('capacity.orbital.fleet.evaluate',return_value=fake):
+            result=project_economics(s,t)
+        self.assertEqual(result['projected_lifecycle']['cohorts'][0]['availability'],1)
 
     def test_real_cli_success_refusal_recovery_overwrite(self):
         with tempfile.TemporaryDirectory() as d:
