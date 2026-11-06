@@ -13,6 +13,20 @@ def _rows(value,label):
     if type(value) is not list or any(type(row) is not dict for row in value):raise ValueError(label+' must be an object list')
     return value
 
+def _numbers(row,names,label):
+    for key in names.split():
+        value=row[key]
+        if type(value) not in (int,float) or (type(value) is int and value.bit_length()>1024) or not math.isfinite(value):
+            raise ValueError(label+'.'+key+' must be a finite non-boolean number')
+
+def _energy_matches(measured,power,start,end):
+    # Kernel uses limit for energy, then records end=start+limit. Recovering
+    # limit by subtracting timestamps loses at most their representational ULPs.
+    expected=power*(end-start)/3600
+    if not math.isfinite(expected):return False
+    allowance=abs(power)/3600*(math.ulp(start)+math.ulp(end))+4*max(math.ulp(measured),math.ulp(expected))
+    return math.isfinite(allowance) and abs(measured-expected)<=allowance
+
 def _report_shapes(r):
     _object(r,'report')
     _rows(r['jobs'],'jobs');_rows(r['processing_buffers'],'processing buffers')
@@ -25,6 +39,21 @@ def _report_shapes(r):
     for state in nodes.values():
         for row in _rows(_object(state,'node state')['intervals'],'intervals'):_object(row['energy'],'energy ledger')
     _object(r['cost'],'cost')
+    for row in r['jobs']:
+        _numbers(row,'quality required_quality deadline_s','job')
+        if row['completion_s'] is not None:_numbers(row,'completion_s','job')
+    for row in r['proposal']['events']:_numbers(row,'start_s end_s power_kw heat_w','event')
+    for job in network['jobs']:
+        if job.get('arrival_s') is not None:_numbers(job,'arrival_s','network job')
+        for hop in job['hops']:_numbers(hop,'data_gb start_s tx_end_s rx_start_s arrival_s','hop')
+    for row in network['resource_reservations']:_numbers(row,'start_s end_s','resource')
+    for row in r['processing_buffers']+network['buffer_reservations']:_numbers(row,'start_s end_s data_gb','buffer')
+    for row in r['network_input']['jobs']:_numbers(row,'release_s deadline_s data_gb','network input job')
+    for state in nodes.values():
+        for row in state['intervals']:
+            _numbers(row,'start_s end_s planned_end_s solar_kw load_kw heat_w initial_k final_k','interval')
+            _numbers(row['energy'],'initial_kwh final_kwh solar_kwh load_kwh conversion_loss_kwh curtailed_kwh residual_kwh residual_tolerance_kwh','energy')
+    _numbers(r['cost'],'compute_usd network_usd partial_operating_usd','cost')
 
 def _ground_schedule(m,route,network_jobs):
     # Reconstruct the ordered compute lane, including eventless zero stages.
@@ -106,7 +135,9 @@ def verify_mission(m,r):
             compute=[event_ids[key] for key in (f"compute:{j['id']}:origin",f"compute:{j['id']}:ground") if key in event_ids]
             for e in compute:
                 duration=j['onboard_s' if route=='onboard' else 'preprocess_s'] if e['node']==m['origin'] else j['ground_s' if route=='ground' else 'hybrid_ground_s']
-                if not math.isclose(e['end_s']-e['start_s'],duration,rel_tol=1e-12,abs_tol=1e-12):errors.add('COMPUTE_DURATION')
+                expected_end=e['start_s']+duration
+                if duration>0 and expected_end-e['start_s']<duration:expected_end=math.nextafter(expected_end,math.inf)
+                if e['end_s']!=expected_end:errors.add('COMPUTE_DURATION')
                 if e['power_kw']!=m['compute'][e['node']]['power_kw'] or e['heat_w']!=m['compute'][e['node']]['heat_w']:errors.add('COMPUTE_POWER')
             if nj and nj['status']=='delivered':
                 size=j[{'ground':'raw_gb','onboard':'result_gb','hybrid':'compressed_gb'}[route]]
@@ -178,8 +209,8 @@ def verify_mission(m,r):
                 profile=profiles[pi]
                 expected=profile['background_kw']+math.fsum(e['power_kw'] for e in active)
                 if not math.isclose(row['load_kw'],expected,rel_tol=1e-12,abs_tol=1e-12):errors.add('POWER_RELATIONSHIP')
-                ledger=row['energy'];seconds=row['end_s']-row['start_s']
-                if not math.isclose(ledger['load_kwh'],expected*seconds/3600,rel_tol=1e-12,abs_tol=1e-12):errors.add('ENERGY_RELATIONSHIP')
+                ledger=row['energy']
+                if not _energy_matches(ledger['load_kwh'],expected,row['start_s'],row['end_s']):errors.add('ENERGY_RELATIONSHIP')
                 balance=ledger['initial_kwh']+ledger['solar_kwh']-ledger['load_kwh']-ledger['conversion_loss_kwh']-ledger['curtailed_kwh']-ledger['final_kwh']
                 if abs(balance)>1e-9*max(1,abs(ledger['initial_kwh'])):errors.add('ENERGY_CONSERVATION')
         compute_cost=math.fsum((e['end_s']-e['start_s'])*m['compute'][e['node']]['cost_per_s_usd'] for e in events if e['kind']=='compute')

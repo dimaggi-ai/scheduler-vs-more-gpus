@@ -321,4 +321,90 @@ class PlatformTests(unittest.TestCase):
         r=plan_mission(m,'ground');self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
         self.assertEqual(r['jobs'][0]['completion_s'],r['jobs'][2]['completion_s'])
 
+class PlatformTimestampAndNumericTests(unittest.TestCase):
+    @staticmethod
+    def shifted(release,duration,power=1,kind='nominal'):
+        m=demo(kind);h=31_557_600
+        m['network']['horizon_s']=m['dynamics']['horizon_s']=h;m['authority']['expires_s']=h
+        for n in m['network']['nodes'].values():n['retired_s']=h
+        for c in m['network']['contacts']:c.update(start_s=0,end_s=h)
+        for n in m['dynamics']['nodes'].values():n['profiles'][0]['end_s']=h
+        for c in m['compute'].values():c['power_kw']=power
+        for j in m['jobs']:j.update(release_s=release,deadline_s=h,ground_s=duration,onboard_s=duration,preprocess_s=duration,hybrid_ground_s=duration)
+        return m
+
+    def test_large_timestamp_fractional_honest_reports_and_resealed_edits(self):
+        import math
+        for release in (16_384,1_000_000,30_000_000,31_000_000):
+            for duration in (.1,.3,.7,37.3,1234.5):
+                for route in ('ground','onboard','hybrid'):
+                    m=self.shifted(release,duration,3);r=plan_mission(m,route)
+                    with self.subTest(release=release,duration=duration,route=route):
+                        self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
+                        event=next(e for e in r['proposal']['events'] if e['kind']=='compute')
+                        expected=event['start_s']+duration
+                        if expected-event['start_s']<duration:expected=math.nextafter(expected,math.inf)
+                        self.assertEqual(event['end_s'],expected)
+                        bad=copy.deepcopy(r);e=next(e for e in bad['proposal']['events'] if e['kind']=='compute');e['end_s']=math.nextafter(e['end_s'],math.inf)
+                        bad['receipt_id']=digest({k:v for k,v in bad.items() if k!='receipt_id'})
+                        verdict=verify_mission(m,bad);self.assertFalse(verdict['valid']);self.assertIn('COMPUTE_DURATION',verdict['errors']);self.assertIn('REPLAY_MISMATCH',verdict['errors'])
+        for route in ('ground','hybrid','onboard'):
+            m=self.shifted(31_000_000,1234.5,.7,'battery');r=plan_mission(m,route)
+            self.assertFalse(r['admissible']);self.assertTrue(verify_mission(m,r)['valid'])
+
+    def test_timestamp_energy_ulp_allowance_and_replay(self):
+        from .platform.verify import _energy_matches
+        import math
+        start=31_000_000.;limit=.0001234;power=3.;end=start+limit;measured=power*limit/3600
+        self.assertTrue(_energy_matches(measured,power,start,end))
+        uncertainty=abs(power)/3600*(math.ulp(start)+math.ulp(end))+4*max(math.ulp(measured),math.ulp(power*(end-start)/3600))
+        self.assertFalse(_energy_matches(measured+10*uncertainty,power,start,end))
+        m=self.shifted(31_000_000,1234.5,3);r=plan_mission(m,'ground')
+        self.assertTrue(verify_mission(m,r)['valid'])
+        bad=copy.deepcopy(r);row=bad['dynamics']['nodes']['G']['intervals'][-1];row['energy']['load_kwh']+=1e-5
+        bad['receipt_id']=digest({k:v for k,v in bad.items() if k!='receipt_id'})
+        verdict=verify_mission(m,bad);self.assertFalse(verdict['valid']);self.assertIn('ENERGY_RELATIONSHIP',verdict['errors']);self.assertIn('REPLAY_MISMATCH',verdict['errors'])
+
+    def test_integer_price_hostile_sequences_rejected_before_multiplication(self):
+        class NoMultiplyList(list):
+            def __mul__(self,other):raise AssertionError('sequence multiplied before numeric validation')
+        class NoMultiplyString(str):
+            def __mul__(self,other):raise AssertionError('sequence multiplied before numeric validation')
+        m=demo()
+        for c in m['network']['contacts']:c['cost_per_gb']=10**18
+        r=plan_mission(m,'ground');self.assertTrue(verify_mission(m,r)['valid'])
+        for value in (NoMultiplyList([0]),NoMultiplyString('x'),[],True,10**400):
+            bad=copy.deepcopy(r);bad['network']['jobs'][0]['hops'][0]['data_gb']=value
+            bad['receipt_id']=digest({k:v for k,v in bad.items() if k!='receipt_id'})
+            verdict=verify_mission(m,bad);self.assertFalse(verdict['valid']);self.assertTrue(any('finite non-boolean number' in e for e in verdict['errors']))
+            if type(value) in (list,bool,int):
+                response=dispatch(dict(schema='capacity-orbital/mission-tool-v1',id='hostile',tool='verify',arguments=dict(mission=m,report=bad)))
+                self.assertFalse(response['result']['valid'])
+        # Fresh-process plain nonempty sequences use a small integer price: a
+        # regression cannot allocate huge memory in the test runner itself.
+        import tempfile
+        from pathlib import Path
+        for c in m['network']['contacts']:c['cost_per_gb']=7
+        r=plan_mission(m,'ground')
+        with tempfile.TemporaryDirectory() as folder:
+            for value in ([0],'x',True):
+                bad=copy.deepcopy(r);bad['network']['jobs'][0]['hops'][0]['data_gb']=value;bad['receipt_id']=digest({k:v for k,v in bad.items() if k!='receipt_id'})
+                request=dict(schema='capacity-orbital/mission-tool-v1',id='cli-hostile',tool='verify',arguments=dict(mission=m,report=bad))
+                response=dispatch(request);self.assertFalse(response['result']['valid'])
+                path=Path(folder)/'request.json';path.write_text(json.dumps(request))
+                p=subprocess.run([sys.executable,'-m','capacity.orbital.platform','--request',str(path)],capture_output=True,text=True,timeout=15)
+                self.assertEqual(p.returncode,0,p.stderr);self.assertFalse(json.loads(p.stdout)['result']['valid']);self.assertNotIn('Traceback',p.stderr)
+
+    def test_all_report_arithmetic_groups_are_numeric_before_operations(self):
+        m=demo();r=plan_mission(m,'ground')
+        paths=[('proposal','events',0,'power_kw'),('proposal','events',0,'start_s'),('network','jobs',0,'hops',0,'arrival_s'),('processing_buffers',0,'data_gb'),('dynamics','nodes','A','intervals',0,'energy','load_kwh'),('dynamics','nodes','A','intervals',0,'load_kw'),('cost','partial_operating_usd'),('jobs',0,'completion_s')]
+        for path in paths:
+            for value in (True,'x',[0],float('inf')):
+                bad=copy.deepcopy(r);where=bad
+                for key in path[:-1]:where=where[key]
+                where[path[-1]]=value
+                # Nonfinite canonicalization is already refused before shape checks.
+                if value!=float('inf'):bad['receipt_id']=digest({k:v for k,v in bad.items() if k!='receipt_id'})
+                self.assertFalse(verify_mission(m,bad)['valid'],path)
+
 if __name__=='__main__':unittest.main()
