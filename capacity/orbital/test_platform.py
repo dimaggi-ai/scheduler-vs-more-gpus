@@ -245,4 +245,51 @@ class PlatformTests(unittest.TestCase):
                 proc=subprocess.run([sys.executable,'-m','capacity.orbital.platform','--request',str(path)],capture_output=True,text=True)
                 self.assertEqual(proc.returncode,0,proc.stderr);self.assertNotIn('Traceback',proc.stderr);self.assertFalse(json.loads(proc.stdout)['result']['valid'])
 
+    def test_honest_queue_branch_regressions(self):
+        for adjustment in ('outage-at-cursor','retired-at-cursor','retired-mid','memory','rounding','unavailable-cursor'):
+            m=demo();m['jobs'][0]['ground_s']=20;m['jobs'][1]['ground_s']=0;g=m['network']['nodes'][m['destination']]
+            if adjustment=='outage-at-cursor':g['unavailable']=[dict(start_s=36,end_s=40)]
+            elif adjustment=='retired-at-cursor':g['retired_s']=36
+            elif adjustment=='retired-mid':g['retired_s']=30
+            elif adjustment=='memory':m['jobs'][0]['memory_gb']=m['compute'][m['destination']]['memory_gb']+1
+            elif adjustment=='rounding':m['jobs'][0]['ground_s']=.1;m['jobs'][1]['ground_s']=.3
+            else:m['jobs'][0]['ground_s']=300
+            result=plan_mission(m,'ground');self.assertTrue(verify_mission(m,result)['valid'],(adjustment,verify_mission(m,result)))
+        import random
+        rng=random.Random(773)
+        for _ in range(60):
+            m=demo();template=copy.deepcopy(m['jobs'][0]);m['jobs']=[]
+            for i in range(4):
+                j=copy.deepcopy(template);j.update(id=f'j{3-i}',release_s=rng.choice([0,1,5,20]),memory_gb=rng.choice([1,10000]))
+                for key in ('ground_s','hybrid_ground_s','onboard_s','preprocess_s'):j[key]=rng.choice([0,.1,.3,5,20])
+                m['jobs'].append(j)
+            rng.shuffle(m['jobs'])
+            if rng.randrange(2):m['network']['nodes'][m['destination']]['unavailable']=[dict(start_s=20,end_s=30)]
+            for route in ('ground','hybrid','onboard'):
+                result=plan_mission(m,route);self.assertTrue(verify_mission(m,result)['valid'],verify_mission(m,result))
+
+    def test_replay_extra_fields_and_reason_codes(self):
+        m=demo();original=plan_mission(m,'ground')
+        for kind in ('extra','reason'):
+            result=copy.deepcopy(original)
+            if kind=='extra':result['extra_unverified_claim']=1
+            else:result['network']['jobs'][0]['reason_code']='altered'
+            result['receipt_id']=digest({k:v for k,v in result.items() if k!='receipt_id'})
+            self.assertIn('REPLAY_MISMATCH',verify_mission(m,result)['errors'])
+
+    def test_resource_sweep_bounded_diagnostics_and_halfopen(self):
+        m=demo();original=plan_mission(m,'ground')
+        for overlapping in (True,False):
+            result=copy.deepcopy(original)
+            result['network']['resource_reservations']=[dict(resource=['synthetic','r'],start_s=0 if overlapping else i,end_s=1 if overlapping else i+1) for i in range(4000)]
+            result['receipt_id']=digest({k:v for k,v in result.items() if k!='receipt_id'})
+            errors=verify_mission(m,result)['errors']
+            self.assertEqual('SHARED_RESOURCE_OVERLAP' in errors,overlapping);self.assertEqual(len(errors),len(set(errors)));self.assertLess(len(errors),10)
+        huge=copy.deepcopy(original);huge['processing_buffers']=[dict(node=m['origin'],start_s=i,end_s=i+1,data_gb=0) for i in range(2000)]
+        huge['receipt_id']=digest({k:v for k,v in huge.items() if k!='receipt_id'})
+        self.assertTrue(any('verification work budget' in e for e in verify_mission(m,huge)['errors']))
+        result=copy.deepcopy(original);result['network']['resource_reservations']=[dict(resource=['r'],start_s=0,end_s=1),dict(resource=['r'],start_s=1,end_s=2),dict(resource=['r'],start_s=.5,end_s=.5)]
+        result['receipt_id']=digest({k:v for k,v in result.items() if k!='receipt_id'})
+        self.assertNotIn('SHARED_RESOURCE_OVERLAP',verify_mission(m,result)['errors'])
+
 if __name__=='__main__':unittest.main()
