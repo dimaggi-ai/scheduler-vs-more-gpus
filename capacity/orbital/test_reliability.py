@@ -257,7 +257,7 @@ class CheckpointTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             p=Path(temp)/'input.json';out=Path(temp)/'out.json'
             for missing in (p,Path(temp)):
-                reply=subprocess.run([sys.executable,'-m','capacity.orbital.reliability','--request',str(missing)],capture_output=True,text=True)
+                reply=subprocess.run([sys.executable,'-m','capacity.orbital.reliability','--request',str(missing)],capture_output=True,text=True,timeout=10)
                 self.assertEqual(reply.returncode,2);self.assertEqual(json.loads(reply.stdout)['code'],'OUTPUT_ERROR');self.assertNotIn('Traceback',reply.stderr)
             p.write_text(json.dumps(request()))
             buffer=io.StringIO()
