@@ -1,0 +1,62 @@
+{
+  "schema": "capacity-orbital/checkpoint-tool-v1",
+  "id": "r1",
+  "tool": "compare",
+  "input": {
+    "baseline": {
+      "schema": "capacity-orbital/checkpoint-v1",
+      "id": "case-é",
+      "release_s": 0,
+      "deadline_s": 30,
+      "horizon_s": 30,
+      "work_s": 6,
+      "interruptions": [],
+      "power_kw": {
+        "productive": 1,
+        "checkpoint": 1,
+        "restart": 1,
+        "down": 0
+      },
+      "policy": {
+        "version": "v1",
+        "checkpoint_every_work_s": 4,
+        "checkpoint_duration_s": 2,
+        "restart_duration_s": 2
+      },
+      "provenance": {
+        "kind": "synthetic",
+        "source": "hand-case-1",
+        "licence": "synthetic-fixture",
+        "generated_on": "2026-11-05"
+      }
+    },
+    "candidate": {
+      "schema": "capacity-orbital/checkpoint-v1",
+      "id": "case-é",
+      "release_s": 0,
+      "deadline_s": 30,
+      "horizon_s": 30,
+      "work_s": 6,
+      "interruptions": [],
+      "power_kw": {
+        "productive": 1,
+        "checkpoint": 1,
+        "restart": 1,
+        "down": 0
+      },
+      "policy": {
+        "version": "v1",
+        "checkpoint_every_work_s": null,
+        "checkpoint_duration_s": 2,
+        "restart_duration_s": 2
+      },
+      "provenance": {
+        "kind": "synthetic",
+        "source": "hand-case-1",
+        "licence": "synthetic-fixture",
+        "generated_on": "2026-11-05"
+      }
+    },
+    "expected_baseline_sha256": "4573714e8a4c374d5e96134129ebc8c49a935ec56069e96e37fb67fd0b618824"
+  }
+}

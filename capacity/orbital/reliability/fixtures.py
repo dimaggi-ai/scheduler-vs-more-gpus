@@ -1,0 +1,5 @@
+"""Explicit synthetic assumptions, never observed device data."""
+def scenario():
+    return dict(schema='capacity-orbital/checkpoint-v1',id='case-é',release_s=0,deadline_s=30,horizon_s=30,work_s=6,interruptions=[],power_kw=dict(productive=1,checkpoint=1,restart=1,down=0),policy=dict(version='v1',checkpoint_every_work_s=4,checkpoint_duration_s=2,restart_duration_s=2),provenance=dict(kind='synthetic',source='hand-case-1',licence='synthetic-fixture',generated_on='2026-11-05'))
+def request(s=None):
+    return dict(schema='capacity-orbital/checkpoint-tool-v1',id='r1',tool='evaluate',input=scenario() if s is None else s)
