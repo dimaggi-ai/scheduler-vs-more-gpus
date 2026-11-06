@@ -86,6 +86,8 @@ class CheckpointTests(unittest.TestCase):
         for value in ('1',True,float('inf')):
             with self.assertRaises(Refuse):number(value)
         with self.assertRaises(Refuse):number(D('1e999999'))
+        direct=request();direct['input']['id']='\ud800'
+        self.assertEqual(dispatch(direct)['code'],'INVALID_ARGUMENT')
         with self.assertRaises(Refuse):number(.30000000000000004)
         with self.assertRaises(Refuse):rational(F(10**256))
     def test_budget_refusal_recovery_and_source(self):
