@@ -63,3 +63,21 @@ Live payload adapters, real Tool Guard enforcement, telemetry calibration, orbit
 Verification reconstructs the ground-processing lane in release/ID order, including cursor, commissioning and declared availability delays for zero-duration stages that emit no compute event. Completion therefore need not equal data arrival even when processing duration is zero. Malformed report containers and unknown contact references produce a bounded invalid verification result; a successful verify-tool invocation means the diagnostic ran, not that its `valid` field is true. Programmer errors are not broadly converted into valid evidence.
 
 Shared-resource overlap verification uses a per-resource sorted interval sweep with half-open intervals; empty intervals occupy no capacity. Diagnostics are deduplicated as they are collected. Job, transfer and event references use unique-ID indexes; profiles use binary search, and event/storage activity uses sorted sweeps that retain original-order fsum. Actual active-term evaluations charge a shared conservative 2,000,000-work-unit budget; an oversized verification workload returns invalid evidence with a distinct VERIFICATION_BUDGET diagnostic, rather than claiming the report itself is malformed or completing all requested checks. This is not a total process-memory or wall-time guarantee and may conservatively refuse large valid reports.
+
+### Timestamp and malformed-evidence checks
+
+Compute endpoints are reconstructed using the planner’s addition and upward
+`nextafter` correction; subtracting large absolute timestamps is not treated as
+an exact duration. Dynamics load-energy checks allow only the endpoint rounding
+uncertainty `abs(power_kw)/3600 * (ulp(start_s) + ulp(end_s))` plus four energy
+ULPs for arithmetic rounding. The dynamics kernel computes energy from its step
+limit before storing `end_s = start_s + limit`; subtracting the stored endpoints
+can therefore lose duration precision. Nonfinite derived allowances refuse.
+This relationship allowance does not relax full deterministic report replay:
+resealed endpoint or ledger changes still fail replay.
+
+Every report field used in verifier arithmetic is checked as finite numeric and
+non-boolean before operations; integers above 1024 bits refuse before float
+conversion. In particular, hop data cannot trigger sequence multiplication by
+an integer link price. These are offline evidence consistency checks, not physical
+validation or product acceptance.
