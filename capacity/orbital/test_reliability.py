@@ -140,6 +140,8 @@ class CheckpointTests(unittest.TestCase):
             result=compare(a,b,pin)
             self.assertEqual({k:q(v) if v is not None else None for k,v in result['deltas'].items()},expected)
             self.assertEqual(result['input_sha256'],digest(dict(baseline=encoded(validate(a)),candidate=encoded(validate(b)),expected_baseline_sha256=pin)))
+            from .reliability import source_digest
+            self.assertEqual(result['source_sha256'],source_digest())
             self.assertEqual(result['evidence_scope'],'one declared timeline');self.assertEqual(result['recommendation'],'diagnostic only; held-out evaluation and independent acceptance required');self.assertEqual(result['baseline_binding'],'baseline matched supplied digest')
             self.assertFalse(result['execution_performed']);self.assertFalse(result['promoted'])
             for report in (result['baseline'],result['candidate']):
@@ -237,5 +239,38 @@ class CheckpointTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'programmer defect'):main(['--request',str(p)])
             p.write_bytes(b' '*999999+b'0');r=run();self.assertEqual(json.loads(r.stdout)['code'],'INVALID_ARGUMENT')
             p.write_bytes(b' '*1000000+b'0');r=run();self.assertEqual(json.loads(r.stdout)['code'],'BUDGET_EXCEEDED')
+
+    def test_faulted_and_deadline_complete_trace_rows(self):
+        def progress(d,v,l):return dict(durable_work_s=F(d),volatile_work_s=F(v),lost_work_s=F(l))
+        def row(state,start,end,before,after,reasons):return dict(state=state,start_s=F(start),end_s=F(end),duration_s=F(end-start),energy_kwh=F(0) if state=='down' else F(end-start,3600),progress_before=progress(*before),progress_after=progress(*after),reasons=reasons)
+        s=scenario();s['interruptions']=[dict(start_s=5,end_s=7)]
+        expected=[row('productive',0,4,(0,0,0),(0,4,0),['checkpoint_started']),row('checkpoint',4,5,(0,4,0),(0,0,4),['outage_started']),row('down',5,7,(0,0,4),(0,0,4),['outage_ended']),row('restart',7,9,(0,0,4),(0,0,4),['restart_completed']),row('productive',9,13,(0,0,4),(0,4,4),['checkpoint_started']),row('checkpoint',13,15,(0,4,4),(4,0,4),['checkpoint_committed']),row('productive',15,17,(4,0,4),(6,0,4),['job_completed'])]
+        self.assertEqual(evaluate(s)['trace'],encoded(expected))
+        s['deadline_s']=13
+        expected=expected[:5];expected[-1]['reasons']=['deadline_reached']
+        self.assertEqual(evaluate(s)['trace'],encoded(expected))
+
+    def test_cli_unreadable_and_publication_oserror(self):
+        from .reliability.__main__ import main
+        from contextlib import redirect_stdout
+        import io
+        with tempfile.TemporaryDirectory() as temp:
+            p=Path(temp)/'input.json';out=Path(temp)/'out.json'
+            for missing in (p,Path(temp)):
+                reply=subprocess.run([sys.executable,'-m','capacity.orbital.reliability','--request',str(missing)],capture_output=True,text=True)
+                self.assertEqual(reply.returncode,2);self.assertEqual(json.loads(reply.stdout)['code'],'OUTPUT_ERROR');self.assertNotIn('Traceback',reply.stderr)
+            p.write_text(json.dumps(request()))
+            buffer=io.StringIO()
+            with patch('capacity.orbital.reliability.__main__.publish',side_effect=OSError('disposable simulated filesystem failure')),redirect_stdout(buffer):
+                self.assertEqual(main(['--request',str(p),'--output',str(out)]),2)
+            result=json.loads(buffer.getvalue());self.assertEqual(result['code'],'OUTPUT_ERROR');self.assertEqual(result['id'],'r1');self.assertIsNotNone(result['source_sha256']);self.assertFalse(out.exists())
+
+    def test_rational_denominator_limit(self):
+        from .reliability.contracts import Lexeme
+        for length,reason in ((48,'coefficient/fractional-place'),(49,'numeric token length')):
+            with self.assertRaisesRegex(Refuse,reason):number(Lexeme('0.'+'0'*(length-2)))
+        self.assertEqual(rational(F(1,10**256-1)),F(1,10**256-1))
+        with self.assertRaises(Refuse) as caught:rational(F(1,10**256))
+        self.assertEqual(caught.exception.code,'BUDGET_EXCEEDED')
 
 if __name__=='__main__':unittest.main()

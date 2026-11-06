@@ -21,3 +21,9 @@ Validator regressions cover malformed outage/state/physical ranges, schema/tool 
 Corrected local validation: 14 reliability test methods passed in 3.447 s; 156 composed tests passed in 9.005 s. Hosted correction checks and independent source review remain pending. Earlier counts/scaling observations are retained as historical evidence.
 
 The 8,000,000-byte cap limits serialized intermediate-receipt size, not process memory. Actual Python allocations can be larger.
+
+## Fault-trace and refusal regression follow-up
+
+No runtime code changed. Added complete hand-written faulted and deadline trace rows, including all progress/state/reason fields, and an explicit comparison result source-hash assertion. Missing/directory input paths are tested through fresh CLI processes; a portable injected publication OSError checks the IO handler without relying on OS/root-specific chmod behavior. Denominator256-digit boundary is tested independently. Token lengths48/49 test the distinct rejection stages (fractional-place versus lexical-length); both are invalid by other limits, so this is error-priority coverage, not an invented valid48-character value.
+
+17 focused methods passed in3.056s;159 composed tests passed in8.329s. Five targeted disposable-copy mutations (deadline reason, outage reason, restart reason, lost-work row field, comparison source hash) were all caught. The working source and committed receipts stayed unchanged. These checks strengthen regression coverage, not physical qualification or acceptance.
