@@ -12,6 +12,13 @@ def destination(path,input_path):
     own=Path(__file__).resolve().parent
     if resolved==Path(input_path).resolve():raise Refuse('INVALID_ARGUMENT','output cannot equal input')
     if resolved.is_relative_to(own):raise Refuse('FORBIDDEN_OUTPUT','output is inside bundle source')
+    # resolve() can preserve case aliases on case-insensitive filesystems. Walk
+    # identities, including existing ancestors above a not-yet-created directory.
+    for ancestor in (parent,*parent.parents):
+        try:inside=os.path.samefile(ancestor,own)
+        except FileNotFoundError:continue
+        except OSError:raise Refuse('IO_ERROR','output directory identity could not be checked') from None
+        if inside:raise Refuse('FORBIDDEN_OUTPUT','output ancestor aliases the reserved bundle source subtree')
     _,sources=required_sources()
     # Existing checkpoint source discovery is nonrecursive. Evidence subdirectories
     # remain allowed; aliases of exact source directory identities do not.

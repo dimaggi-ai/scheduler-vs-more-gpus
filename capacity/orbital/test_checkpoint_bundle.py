@@ -129,6 +129,24 @@ class CheckpointBundle(unittest.TestCase):
             src.write_bytes(before);p,v=run('export','--request',src,'--output',root/'recovered.json');self.assertEqual(p.returncode,0)
         self.assertEqual(checkpoint_source(),CHECKPOINT_SOURCE);self.assertEqual(parent_source(),'dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e')
 
+    def test_reserved_subtree_identity_and_permitted_evidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);capacity=root/'capacity'
+            shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
+            own=capacity/'orbital/checkpoint_bundle';(own/'nested').mkdir()
+            src=root/'request.json';src.write_text(self.inner());launcher=own/'cli.py'
+            targets=[own/'nested/new.json']
+            alias=own.with_name(own.name.upper())
+            # Exercise a real case alias when the host filesystem supports it.
+            if alias.exists() and os.path.samefile(alias,own):targets.extend([alias/'nested/new.json',alias/'not-created/deeper/new.json'])
+            for target in targets:
+                run=subprocess.run([sys.executable,str(launcher),'export','--request',str(src),'--output',str(target)],capture_output=True,text=True,timeout=30)
+                self.assertEqual(run.returncode,2,run.stderr);self.assertEqual(json.loads(run.stdout)['code'],'FORBIDDEN_OUTPUT');self.assertFalse(target.exists())
+            allowed=capacity/'orbital/evidence/checkpoint-bundle/fresh-permitted.json'
+            run=subprocess.run([sys.executable,str(launcher),'export','--request',str(src),'--output',str(allowed)],capture_output=True,text=True,timeout=30)
+            self.assertEqual(run.returncode,0,run.stderr);self.assertTrue(allowed.exists())
+            self.assertTrue(verify(allowed.read_bytes())['valid'])
+
     def test_guarded_startup_and_source_restore(self):
         with tempfile.TemporaryDirectory() as td:
             capacity=Path(td)/'capacity';shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))

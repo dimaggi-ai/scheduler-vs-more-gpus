@@ -1,12 +1,12 @@
 {
   "classification": "synthetic two-process export/verify, not physical qualification",
   "provisional_base": "55792ab6d7f4c61d7528b95204e5e0cb728bfe20",
-  "bundle_source_sha256": "0b3ea967db26f94ebeeb7059afaf484a4b7a2311985680551d554a9842384b68",
+  "bundle_source_sha256": "6dcb2d7d50ab53ab62783e0c34c8c2bb03b3633ed88e8a040ad024be58f7ce35",
   "checkpoint_source_sha256": "e6553c039be697a5157dfb1e0c62596f2570c8b43df1e92a8220228db14a47cf",
-  "envelope_sha256": "1a600335355c11896216ef99b87a5438f7d70565242d926925d20d499b038b77",
+  "envelope_sha256": "ef6c18a3cd40ac901e5c7a23bbcbeb0680e529f36406edeca2ac28ab74338df1",
   "request_bytes": 5103,
   "bundle_bytes": 37222,
-  "elapsed_s": 0.22308587515726686,
+  "elapsed_s": 0.24591595912352204,
   "python": "3.12.6",
   "verification": {
     "admissible": true,
@@ -15,5 +15,6 @@
     "errors": [],
     "execution_performed": false,
     "valid": true
-  }
+  },
+  "correction": "ancestor directory identity guard for reserved own subtree"
 }
