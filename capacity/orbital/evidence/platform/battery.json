@@ -1,7 +1,7 @@
 {
   "schema": "capacity-orbital/mission-comparison-v1",
   "input_sha256": "817b3ee9b24249c7163efa3966311a38e541b2a2ac4f79f647766c654a1ebc8c",
-  "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+  "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
   "evaluator": "coupled-mission-v1 (distinct from static agentic evaluator)",
   "comparisons": [
     {
@@ -9,7 +9,7 @@
       "mission_id": "synthetic-EO",
       "route": "ground",
       "input_sha256": "817b3ee9b24249c7163efa3966311a38e541b2a2ac4f79f647766c654a1ebc8c",
-      "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+      "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
       "classification": "synthetic coupled prediction; no execution or billing",
       "execution_performed": false,
       "promoted": false,
@@ -160,7 +160,7 @@
       "network": {
         "schema": "capacity-orbital/network-report-v1",
         "input_sha256": "e367dd1c64ae231524f5d4eeb288883076d4b2cb6e90d8d7ca5351ee8867553d",
-        "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+        "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
         "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
         "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
         "jobs": [
@@ -400,7 +400,7 @@
           }
         ],
         "operations": 141,
-        "receipt_id": "ebb9794dc39d0c2efc1899472ad265bd622c2fbda3d9625dfc92ae95651707ff"
+        "receipt_id": "34b8278083582073855605d315d6fa6b7c8eb545df8c292cbedadc0ac3847dd3"
       },
       "proposal": {
         "schema": "capacity-orbital/proposal-v1",
@@ -509,7 +509,7 @@
         "schema": "capacity-orbital/dynamics-report-v1",
         "proposal_id": "synthetic-EO:ground",
         "input_sha256": "84120fe47a58e04102221fa0e6e9b9d6c3150f7fbb88f2ccecd2850ca0138f81",
-        "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+        "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
         "source_binding": "caller-supplied",
         "classification": "synthetic predicted feasibility; no observed or executed outcomes",
         "authority": {
@@ -641,7 +641,7 @@
             "at_s": 8.36
           }
         ],
-        "receipt_id": "3ccf54ea88acc591fcad73fa5cd7ac44a27205a89c976c5cdfc13890eb807f76"
+        "receipt_id": "6ed4121a3f833948a18c98c152682717eab68c00c52db62a5cb5085e77e10425"
       },
       "processing_buffers": [
         {
@@ -679,7 +679,7 @@
       "diligence": {
         "mission_id": "synthetic-EO",
         "mission_input_sha256": "817b3ee9b24249c7163efa3966311a38e541b2a2ac4f79f647766c654a1ebc8c",
-        "network_receipt_id": "ebb9794dc39d0c2efc1899472ad265bd622c2fbda3d9625dfc92ae95651707ff",
+        "network_receipt_id": "34b8278083582073855605d315d6fa6b7c8eb545df8c292cbedadc0ac3847dd3",
         "lifecycle": {
           "schema": "capacity-orbital/diligence-response-v1",
           "request_id": "synthetic-EO:lifecycle",
@@ -1077,14 +1077,14 @@
           "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
         ]
       },
-      "receipt_id": "4ff5b8999b4774f7b7cbbad753947dfc2a0100d0cdc4e4c6571357c828ae986b"
+      "receipt_id": "856cf782b3bdf6bff33a1e92bcd8c6a22fba150dee7b5e6b2d0de061861e8151"
     },
     {
       "schema": "capacity-orbital/mission-report-v1",
       "mission_id": "synthetic-EO",
       "route": "onboard",
       "input_sha256": "817b3ee9b24249c7163efa3966311a38e541b2a2ac4f79f647766c654a1ebc8c",
-      "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+      "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
       "classification": "synthetic coupled prediction; no execution or billing",
       "execution_performed": false,
       "promoted": false,
@@ -1235,7 +1235,7 @@
       "network": {
         "schema": "capacity-orbital/network-report-v1",
         "input_sha256": "f13ef07cac4c15cae90b14556c0f485657ebac90fddec247237fc8366bebd803",
-        "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+        "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
         "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
         "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
         "jobs": [
@@ -1475,7 +1475,7 @@
           }
         ],
         "operations": 137,
-        "receipt_id": "89723380ff8ac46481e27aab07c5e6ed526ac32b57b3990dbaab8ff8e8503a08"
+        "receipt_id": "8a317741eb132b46ffb47719b21a3d79a9542db3d34d30cfcd90559d2e4a901d"
       },
       "proposal": {
         "schema": "capacity-orbital/proposal-v1",
@@ -1584,7 +1584,7 @@
         "schema": "capacity-orbital/dynamics-report-v1",
         "proposal_id": "synthetic-EO:onboard",
         "input_sha256": "c91fffc6a7f4da54a8f490909400f4499e541f2db860d417b2c0780ed0e0a69e",
-        "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+        "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
         "source_binding": "caller-supplied",
         "classification": "synthetic predicted feasibility; no observed or executed outcomes",
         "authority": {
@@ -1756,7 +1756,7 @@
             "at_s": 6.160000000000001
           }
         ],
-        "receipt_id": "5b41b2b4486460812397541f9612a5dc9797a6d5fc4a633a46ea11e187070f7f"
+        "receipt_id": "2429b764b8f0454e186681674d0499f7cd145f3527b2143306785beaca7a9063"
       },
       "processing_buffers": [
         {
@@ -1794,7 +1794,7 @@
       "diligence": {
         "mission_id": "synthetic-EO",
         "mission_input_sha256": "817b3ee9b24249c7163efa3966311a38e541b2a2ac4f79f647766c654a1ebc8c",
-        "network_receipt_id": "89723380ff8ac46481e27aab07c5e6ed526ac32b57b3990dbaab8ff8e8503a08",
+        "network_receipt_id": "8a317741eb132b46ffb47719b21a3d79a9542db3d34d30cfcd90559d2e4a901d",
         "lifecycle": {
           "schema": "capacity-orbital/diligence-response-v1",
           "request_id": "synthetic-EO:lifecycle",
@@ -2192,14 +2192,14 @@
           "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
         ]
       },
-      "receipt_id": "cdf8f71e6f1b7a1157f435003619e308fc12237e3c94a7863c11a6aff9bc3a4e"
+      "receipt_id": "3302a285a238ac767d36126f6aeea2f9ba516daa02c1818c7eb604906fedfe50"
     },
     {
       "schema": "capacity-orbital/mission-report-v1",
       "mission_id": "synthetic-EO",
       "route": "hybrid",
       "input_sha256": "817b3ee9b24249c7163efa3966311a38e541b2a2ac4f79f647766c654a1ebc8c",
-      "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+      "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
       "classification": "synthetic coupled prediction; no execution or billing",
       "execution_performed": false,
       "promoted": false,
@@ -2350,7 +2350,7 @@
       "network": {
         "schema": "capacity-orbital/network-report-v1",
         "input_sha256": "a900878e9eb75f336afe8236995ca9abaa90ad1860d851358c2a95a276170be7",
-        "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+        "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
         "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
         "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
         "jobs": [
@@ -2590,7 +2590,7 @@
           }
         ],
         "operations": 141,
-        "receipt_id": "a6b7d36593a507a31941d708a85e2a6fb28b5fc4420bc0ea1239d6cd6f22e9d3"
+        "receipt_id": "327fd71c6d9d1a9fb02b213815573b127d2096e016bc42878dc0ab60c3414566"
       },
       "proposal": {
         "schema": "capacity-orbital/proposal-v1",
@@ -2717,7 +2717,7 @@
         "schema": "capacity-orbital/dynamics-report-v1",
         "proposal_id": "synthetic-EO:hybrid",
         "input_sha256": "7053b763fe133d5d40941287aec3b2f6915f602c7906181fcff5107230eac704",
-        "source_sha256": "08c0874109e7d8ca016ef4556e0c1ecafcd4cb2f5e705653eff1de99e5b51b80",
+        "source_sha256": "71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff",
         "source_binding": "caller-supplied",
         "classification": "synthetic predicted feasibility; no observed or executed outcomes",
         "authority": {
@@ -2909,7 +2909,7 @@
             "at_s": 5.5600000000000005
           }
         ],
-        "receipt_id": "023738fb896843c16ed5a673691b7a0d7b90ce570ee37867926cf80cb4dacff0"
+        "receipt_id": "157a0e63eabeddf76846d07f0b32bf4a2ad1c39df696282cbf3e7cab5f1c190c"
       },
       "processing_buffers": [
         {
@@ -2959,7 +2959,7 @@
       "diligence": {
         "mission_id": "synthetic-EO",
         "mission_input_sha256": "817b3ee9b24249c7163efa3966311a38e541b2a2ac4f79f647766c654a1ebc8c",
-        "network_receipt_id": "a6b7d36593a507a31941d708a85e2a6fb28b5fc4420bc0ea1239d6cd6f22e9d3",
+        "network_receipt_id": "327fd71c6d9d1a9fb02b213815573b127d2096e016bc42878dc0ab60c3414566",
         "lifecycle": {
           "schema": "capacity-orbital/diligence-response-v1",
           "request_id": "synthetic-EO:lifecycle",
@@ -3357,7 +3357,7 @@
           "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
         ]
       },
-      "receipt_id": "d9574b07eca403420db2a4b3e3b5e98f43b91ab590a51ace9f1c5834f14e0357"
+      "receipt_id": "934b1612bccbe15369eef236d64a77fc147f72e1a9d505b584f1a4ec5109e1ca"
     }
   ],
   "execution_performed": false,

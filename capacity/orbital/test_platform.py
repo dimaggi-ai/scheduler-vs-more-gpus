@@ -212,4 +212,37 @@ class PlatformTests(unittest.TestCase):
             p=subprocess.run([sys.executable,'-m','capacity.orbital.platform','--demo',kind],capture_output=True,text=True)
             self.assertEqual(p.returncode,code,p.stderr);self.assertIn('comparisons',json.loads(p.stdout))
 
+    def test_queued_zero_ground_and_hybrid_verify_lane(self):
+        for route,field in (('ground','ground_s'),('hybrid','hybrid_ground_s')):
+            for outage in (False,True):
+                m=demo();m['jobs'][0][field]=20;m['jobs'][1][field]=0
+                if outage:m['network']['nodes'][m['destination']]['unavailable']=[dict(start_s=20,end_s=30)]
+                r=plan_mission(m,route)
+                self.assertEqual(r['jobs'][1]['completion_s'],r['jobs'][0]['completion_s'])
+                self.assertGreater(r['jobs'][1]['completion_s'],r['network']['jobs'][1]['arrival_s'])
+                self.assertTrue(verify_mission(m,r)['valid'],verify_mission(m,r))
+                bad=copy.deepcopy(r);bad['jobs'][1]['completion_s']=bad['network']['jobs'][1]['arrival_s'];bad['receipt_id']=digest({k:v for k,v in bad.items() if k!='receipt_id'})
+                self.assertIn('FINAL_COMPLETION',verify_mission(m,bad)['errors'])
+                m['jobs'].reverse();self.assertTrue(verify_mission(m,plan_mission(m,route))['valid'])
+            m=demo()
+            for j in m['jobs']:j[field]=0
+            self.assertTrue(verify_mission(m,plan_mission(m,route))['valid'])
+        m=demo();m['jobs'][0]['onboard_s']=20;m['jobs'][1]['onboard_s']=0
+        self.assertTrue(verify_mission(m,plan_mission(m,'onboard'))['valid'])
+
+    def test_malformed_report_references_all_boundaries(self):
+        import tempfile
+        from pathlib import Path
+        m=demo();original=plan_mission(m,'ground')
+        mutations=[lambda r:r['network']['jobs'][0]['hops'][0].update(contact_id='missing'),lambda r:r['dynamics'].update(nodes=[]),lambda r:r.update(dynamics=[]),lambda r:r['network'].update(jobs={}),lambda r:r['proposal'].update(events={}),lambda r:r['network']['jobs'][0].update(hops=[[]])]
+        for mutate in mutations:
+            r=copy.deepcopy(original);mutate(r);r['receipt_id']=digest({k:v for k,v in r.items() if k!='receipt_id'})
+            result=verify_mission(m,r);self.assertFalse(result['valid']);self.assertTrue(any(e.startswith('MALFORMED_EVIDENCE:') for e in result['errors']))
+            req=dict(schema='capacity-orbital/mission-tool-v1',id='malformed-report',tool='verify',arguments=dict(mission=m,report=r))
+            reply=dispatch(req);self.assertEqual(reply['status'],'evaluated');self.assertFalse(reply['result']['valid'])
+            with tempfile.TemporaryDirectory() as temp:
+                path=Path(temp)/'request.json';path.write_text(json.dumps(req))
+                proc=subprocess.run([sys.executable,'-m','capacity.orbital.platform','--request',str(path)],capture_output=True,text=True)
+                self.assertEqual(proc.returncode,0,proc.stderr);self.assertNotIn('Traceback',proc.stderr);self.assertFalse(json.loads(proc.stdout)['result']['valid'])
+
 if __name__=='__main__':unittest.main()

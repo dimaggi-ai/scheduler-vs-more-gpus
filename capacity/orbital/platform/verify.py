@@ -4,16 +4,62 @@ from ..contracts import digest,canonical
 from .contracts import validate
 from .mission import plan_mission,source_digest
 
+def _object(value,label):
+    if type(value) is not dict:raise ValueError(label+' must be an object')
+    return value
+
+def _rows(value,label):
+    if type(value) is not list or any(type(row) is not dict for row in value):raise ValueError(label+' must be an object list')
+    return value
+
+def _report_shapes(r):
+    _object(r,'report')
+    _rows(r['jobs'],'jobs');_rows(r['processing_buffers'],'processing buffers')
+    _rows(_object(r['proposal'],'proposal')['events'],'events')
+    network=_object(r['network'],'network')
+    for job in _rows(network['jobs'],'network jobs'):_rows(job['hops'],'hops')
+    for key in ('resource_reservations','buffer_reservations'):_rows(network[key],key)
+    _rows(_object(r['network_input'],'network input')['jobs'],'network input jobs')
+    nodes=_object(_object(r['dynamics'],'dynamics')['nodes'],'dynamics nodes')
+    for state in nodes.values():
+        for row in _rows(_object(state,'node state')['intervals'],'intervals'):_object(row['energy'],'energy ledger')
+    _object(r['cost'],'cost')
+
+def _ground_schedule(m,route,network_jobs):
+    # Reconstruct the ordered compute lane, including eventless zero stages.
+    expected={};cursor=0;node=m['network']['nodes'][m['destination']]
+    for job in sorted(m['jobs'],key=lambda j:(j['release_s'],j['id'])):
+        transfer=network_jobs.get(job['id'])
+        if not transfer or transfer['status']!='delivered':continue
+        if job['memory_gb']>m['compute'][m['destination']]['memory_gb']:expected[job['id']]=None;continue
+        duration=job['ground_s' if route=='ground' else 'hybrid_ground_s']
+        start=max(transfer['arrival_s'],cursor,node['commissioned_s'])
+        for outage in node['unavailable']:
+            if start<outage['end_s'] and start+duration>outage['start_s']:start=outage['end_s']
+        end=start+duration
+        if duration>0 and end-start<duration:end=math.nextafter(end,math.inf)
+        invalid=(not math.isfinite(end) or end>m['network']['horizon_s'] or start<node['commissioned_s'] or end>node['retired_s'] or start>=node['retired_s'] or any((start<o['end_s'] and o['start_s']<end) or (start==end and o['start_s']<=start<o['end_s']) for o in node['unavailable']))
+        if invalid:expected[job['id']]=None
+        else:expected[job['id']]=end;cursor=end
+    return expected
+
 def verify_mission(m,r):
     errors=[]
     try:
         validate(m)
         if len(canonical(r).encode())>4000000:raise ValueError('report exceeds4MB')
+        _report_shapes(r)
+        contacts={c['id']:c for c in m['network']['contacts']}
+        for job in r['network']['jobs']:
+            for hop in job['hops']:
+                if type(hop.get('contact_id')) is not str or hop['contact_id'] not in contacts:raise ValueError('unknown contact reference')
         if r['input_sha256']!=digest(m):errors.append('INPUT_BINDING')
         if r['source_sha256']!=source_digest():errors.append('SOURCE_BINDING')
         if r['receipt_id']!=digest({k:v for k,v in r.items() if k!='receipt_id'}):errors.append('OUTCOME_BINDING')
         if r['execution_performed'] or r['promoted']:errors.append('AUTHORITY_CLAIM')
         route=r['route'];jobs={j['id']:j for j in m['jobs']};events=r['proposal']['events']
+        if route not in ('ground','onboard','hybrid'):raise ValueError('unknown report route')
+        ground_schedule=_ground_schedule(m,route,{j['id']:j for j in r['network']['jobs']}) if route!='onboard' else {}
         if set(x['id'] for x in r['jobs'])!=set(jobs) or len(r['jobs'])!=len(jobs):errors.append('JOB_COVERAGE')
         for node in m['compute']:
             lane=sorted([e for e in events if e['kind']=='compute' and e['node']==node],key=lambda e:e['start_s'])
@@ -38,8 +84,8 @@ def verify_mission(m,r):
                     previous=h['arrival_s']
                 ground=next((e for e in compute if e['node']==m['destination']),None)
                 if ground and ground['start_s']<previous:errors.append('PROCESSING_BEFORE_ARRIVAL')
-                expected=ground['end_s'] if ground else previous
-                if job['completion_s'] is not None and job['completion_s']!=expected:errors.append('FINAL_COMPLETION')
+                expected=ground_schedule.get(j['id']) if route!='onboard' else nj['arrival_s']
+                if job['completion_s']!=expected:errors.append('FINAL_COMPLETION')
         # Independent shared-resource and storage checks, not merely hashes.
         resources=r['network']['resource_reservations']
         for i,a in enumerate(resources):
@@ -87,11 +133,11 @@ def verify_mission(m,r):
                 balance=ledger['initial_kwh']+ledger['solar_kwh']-ledger['load_kwh']-ledger['conversion_loss_kwh']-ledger['curtailed_kwh']-ledger['final_kwh']
                 if abs(balance)>1e-9*max(1,abs(ledger['initial_kwh'])):errors.append('ENERGY_CONSERVATION')
         compute_cost=math.fsum((e['end_s']-e['start_s'])*m['compute'][e['node']]['cost_per_s_usd'] for e in events if e['kind']=='compute')
-        link_cost=math.fsum(h['data_gb']*next(c['cost_per_gb'] for c in m['network']['contacts'] if c['id']==h['contact_id']) for j in r['network']['jobs'] for h in j['hops'])
+        link_cost=math.fsum(h['data_gb']*contacts[h['contact_id']]['cost_per_gb'] for j in r['network']['jobs'] for h in j['hops'])
         if not math.isclose(r['cost']['partial_operating_usd'],compute_cost+link_cost,rel_tol=1e-12,abs_tol=1e-12):errors.append('COST_RELATIONSHIP')
         if r['admissible'] and (r['failures'] or not r['dynamics']['admissible'] or any(j['status']!='delivered' for j in r['network']['jobs'])):errors.append('ADMISSIBILITY')
         # Full reconstruction catches omissions and unsupported/extra evidence fields.
         if digest(plan_mission(m,route))!=digest(r):errors.append('REPLAY_MISMATCH')
-    except (ValueError,TypeError,KeyError,StopIteration,OverflowError) as exc:
-        errors.append('MALFORMED_EVIDENCE:'+str(exc))
+    except (ValueError,TypeError,KeyError,StopIteration,OverflowError,RecursionError) as exc:
+        errors.append('MALFORMED_EVIDENCE:'+str(exc)[:500])
     return dict(schema='capacity-orbital/verification-v1',valid=not errors,errors=sorted(set(errors)),classification='offline consistency, not authenticity or acceptance')
