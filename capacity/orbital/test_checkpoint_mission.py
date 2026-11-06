@@ -127,6 +127,108 @@ print(json.dumps(sorted(str(Path(m.__file__).resolve().relative_to(root)) for m 
             run=subprocess.run([sys.executable,str(launcher),'--request',str(target/'orbital/examples/checkpoint-mission-plan.json')],env=env,capture_output=True,text=True,timeout=30)
             self.assertEqual(run.returncode,0,run.stderr);self.assertEqual(json.loads(run.stdout)['status'],'ok')
 
+    def test_zero_ground_availability_independent_of_planner(self):
+        s=demo();s['mission']['jobs'][0].update(preprocess_s=0,hybrid_ground_s=0)
+        s['mission']['network']['nodes']['G']['unavailable']=[dict(start_s=6.4,end_s=7.4)]
+        r=plan(s,'hybrid');self.assertFalse(r['admissible']);self.assertIn('COMPUTE_UNAVAILABLE',[f['code'] for f in r['failures']]);self.assertTrue(verify(s,r)['valid'])
+        bad=copy.deepcopy(r);bad['stages'][1]['failures']=[];bad['stages'][1]['completion_s']=dict(numerator='32',denominator='5');bad['jobs'][0]['completion_s']=6.4;bad['failures']=[];bad['admissible']=True
+        bad.pop('receipt_id');bad['receipt_id']=digest(bad)
+        with patch('capacity.orbital.platform.checkpoint.plan_checkpoint_mission',return_value=bad):
+            self.assertIn('FAILURE_COVERAGE',verify(s,bad)['errors'])
+
+    def test_independent_relationship_check_table(self):
+        from .network import plan_network
+        s=demo();base=plan(s,'hybrid')
+        def no_delivery(r):
+            r['network_input']['jobs']=[]
+            r['network']=plan_network(r['network_input'],source_sha256=r['source_sha256'])
+        cases=[
+            ('AUTHORITY_CLAIM',lambda r:r.update(promoted=True)),
+            ('STAGE_COVERAGE',lambda r:r['stages'].reverse()),
+            ('TRANSFER_DATA_PRECEDENCE',lambda r:r['stages'][0].update(completion_s=dict(numerator='3',denominator='1'))),
+            ('FINAL_COMPLETION',lambda r:r['jobs'][0].update(completion_s=99)),
+            ('GROUND_WITHOUT_DELIVERY',no_delivery),
+            ('PROCESSING_BUFFER_COVERAGE',lambda r:r['processing_buffers'].clear()),
+            ('DYNAMICS_BINDING',lambda r:r['dynamics'].update(extra='wrong')),
+            ('ADMISSIBILITY',lambda r:r.update(admissible=False)),
+            ('INCOMPLETE_ADMISSIBLE',lambda r:r['jobs'][0].update(completion_s=None)),
+            ('TRANSFER_CARDINALITY',lambda r:r['transfer_event_map'].pop()),
+            ('AUTHORITY_BINDING',lambda r:r['proposal']['authority'].update(expires_s=299)),
+            ('TRANSFER_EVENT_BINDING',lambda r:r['transfer_event_map'][0].update(original_event_id='wrong')),
+            ('DECLARED_RESOURCE_BINDING',lambda r:r['stages'][0]['replay_event_map'][0].update(declared_heat_w=dict(numerator='101',denominator='1'))),
+            ('TRANSFER_ID_BINDING',lambda r:r['transfer_event_map'][0].update(mapped_event_id='wrong'))]
+        for code,mutate in cases:
+            r=copy.deepcopy(base);mutate(r);r.pop('receipt_id');r['receipt_id']=digest(r)
+            with patch('capacity.orbital.platform.checkpoint.plan_checkpoint_mission',return_value=r):
+                self.assertIn(code,verify(s,r)['errors'],code)
+
+    def test_report_transport_limits_and_parsed_evidence(self):
+        from .platform.checkpoint.verify import prepare_report
+        s=demo();values=[]
+        deep={};cursor=deep
+        for _ in range(70):cursor['x']={};cursor=cursor['x']
+        for report,code in [(deep,'BUDGET_EXCEEDED'),({'text':'\ud800'},'INVALID_ARGUMENT'),([0]*1_000_001,'BUDGET_EXCEEDED')]:
+            self.refusal(lambda:verify(s,report),code)
+            req=dict(schema=request()['schema'],id='transport',tool='verify',input=dict(scenario=s,report=report))
+            self.assertEqual(dispatch(req)['code'],code)
+            with tempfile.TemporaryDirectory() as td:
+                path=Path(td)/'request.json';path.write_text(canonical(req)+'\n')
+                proc=subprocess.run([sys.executable,'-m','capacity.orbital.platform.checkpoint','--request',str(path)],capture_output=True,text=True,timeout=30)
+                self.assertEqual(proc.returncode,2);self.assertEqual(json.loads(proc.stdout)['code'],code)
+        self.refusal(lambda:verify(s,{'oversized':'x'*8_000_001}),'BUDGET_EXCEEDED')
+        with patch('capacity.orbital.platform.checkpoint.verify.view',side_effect=AssertionError('invalid root must not normalize')):
+            self.assertIsNone(prepare_report([0]*990_000))
+        for report in ([],{},'invalid evidence'):
+            self.assertFalse(verify(s,report)['valid'])
+            req=dict(schema=request()['schema'],id='parsed',tool='verify',input=dict(scenario=s,report=report))
+            self.assertEqual(dispatch(req)['status'],'ok');self.assertFalse(dispatch(req)['result']['valid'])
+            with tempfile.TemporaryDirectory() as td:
+                path=Path(td)/'request.json';path.write_text(canonical(req)+'\n')
+                proc=subprocess.run([sys.executable,'-m','capacity.orbital.platform.checkpoint','--request',str(path)],capture_output=True,text=True,timeout=30)
+                self.assertEqual(proc.returncode,0);self.assertFalse(json.loads(proc.stdout)['result']['valid'])
+
+    def test_startup_preflight_manifest_and_import_race(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);capacity=root/'capacity'
+            shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
+            launcher=capacity/'orbital/platform/checkpoint/cli.py'
+            manifest=launcher.with_name('source_inventory.json');original=manifest.read_bytes()
+            for invalid in ({},[],['../escape'],['/absolute'],[3]):
+                manifest.write_text(json.dumps(invalid))
+                run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
+                self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+            manifest.write_bytes(original)
+            # Missing a non-eager source must refuse before any project import.
+            initializer=capacity/'__init__.py';saved=initializer.read_bytes();marker=root/'imported'
+            initializer.write_text("from pathlib import Path\nPath("+repr(str(marker))+").write_text('imported')\n")
+            unused=capacity/'orbital/benchmark.py';hidden=unused.with_suffix('.hidden');unused.rename(hidden)
+            run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
+            self.assertEqual(run.returncode,2);self.assertFalse(marker.exists())
+            hidden.rename(unused);initializer.write_bytes(saved)
+            wrapper=root/'probe.py'
+            template="""import runpy,builtins,sys
+from pathlib import Path
+ns=runpy.run_path(LAUNCHER)
+real=builtins.__import__;triggered=False
+def intercept(name,*args,**kwargs):
+ global triggered
+ if name=='capacity' and not triggered:
+  triggered=True
+  ACTION
+ return real(name,*args,**kwargs)
+builtins.__import__=intercept
+sys.argv=['cli.py','--request','unused']
+raise SystemExit(ns['main']())
+"""
+            target=capacity/'orbital/dynamics/__init__.py';hidden=target.with_suffix('.hidden')
+            for action,refuses in [("Path("+repr(str(target))+").rename("+repr(str(hidden))+")",True),("raise ImportError('synthetic programmer error')",False),("raise RuntimeError('synthetic programmer error')",False)]:
+                wrapper.write_text(template.replace('LAUNCHER',repr(str(launcher))).replace('ACTION',action))
+                run=subprocess.run([sys.executable,str(wrapper)],capture_output=True,text=True,timeout=20)
+                if refuses:
+                    self.assertEqual(run.returncode,2,run.stderr);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE');hidden.rename(target)
+                else:self.assertNotEqual(run.returncode,0);self.assertIn('synthetic programmer error',run.stderr);self.assertEqual(run.stdout,'')
+
     def test_parent_and_nominal_routes(self):
         self.assertEqual(v1_source(),PARENT_SOURCE)
         s=demo();old=copy.deepcopy(s)

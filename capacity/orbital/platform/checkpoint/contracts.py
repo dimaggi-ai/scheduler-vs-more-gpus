@@ -108,7 +108,7 @@ def selected(v,path,*,time=False,maximum=31_557_600,positive=False):
 def size(value,maximum,scope):
     if len(canonical(value).encode('utf-8'))+1>maximum:raise Refuse('BUDGET_EXCEEDED',scope+' serialized byte budget')
 
-def declaration_bytes(value):
+def declaration_bytes(value,maximum=MAX_INPUT):
     """Compact declaration bytes without Fraction allocation or numeric expansion."""
     total=1;stack=[value]
     while stack:
@@ -119,7 +119,7 @@ def declaration_bytes(value):
         elif type(v) is list:total+=2+max(0,len(v)-1);stack.extend(v)
         elif type(v) in (int,float,Decimal,Token):total+=len(token(v))
         else:total+=len(canonical(v).encode('utf-8'))
-        if total>MAX_INPUT:raise Refuse('BUDGET_EXCEEDED','scenario declaration byte budget')
+        if total>maximum:raise Refuse('BUDGET_EXCEEDED','declaration byte budget')
     return total
 
 def parse(raw):

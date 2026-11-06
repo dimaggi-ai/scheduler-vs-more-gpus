@@ -30,10 +30,11 @@ def dispatch(request):
         if verify:
             bound(data['scenario'])
             scenario_view=enc(normalize(data['scenario']));size(scenario_view,MAX_INPUT,'verify scenario')
-            try:report_view=view(data['report'],'report')
-            except Refuse:
+            from .verify import prepare_report
+            report_view=prepare_report(data['report'])
+            if report_view is None:
                 source=source_digest()
-                return dict(schema='capacity-orbital/checkpoint-mission-tool-result-v2',id=ident,status='ok',input_sha256=None,source_sha256=source,result=verify_checkpoint_mission(data['scenario'],data['report']),execution_performed=False)
+                return dict(schema='capacity-orbital/checkpoint-mission-tool-result-v2',id=ident,status='ok',input_sha256=None,source_sha256=source,result=dict(valid=False,errors=['INVALID_EVIDENCE'],source_sha256=source,execution_performed=False),execution_performed=False)
             normalized['input']=dict(scenario=scenario_view,report=report_view)
         else:normalized['input']=enc(normalize(data))
         size(normalized,MAX_VERIFY if verify else MAX_INPUT,'normalized request');ih=digest(normalized);source=source_digest()

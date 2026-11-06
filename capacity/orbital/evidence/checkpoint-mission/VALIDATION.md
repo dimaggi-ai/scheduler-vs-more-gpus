@@ -1,6 +1,18 @@
 # Checkpoint mission candidate validation
 
-## Current Claude205 correction
+## Current Claude206 correction
+
+R1: independent zero-work endpoint availability checks and the exact destination-outage-start vector now reject the shared-planner admissibility flip. R2: a shipped table asserts each of14 independent relationship error codes under a resealed tampered planner expectation. R3/R5: subprocess tests cover preflight before any project import, malformed manifest shapes, a dynamics initializer disappearing after preflight, and propagation of unrelated ImportError/RuntimeError. The race guard rechecks actual inventoried files, including no-name ImportError, without treating arbitrary import failures as missing source.
+
+R4: transport depth/node/byte and Unicode failures now refuse consistently through direct API, tools and CLI; parsed invalid evidence remains valid:false. PR17 deliberately retains exit0 for that latter result, unlike the separately versioned bundle CLI. R6: structural and serialized bounds precede per-number report normalization. The990,000-element invalid report returned statusok/validfalse in1.080s locally (review206-wide-report.json); this is not a process-memory limit or a cross-machine performance claim. R7: an explicit four-versus-five value-ULP energy comparison makes the existing parent value-roundoff term decisive. It is a numeric tolerance contract test, not measured physical uncertainty.
+
+Twenty directed removals were caught in disposable copies: all14 relationship checks, zero-work availability, the value-ULP allowance and four startup guards. Details are in review206-mutations.json; this is not a mutation percentage. A test fixture initially changed authority scope to an unsupported value, causing the parent validator to reject it; the corrected vector changes expiry within the valid authority schema. No parent code was changed to accommodate the fixture.
+
+Validation:24 focused checkpoint/parent-guard methods pass in12.561s; the full eleven-module suite passes194 tests in33.979s on CPython3.12.6. Five targeted startup/availability/parent-number tests also pass under3.14 and3.9. Own source-bound plan/verify/compare receipts were regenerated. Parent86ab production/source hash remains unchanged. Portable bundle PR18 is deliberately untouched and still pins the prior checkpoint source: its owner must explicitly compose this correction, update that dependency pin and regenerate bundle receipts after review. Current-head CI, cross-tool re-review and designated acceptance remain pending.
+
+Failure deduplication preserves first occurrence order and uses(job,code), retaining distinct attribution rather than reversing code order. Historical measurements and initial failed candidates below remain dated evidence.
+
+## Historical Claude205 correction
 
 The F1–F5 follow-up adds independent data/buffer/storage/dynamics/failure and map-cardinality checks, invalid-evidence result consistency, early verify-scenario budgets, and a standalone source-guarded launcher. Seventeen checkpoint methods plus two parent numeric-guard methods pass. The composed eleven-module suite passed189 tests in29.959s before the final narrow surrogate-preflight classification correction; focused tests rerun after that correction. Startup controls run under Python3.12,3.14 and3.9, including missing own/parent files and a hostile PYTHONPATH.
 

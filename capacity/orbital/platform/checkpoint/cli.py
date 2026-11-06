@@ -23,14 +23,13 @@ def main():
         if Path(package.__file__).resolve() != capacity/'__init__.py':
             raise RuntimeError('imported capacity is outside preflighted source tree')
         from capacity.orbital.platform.checkpoint.__main__ import main as run
-    except ModuleNotFoundError as ex:
-        relative=ex.name.removeprefix('capacity.').replace('.','/') if ex.name else ''
-        candidates=[relative+'.py',relative+'/__init__.py']
-        if ex.name=='capacity':candidates=['__init__.py']
-        for name in candidates:
-            if name in names:
-                try:(capacity/name).read_bytes()
-                except OSError:return unavailable()
+    except ImportError:
+        # A disappearing package initializer can raise ImportError without a name.
+        # Classify only an actually missing/unreadable inventoried source; with
+        # the complete tree intact the original programmer/import error propagates.
+        for name in names:
+            try:(capacity/name).read_bytes()
+            except OSError:return unavailable()
         raise
 
     return run()
