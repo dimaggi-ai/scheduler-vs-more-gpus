@@ -6,6 +6,7 @@ from .contracts import Refuse,bound,size,MAX_REPORT,view,fraction
 
 def verify_checkpoint_mission(scenario,report):
     from . import plan_checkpoint_mission,source_digest
+    source_digest()
     try:
         bound(report,verify=True);report=view(report,'report');size(report,MAX_REPORT,'report')
     except (Refuse,UnicodeError) as ex:

@@ -20,12 +20,88 @@ NUMERIC={
 }
 BUDGETS={'proposal':{'dynamics adapter event budget exceeds10000'},'dynamics':{'shared-clock node/interval budget exceeds 100000','active-event arithmetic budget exceeds 1000000'}}
 
+# Explicit reviewed inventory: globs additionally bind newly present source files,
+# but can never silently erase a required cached module from the source receipt.
+REQUIRED_SOURCE = tuple("""
+__init__.py
+orbital/__init__.py
+orbital/__main__.py
+orbital/adapters.py
+orbital/agentic/__init__.py
+orbital/agentic/__main__.py
+orbital/agentic/benchmark.py
+orbital/agentic/contracts.py
+orbital/agentic/dispatcher.py
+orbital/agentic/evaluation.py
+orbital/agentic/request.schema.json
+orbital/benchmark.py
+orbital/contacts.py
+orbital/contracts.py
+orbital/diligence/__init__.py
+orbital/diligence/__main__.py
+orbital/diligence/api.py
+orbital/diligence/benchmark.py
+orbital/diligence/claims.py
+orbital/diligence/contracts.py
+orbital/diligence/fixtures.py
+orbital/diligence/lifecycle.py
+orbital/diligence/report.py
+orbital/dynamics/__init__.py
+orbital/dynamics/__main__.py
+orbital/dynamics/contracts.py
+orbital/dynamics/fixtures.py
+orbital/dynamics/kernel.py
+orbital/dynamics/physics.py
+orbital/dynamics/report.py
+orbital/network/__init__.py
+orbital/network/__main__.py
+orbital/network/adapter.py
+orbital/network/contracts.py
+orbital/network/fixtures.py
+orbital/network/planner.py
+orbital/network/report.py
+orbital/output.py
+orbital/planner.py
+orbital/platform/__init__.py
+orbital/platform/__main__.py
+orbital/platform/checkpoint/__init__.py
+orbital/platform/checkpoint/__main__.py
+orbital/platform/checkpoint/contracts.py
+orbital/platform/checkpoint/fixtures.py
+orbital/platform/checkpoint/tools.py
+orbital/platform/checkpoint/verify.py
+orbital/platform/composition.json
+orbital/platform/contracts.py
+orbital/platform/diligence.py
+orbital/platform/evaluation.py
+orbital/platform/feedback.py
+orbital/platform/fixtures.py
+orbital/platform/mission.py
+orbital/platform/report.py
+orbital/platform/request.schema.json
+orbital/platform/semantic.py
+orbital/platform/tools.py
+orbital/platform/verify.py
+orbital/reliability/__init__.py
+orbital/reliability/__main__.py
+orbital/reliability/api.py
+orbital/reliability/contracts.py
+orbital/reliability/fixtures.py
+orbital/report.py
+orbital/resources.py
+""".split())
+
 def source_digest():
     root=Path(__file__).resolve().parents[2]
-    paths=list(root.glob('*.py'))+[root.parent/'__init__.py']
+    paths={root.parent/name for name in REQUIRED_SOURCE}
+    paths.update(p for p in root.glob('*.py') if not p.name.startswith('test_'))
     for folder in ('platform','network','dynamics','diligence','agentic','reliability','platform/checkpoint'):
-        paths.extend((root/folder).glob('*.py'));paths.extend((root/folder).glob('*.json'))
-    return digest({str(p.relative_to(root.parent)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths) if not p.name.startswith('test_')})
+        paths.update(p for p in (root/folder).glob('*.py') if not p.name.startswith('test_'))
+        paths.update((root/folder).glob('*.json'))
+    try:
+        return digest({str(p.relative_to(root.parent)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)})
+    except OSError:
+        raise Refuse('SOURCE_UNAVAILABLE','required local source missing or unreadable') from None
 
 def call(scope,fn,*args,**kwargs):
     try:return fn(*args,**kwargs)
@@ -99,9 +175,10 @@ def _stage(s,m,e,role,workfield,arrival):
     return result
 
 def plan_checkpoint_mission(scenario,route):
+    source=source_digest()
     m,e=validate(scenario,route);preflight(scenario,m,e,route)
     if parent_source_digest()!=PARENT_SOURCE:raise Refuse('SOURCE_MISMATCH','parent source differs from reviewed composition')
-    source=source_digest();input_hash=digest(enc(normalized(scenario)));job=m['jobs'][0];fail=[];buffers=[];stages=[];events=[];maps=[]
+    input_hash=digest(enc(normalized(scenario)));job=m['jobs'][0];fail=[];buffers=[];stages=[];events=[];maps=[]
     def add(stage):
         stages.append(stage)
         fail.extend(dict(job=job['id'],code=c) for c in stage['failures'])
@@ -162,6 +239,7 @@ def plan_checkpoint_mission(scenario,route):
     return finish(result)
 
 def compare_checkpoint_missions(baseline,candidate,route,expected_baseline_sha256):
+    source_digest()
     from ...reliability import _pin
     _pin(expected_baseline_sha256);validate(baseline,route);validate(candidate,route)
     a,b=normalized(baseline),normalized(candidate)

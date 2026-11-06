@@ -23,6 +23,33 @@ class CheckpointMission(unittest.TestCase):
         self.assertEqual(cm.exception.code,code)
         return str(cm.exception)
 
+    def test_required_source_missing_or_unreadable_refuses(self):
+        from .platform.checkpoint import REQUIRED_SOURCE
+        root=Path(__file__).resolve().parent.parent
+        original=Path.read_bytes
+        s=demo();report=plan(s,'hybrid');pin=digest(enc(normalized(s)))
+        # Every required source must remain bound after it has been imported.
+        for name in REQUIRED_SOURCE:
+            missing=root/name
+            def read(path, target=missing):
+                if path==target:raise FileNotFoundError('synthetic missing source')
+                return original(path)
+            with patch.object(Path,'read_bytes',read):
+                self.refusal(source_digest,'SOURCE_UNAVAILABLE')
+        for name in ('orbital/platform/checkpoint/contracts.py','orbital/platform/contracts.py','orbital/reliability/contracts.py','__init__.py'):
+            missing=root/name
+            def read(path, target=missing):
+                if path==target:raise PermissionError('synthetic unreadable source')
+                return original(path)
+            with patch.object(Path,'read_bytes',read):
+                for fn in (lambda:plan(s,'hybrid'),lambda:verify(s,report),lambda:compare(s,s,'hybrid',pin)):
+                    self.refusal(fn,'SOURCE_UNAVAILABLE')
+                for tool,data in [('plan',dict(scenario=s,route='hybrid')),('verify',dict(scenario=s,report=report)),('compare',dict(baseline=s,candidate=s,route='hybrid',expected_baseline_sha256=pin))]:
+                    result=dispatch(dict(schema=request()['schema'],id='missing-source',tool=tool,input=data))
+                    self.assertEqual(result['code'],'SOURCE_UNAVAILABLE');self.assertEqual(result['id'],'missing-source')
+        self.assertTrue(verify(s,plan(s,'hybrid'))['valid'])
+        self.assertEqual(compare(s,s,'hybrid',pin)['outcome'],'both_admissible')
+
     def test_parent_and_nominal_routes(self):
         self.assertEqual(v1_source(),PARENT_SOURCE)
         s=demo();old=copy.deepcopy(s)

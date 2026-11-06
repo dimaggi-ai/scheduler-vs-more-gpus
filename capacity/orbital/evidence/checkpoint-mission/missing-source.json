@@ -1,0 +1,16 @@
+{
+  "classification": "disposable copied source; actual cached import then file rename",
+  "result": {
+    "api_code": "SOURCE_UNAVAILABLE",
+    "tool": {
+      "schema": "capacity-orbital/checkpoint-mission-tool-result-v2",
+      "id": "demo-plan",
+      "status": "refused",
+      "code": "SOURCE_UNAVAILABLE",
+      "reason": "required local source missing or unreadable",
+      "input_sha256": "024feed3d2ec1d041d8f8460132057ce05d6887c23c2235157c5246891018bb9",
+      "source_sha256": null,
+      "execution_performed": false
+    }
+  }
+}
