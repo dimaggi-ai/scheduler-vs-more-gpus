@@ -1,0 +1,41 @@
+{
+  "base": "8915005abc02ad7eb8d6758cc9b1a1f4bafab096",
+  "parent": "978ec88b24aa0d0ef5ceb063a53d00737f9b6121",
+  "merge_commit": "3d1ae46bbc213fbf98d90f7040f0ba60494fd502",
+  "platform_source_sha256": "349c7248ae57391cbd12007938a464fbc8d75707547ea74afdc14beff7842dd9",
+  "old_bundle_sha256": "cbfef0cf7d524d4106880c901712e8f4dde0a8d8675632275c0645c671b655ed",
+  "old_fixture_result": {
+    "schema": "capacity-orbital/bundle-verification-v1",
+    "valid": false,
+    "errors": [
+      "source binding differs"
+    ],
+    "authenticity_verified": false,
+    "execution_performed": false
+  },
+  "new_bundle_sha256": "6ceb1e404e95db06791252ca5601e47521bb6a4fec98f1f5a711c4bc3b4a6a90",
+  "fresh_process_verification": {
+    "schema": "capacity-orbital/bundle-verification-v1",
+    "valid": true,
+    "errors": [],
+    "sha256": "6ceb1e404e95db06791252ca5601e47521bb6a4fec98f1f5a711c4bc3b4a6a90",
+    "admissible_routes": [
+      "ground",
+      "onboard",
+      "hybrid"
+    ],
+    "authenticity_verified": false,
+    "execution_performed": false
+  },
+  "resealed_tamper": {
+    "schema": "capacity-orbital/bundle-verification-v1",
+    "valid": false,
+    "errors": [
+      "input binding differs"
+    ],
+    "authenticity_verified": false,
+    "execution_performed": false
+  },
+  "overwrite_refused": true,
+  "author_source_paths_equal": true
+}
