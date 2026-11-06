@@ -11,7 +11,7 @@ def main():
     try:
         with open(args.request,'rb') as f:raw=f.read(MAX_VERIFY+1)
         request=parse(raw);result=dispatch(request)
-    except Refuse as ex:result=refusal(ex.code,str(ex))
+    except Refuse as ex:result=refusal(ex.code,str(ex),getattr(ex,'request_id',None))
     except OSError:result=refusal('IO_ERROR','request could not be read')
     data=canonical(result)+'\n'
     if args.output and result['status']=='ok':

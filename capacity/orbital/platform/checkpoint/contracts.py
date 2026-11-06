@@ -123,9 +123,14 @@ def parse(raw):
     except RecursionError:raise Refuse('BUDGET_EXCEEDED','JSON nesting') from None
     except (UnicodeError,json.JSONDecodeError):raise Refuse('INVALID_ARGUMENT','malformed JSON/UTF-8') from None
     verify=type(v) is dict and v.get('tool')=='verify'
-    if len(raw)>(MAX_VERIFY if verify else MAX_INPUT):raise Refuse('BUDGET_EXCEEDED','raw request byte budget')
-    try:bound(v,verify=verify)
-    except UnicodeError:raise Refuse('INVALID_ARGUMENT','surrogate text') from None
+    try:
+        if len(raw)>(MAX_VERIFY if verify else MAX_INPUT):raise Refuse('BUDGET_EXCEEDED','raw request byte budget')
+        try:bound(v,verify=verify)
+        except UnicodeError:raise Refuse('INVALID_ARGUMENT','surrogate text') from None
+    except Refuse as ex:
+        try:ex.request_id=text(v.get('id'),128) if type(v) is dict else None
+        except Refuse:ex.request_id=None
+        raise
     return v
 
 def normalized(s):

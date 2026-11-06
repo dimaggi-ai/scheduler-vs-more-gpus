@@ -13,7 +13,7 @@ from ..mission import source_digest as parent_source_digest
 from .contracts import (Refuse,validate,normalized,enc,fraction,selected,decimal,exact,
                         GRID,finish,MAX_REPORT,size)
 
-PARENT_SOURCE='349c7248ae57391cbd12007938a464fbc8d75707547ea74afdc14beff7842dd9'
+PARENT_SOURCE='dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e'
 NUMERIC={
  'network':{'nonfinite derived network arithmetic','positive transfer duration below numeric resolution','positive transfer/propagation below timestamp resolution'},
  'dynamics':{'nonfinite or undefined derived arithmetic','nonfinite derived state'},
