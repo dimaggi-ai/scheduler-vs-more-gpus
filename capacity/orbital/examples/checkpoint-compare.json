@@ -45,7 +45,7 @@
         "down": 0
       },
       "policy": {
-        "version": "v1",
+        "version": "candidate-v2",
         "checkpoint_every_work_s": null,
         "checkpoint_duration_s": 2,
         "restart_duration_s": 2

@@ -59,7 +59,7 @@ def _evaluate(s):
         if durations['productive']!=lost+durable+volatile:raise RuntimeError('work conservation failure')
         if complete:break
     energy={k:rational(durations[k]*s['power_kw'][k]/F(3600)) for k in durations}
-    result=dict(schema='capacity-orbital/checkpoint-result-v1',status='completed' if durable==required else 'deadline_exceeded',classification='deterministic synthetic replay; not observed telemetry',input_sha256=digest(encoded(s)),source_sha256=source_digest(),policy_version=policy['version'],stop_s=t,completion_s=t if durable==required else None,required_work_s=required,durable_work_s=durable,volatile_work_s=volatile,lost_work_s=lost,productive_work_s=durations['productive'],durations_s=durations,energy_kwh=energy,total_energy_kwh=rational(sum(energy.values(),F(0))),trace=trace,trace_sha256=digest(encoded(trace)),execution_performed=False,promoted=False)
+    result=dict(schema='capacity-orbital/checkpoint-result-v1',scenario_id=s['id'],provenance=deepcopy(s['provenance']),status='completed' if durable==required else 'deadline_exceeded',classification='deterministic synthetic replay; not observed telemetry',input_sha256=digest(encoded(s)),source_sha256=source_digest(),policy_version=policy['version'],stop_s=t,completion_s=t if durable==required else None,required_work_s=required,durable_work_s=durable,volatile_work_s=volatile,lost_work_s=lost,productive_work_s=durations['productive'],durations_s=durations,energy_kwh=energy,total_energy_kwh=rational(sum(energy.values(),F(0))),trace=trace,trace_sha256=digest(encoded(trace)),execution_performed=False,promoted=False)
     if sum(durations.values(),F(0))!=t-s['release_s']:raise RuntimeError('duration conservation failure')
     return receipt(result)
 
@@ -82,7 +82,13 @@ def compare_checkpoint_policies(baseline,candidate,expected_baseline_sha256):
         for key in ('version','checkpoint_every_work_s'):value['policy'].pop(key)
         return value
     if fixed(a)!=fixed(b):raise Refuse('BASELINE_MISMATCH','only checkpoint interval and descriptive fields may vary')
-    ar,br=_evaluate(a),_evaluate(b)
+    reports=[]
+    for side,scenario in (('baseline',a),('candidate',b)):
+        try:reports.append(_evaluate(scenario))
+        except Refuse as exc:
+            if exc.code=='BUDGET_EXCEEDED':raise Refuse(exc.code,side+' full evaluation/trace budget: '+str(exc)) from None
+            raise
+    ar,br=reports
     ac=ar['status']=='completed';bc=br['status']=='completed'
     outcome=('both_completed' if bc else 'regression') if ac else ('candidate_completed_baseline_missed' if bc else 'both_missed')
     deltas={key:rational(_fraction(br[key])-_fraction(ar[key])) for key in ('stop_s','total_energy_kwh','lost_work_s','durable_work_s')}

@@ -102,6 +102,8 @@ class CheckpointTests(unittest.TestCase):
         s['policy'].update(checkpoint_every_work_s=D('.01'),checkpoint_duration_s=D('.001'))
         r=evaluate(s);self.assertEqual(len(r['trace']),9999)
         c=compare(s,s,r['input_sha256']);self.assertNotIn('trace',c['baseline']);self.assertLess(len(json.dumps(c)),10000)
+        limit=copy.deepcopy(s);limit['interruptions']=[dict(start_s=D('54.995'),end_s=55)];limit['deadline_s']=D('54.996')
+        self.assertEqual(len(evaluate(limit)['trace']),10000)
         s['work_s']=D('50.001')
         self.assertEqual(dispatch(request(s))['code'],'BUDGET_EXCEEDED')
 
@@ -114,4 +116,125 @@ class CheckpointTests(unittest.TestCase):
             for malformed in ('{','{"id":1,"id":2}','NaN'):
                 p.write_text(malformed);reply=run();self.assertEqual(reply.returncode,2)
                 result=json.loads(reply.stdout);self.assertEqual(result['schema'],'capacity-orbital/checkpoint-tool-result-v1');self.assertEqual(result['code'],'INVALID_ARGUMENT');self.assertIsNone(result['input_sha256'])
+    def test_fixed_fields_allowed_fields_and_complete_comparison_contract(self):
+        a=scenario();pin=evaluate(a)['input_sha256']
+        changes=[('power_kw','productive',2),('work_s',None,7),('deadline_s',None,29),('release_s',None,1),('horizon_s',None,31),('interruptions',None,[dict(start_s=1,end_s=2)]),('policy','checkpoint_duration_s',1),('policy','restart_duration_s',1)]
+        for group,key,value in changes:
+            with self.subTest(fixed=group,key=key):
+                b=copy.deepcopy(a)
+                if key:b[group][key]=value
+                else:b[group]=value
+                with self.assertRaises(Refuse) as caught:compare(a,b,pin)
+                self.assertEqual(caught.exception.code,'BASELINE_MISMATCH')
+        b=copy.deepcopy(a);b['schema']='wrong'
+        with self.assertRaises(Refuse) as caught:compare(a,b,pin)
+        self.assertEqual(caught.exception.code,'UNSUPPORTED_SCHEMA')
+        for group,key,value in [('id',None,'candidate'),('provenance','source','distinct synthetic source'),('policy','version','candidate-v2')]:
+            b=copy.deepcopy(a)
+            if key:b[group][key]=value
+            else:b[group]=value
+            result=compare(a,b,pin)
+            self.assertEqual(result['candidate']['scenario_id'],b['id']);self.assertEqual(result['candidate']['provenance'],b['provenance']);self.assertEqual(result['candidate']['policy_version'],b['policy']['version'])
+        for deadline,expected in [(30,dict(stop_s=-2,total_energy_kwh=F(-2,3600),lost_work_s=0,durable_work_s=0,completion_s=-2)),(5,dict(stop_s=0,total_energy_kwh=0,lost_work_s=0,durable_work_s=0,completion_s=None))]:
+            a=scenario();a['deadline_s']=deadline;b=copy.deepcopy(a);b['policy'].update(checkpoint_every_work_s=None,version='candidate-v2');pin=evaluate(a)['input_sha256']
+            result=compare(a,b,pin)
+            self.assertEqual({k:q(v) if v is not None else None for k,v in result['deltas'].items()},expected)
+            self.assertEqual(result['input_sha256'],digest(dict(baseline=encoded(validate(a)),candidate=encoded(validate(b)),expected_baseline_sha256=pin)))
+            self.assertEqual(result['evidence_scope'],'one declared timeline');self.assertEqual(result['recommendation'],'diagnostic only; held-out evaluation and independent acceptance required');self.assertEqual(result['baseline_binding'],'baseline matched supplied digest')
+            self.assertFalse(result['execution_performed']);self.assertFalse(result['promoted'])
+            for report in (result['baseline'],result['candidate']):
+                self.assertEqual(report['classification'],'deterministic synthetic replay; not observed telemetry');self.assertFalse(report['promoted']);self.assertFalse(report['execution_performed'])
+
+    def test_trace_rows_vector_and_source_graph(self):
+        from .reliability import source_digest
+        import hashlib
+        result=evaluate(scenario());self.assertEqual(result['trace_sha256'],'ffab3991857f8007188464947085e2ac786bcec4e37a8a76ee8952f789379714')
+        def progress(d,v):return dict(durable_work_s=F(d),volatile_work_s=F(v),lost_work_s=F(0))
+        rows=[]
+        for state,start,end,before,after,reasons in [('productive',0,4,progress(0,0),progress(0,4),['checkpoint_started']),('checkpoint',4,6,progress(0,4),progress(4,0),['checkpoint_committed']),('productive',6,8,progress(4,0),progress(6,0),['job_completed'])]:
+            rows.append(dict(state=state,start_s=F(start),end_s=F(end),duration_s=F(end-start),energy_kwh=F(end-start,3600),progress_before=before,progress_after=after,reasons=reasons))
+        self.assertEqual(result['trace'],encoded(rows))
+        root=Path(__file__).parent
+        files=[root/'reliability'/name for name in ('__init__.py','__main__.py','api.py','contracts.py','fixtures.py')]+[root/'contracts.py',root/'output.py',root/'__init__.py',root.parent/'__init__.py']
+        expected=digest({str(p.relative_to(root.parent)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(files)})
+        self.assertEqual(source_digest(),expected);self.assertEqual(result['source_sha256'],expected);self.assertEqual(dispatch(request())['source_sha256'],expected)
+        original=Path.read_bytes
+        for target in (root/'contracts.py',root/'output.py'):
+            with patch.object(Path,'read_bytes',lambda p:original(p)+(b'\n# test source binding' if p==target else b'')):
+                self.assertNotEqual(source_digest(),expected)
+
+    def test_validator_cases_and_exact_limit_pairs(self):
+        from .reliability.contracts import bounded,Lexeme
+        bads=[]
+        for intervals in ([dict(start_s=1,end_s=3),dict(start_s=2,end_s=4)],[dict(start_s=1,end_s=31)],[dict(start_s=1,end_s=1)],{}):
+            s=scenario();s['interruptions']=intervals;bads.append(s)
+        for key,value in [('release_s',31),('deadline_s',31),('horizon_s',5),('work_s',31),('work_s',0)]:
+            s=scenario();s[key]=value;bads.append(s)
+        for key in ('checkpoint_duration_s','restart_duration_s'):
+            s=scenario();s['policy'][key]=0;bads.append(s)
+        s=scenario();s['provenance']['kind']='measured';bads.append(s)
+        for s in bads:self.assertEqual(dispatch(request(s))['code'],'INVALID_ARGUMENT')
+        self.assertEqual(dispatch(dict(request(),tool='missing'))['code'],'UNKNOWN_TOOL')
+        self.assertEqual(dispatch(dict(request(),schema='wrong'))['code'],'UNSUPPORTED_SCHEMA')
+        for n,accepted in [(128,True),(129,False)]:
+            for field in ('request','scenario'):
+                req=request()
+                if field=='request':req['id']='a'*n
+                else:req['input']['id']='a'*n
+                self.assertEqual(dispatch(req)['status']=='ok',accepted)
+        for n,accepted in [(256,True),(257,False)]:
+            s=scenario();s['provenance']['source']='a'*n;self.assertEqual(dispatch(request(s))['status']=='ok',accepted)
+        for power,accepted in [(1_000_000_000,True),(1_000_000_001,False)]:
+            s=scenario();s['power_kw']['down']=power;self.assertEqual(dispatch(request(s))['status']=='ok',accepted)
+        for count,accepted in [(1000,True),(1001,False)]:
+            s=scenario();s.update(horizon_s=3000,interruptions=[dict(start_s=2*i,end_s=2*i+1) for i in range(count)])
+            if accepted:validate(s)
+            else:
+                with self.assertRaises(Refuse) as caught:validate(s)
+                self.assertEqual(caught.exception.code,'BUDGET_EXCEEDED')
+        for depth in (32,33):
+            nested=0
+            for _ in range(depth):nested=[nested]
+            if depth==32:bounded(nested)
+            else:
+                with self.assertRaises(Refuse):bounded(nested)
+        bounded([0]*49999)
+        with self.assertRaises(Refuse):bounded([0]*50000)
+        self.assertEqual(number(Lexeme('0'*1+'.'+'0'*12)),0)
+        for token in ('0.'+'0'*47,'1'*25):
+            with self.assertRaises(Refuse) as caught:number(Lexeme(token))
+            self.assertEqual(caught.exception.code,'BUDGET_EXCEEDED')
+        with self.assertRaises(Refuse):rational(F(10**5000))
+
+    def test_comparison_intermediate_budget_side(self):
+        def too_big(s):raise Refuse('BUDGET_EXCEEDED','output byte budget')
+        s=scenario();pin=evaluate(s)['input_sha256']
+        with patch('capacity.orbital.reliability._evaluate',side_effect=too_big):
+            with self.assertRaisesRegex(Refuse,'baseline full evaluation/trace budget'):compare(s,s,pin)
+        with patch('capacity.orbital.reliability._evaluate',side_effect=[evaluate(s),Refuse('BUDGET_EXCEEDED','output byte budget')]):
+            with self.assertRaisesRegex(Refuse,'candidate full evaluation/trace budget'):compare(s,s,pin)
+
+    def test_cli_identity_channels_and_programmer_error(self):
+        from .reliability.__main__ import main
+        with tempfile.TemporaryDirectory() as temp:
+            p=Path(temp)/'input.json';out=Path(temp)/'out.json'
+            def run(output=None):
+                cmd=[sys.executable,'-m','capacity.orbital.reliability','--request',str(p)]
+                if output is not None:cmd+=['--output',str(output)]
+                return subprocess.run(cmd,capture_output=True,text=True,timeout=10)
+            s=scenario();s['deadline_s']=5;p.write_text(json.dumps(request(s)))
+            r=run();self.assertEqual(r.returncode,0);self.assertEqual(json.loads(r.stdout)['result']['status'],'deadline_exceeded')
+            r=run(out);self.assertEqual(r.returncode,0);self.assertEqual(r.stdout,'')
+            r=run(out);self.assertEqual(json.loads(r.stdout)['id'],'r1')
+            before=p.read_bytes();r=run(p);self.assertEqual(r.returncode,2);self.assertEqual(p.read_bytes(),before)
+            req=request();v=0
+            for _ in range(40):v=[v]
+            req['input']['extra']=v;p.write_text(json.dumps(req));r=run();self.assertEqual(json.loads(r.stdout)['id'],'r1');self.assertEqual(json.loads(r.stdout)['code'],'BUDGET_EXCEEDED')
+            req=request();req['input']['extra']=[0]*60000;p.write_text(json.dumps(req));r=run();self.assertEqual(json.loads(r.stdout)['id'],'r1')
+            p.write_text(json.dumps(request()))
+            with patch('capacity.orbital.reliability.__main__.dispatch',side_effect=ValueError('programmer defect')):
+                with self.assertRaisesRegex(ValueError,'programmer defect'):main(['--request',str(p)])
+            p.write_bytes(b' '*999999+b'0');r=run();self.assertEqual(json.loads(r.stdout)['code'],'INVALID_ARGUMENT')
+            p.write_bytes(b' '*1000000+b'0');r=run();self.assertEqual(json.loads(r.stdout)['code'],'BUDGET_EXCEEDED')
+
 if __name__=='__main__':unittest.main()

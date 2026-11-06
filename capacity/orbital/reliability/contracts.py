@@ -83,7 +83,7 @@ def number(value, *, positive=False, maximum=31_557_600):
     return result
 
 def rational(value):
-    if len(str(abs(value.numerator))) > 256 or len(str(value.denominator)) > 256:
+    if abs(value.numerator)>=10**256 or value.denominator>=10**256:
         raise Refuse('BUDGET_EXCEEDED', 'rational size budget')
     return value
 
@@ -95,7 +95,7 @@ def encoded(value):
     if type(value) is list: return [encoded(v) for v in value]
     return value
 
-def parse(raw):
+def parse(raw, *, check_bounds=True):
     if len(raw) > MAX_BYTES: raise Refuse('BUDGET_EXCEEDED', 'input byte budget')
     def pairs(items):
         obj = {}
@@ -112,7 +112,7 @@ def parse(raw):
         raise Refuse('BUDGET_EXCEEDED', 'JSON nesting budget') from None
     except (UnicodeError, json.JSONDecodeError):
         raise Refuse('INVALID_ARGUMENT', 'malformed JSON/UTF-8') from None
-    bounded(obj)
+    if check_bounds: bounded(obj)
     return obj
 
 def validate(s):
