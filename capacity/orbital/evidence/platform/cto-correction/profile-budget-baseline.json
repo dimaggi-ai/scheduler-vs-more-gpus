@@ -1,0 +1,17 @@
+{
+  "method": "isolated namespace of exact 41ed262 verifier; unchanged mission planner/current source binding; 1000 identical profiles per node",
+  "before": {
+    "schema": "capacity-orbital/verification-v1",
+    "valid": false,
+    "errors": [
+      "MALFORMED_EVIDENCE:verification work budget exceeded"
+    ],
+    "classification": "offline consistency, not authenticity or acceptance"
+  },
+  "after": {
+    "schema": "capacity-orbital/verification-v1",
+    "valid": true,
+    "errors": [],
+    "classification": "offline consistency, not authenticity or acceptance"
+  }
+}

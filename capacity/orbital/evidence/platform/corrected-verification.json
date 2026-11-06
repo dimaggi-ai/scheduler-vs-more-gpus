@@ -1,0 +1,20 @@
+[
+  {
+    "schema": "capacity-orbital/verification-v1",
+    "valid": true,
+    "errors": [],
+    "classification": "offline consistency, not authenticity or acceptance"
+  },
+  {
+    "schema": "capacity-orbital/verification-v1",
+    "valid": true,
+    "errors": [],
+    "classification": "offline consistency, not authenticity or acceptance"
+  },
+  {
+    "schema": "capacity-orbital/verification-v1",
+    "valid": true,
+    "errors": [],
+    "classification": "offline consistency, not authenticity or acceptance"
+  }
+]

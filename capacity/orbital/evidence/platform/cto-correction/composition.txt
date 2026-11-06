@@ -1,0 +1,9 @@
+Old fixture: {'schema': 'capacity-orbital/bundle-verification-v1', 'valid': False, 'errors': ['source binding differs'], 'authenticity_verified': False, 'execution_performed': False}
+ground roundtrip valid
+hybrid roundtrip valid
+New platform source: 71439971e2e4e996b5d0f60352816c2bc220f45e7c394c8df1936f9272563fff
+New bundle pin: ceea8f42d898b0e68039cc3b7449d0b0da9e8a3b4c687ce2c9a9538c69d48091
+----------------------------------------------------------------------
+Ran 133 tests in 5.482s
+
+OK

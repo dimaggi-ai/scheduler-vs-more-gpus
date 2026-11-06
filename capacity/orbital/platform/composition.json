@@ -1,0 +1,12 @@
+{
+  "schema": "capacity-orbital/source-composition-v1",
+  "repository": "dimaggi-ai/scheduler-vs-more-gpus",
+  "base_task108": "39d1c36f6693cb7cdc93402e49d72cd567895337",
+  "task105": "4d80c164c336ba2e1bb1cb00c8208a5ad0061384",
+  "task106": "1aa7364a5b9bc6f818527284f6bb774b4fd831e5",
+  "task107_source": "ec3560a7f68a12e711e7975da7b47dd71393f0a4",
+  "task107_local_cherry_pick": "81d668b3806334308f394d2c56a8584b3cdebe58",
+  "task109_source": "b179d5c444c879cf65ffbfd570b744f3c62509a6",
+  "task109_local_cherry_pick": "1fd25633aa5ef3d58a0e9c35fcf2195b34a0e93a",
+  "acceptance": "none inferred; local source composition only; no upstream PR merge"
+}
