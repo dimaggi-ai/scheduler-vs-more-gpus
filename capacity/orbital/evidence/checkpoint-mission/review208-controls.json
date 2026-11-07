@@ -4,5 +4,9 @@
     "test": "test_zero_ground_availability_independent_of_planner",
     "storage_preserved": true
   },
-  "historical_review206_note": "Earlier zero-work mutation removed planner availability; not proof of verifier-clause isolation."
+  "historical_review206_note": "Earlier zero-work mutation removed planner availability; not proof of verifier-clause isolation.",
+  "zero_terminal_deadline_inclusive_mutant": {
+    "caught": true,
+    "test": "test_terminal_equal_deadline_and_corrupt_inventory_api"
+  }
 }
