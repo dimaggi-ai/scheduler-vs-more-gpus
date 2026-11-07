@@ -1,0 +1,46 @@
+[
+  {
+    "case": "ground",
+    "completion": [
+      36.0,
+      36.0
+    ],
+    "verification": {
+      "schema": "capacity-orbital/verification-v1",
+      "valid": false,
+      "errors": [
+        "FINAL_COMPLETION"
+      ],
+      "classification": "offline consistency, not authenticity or acceptance"
+    }
+  },
+  {
+    "case": "hybrid",
+    "completion": [
+      28.4,
+      28.4
+    ],
+    "verification": {
+      "schema": "capacity-orbital/verification-v1",
+      "valid": false,
+      "errors": [
+        "FINAL_COMPLETION"
+      ],
+      "classification": "offline consistency, not authenticity or acceptance"
+    }
+  },
+  {
+    "case": "contact",
+    "verification": {
+      "exception": "RuntimeError",
+      "message": "generator raised StopIteration"
+    }
+  },
+  {
+    "case": "nodes",
+    "verification": {
+      "exception": "AttributeError",
+      "message": "'list' object has no attribute 'items'"
+    }
+  }
+]

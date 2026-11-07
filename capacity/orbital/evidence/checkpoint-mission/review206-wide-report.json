@@ -1,0 +1,8 @@
+{
+  "classification": "local wall time, not a process-memory bound",
+  "report_elements": 990000,
+  "elapsed_s": 1.0795166660100222,
+  "status": "ok",
+  "valid": false,
+  "normalization": "structural refusal before report numeric conversion"
+}

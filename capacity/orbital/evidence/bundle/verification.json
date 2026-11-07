@@ -1,1 +1,13 @@
-{"schema": "capacity-orbital/bundle-verification-v1", "valid": true, "errors": [], "sha256": "cbfef0cf7d524d4106880c901712e8f4dde0a8d8675632275c0645c671b655ed", "admissible_routes": ["ground", "onboard", "hybrid"], "authenticity_verified": false, "execution_performed": false}
+{
+  "schema": "capacity-orbital/bundle-verification-v1",
+  "valid": true,
+  "errors": [],
+  "sha256": "9136e2b2e8d65ab89bf8c304ae76f1df4114802d139abecc66241029747e484f",
+  "admissible_routes": [
+    "ground",
+    "onboard",
+    "hybrid"
+  ],
+  "authenticity_verified": false,
+  "execution_performed": false
+}

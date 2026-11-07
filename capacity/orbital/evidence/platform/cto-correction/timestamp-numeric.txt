@@ -1,0 +1,11 @@
+Parent baseline: 978ec88b24aa0d0ef5ceb063a53d00737f9b6121
+Source SHA256: dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e
+Command: python3 -m unittest capacity.orbital.test_platform capacity.orbital.test_network capacity.orbital.test_dynamics capacity.orbital.test_agentic capacity.orbital.test_diligence capacity.orbital.test_orbital -q
+----------------------------------------------------------------------
+Ran 136 tests in 16.162s
+
+OK
+
+Regeneration: python3 -m capacity.orbital.evidence.platform.reproduce
+Focused cases: 60 honest large-timestamp fractional route scenarios and 60 resealed one-ULP endpoint mutations; 3 refused battery routes; energy endpoint uncertainty and altered ledger; guarded sequence sentinels at integer price 10**18; plain CLI hostile data at safe integer price 7; arithmetic field shape groups. No huge sequence allocation executed.
+Offline consistency only; independent cross-tool review and designated acceptance remain open.

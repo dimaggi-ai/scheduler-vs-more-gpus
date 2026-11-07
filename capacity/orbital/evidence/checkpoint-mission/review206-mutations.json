@@ -1,0 +1,105 @@
+{
+  "scope": "directed removable relationship and numeric guards; not a mutation score",
+  "results": [
+    {
+      "removed_check": "AUTHORITY_CLAIM",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "STAGE_COVERAGE",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "TRANSFER_DATA_PRECEDENCE",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "FINAL_COMPLETION",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "GROUND_WITHOUT_DELIVERY",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "PROCESSING_BUFFER_COVERAGE",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "DYNAMICS_BINDING",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "ADMISSIBILITY",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "INCOMPLETE_ADMISSIBLE",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "TRANSFER_CARDINALITY",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "AUTHORITY_BINDING",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "TRANSFER_EVENT_BINDING",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "DECLARED_RESOURCE_BINDING",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "TRANSFER_ID_BINDING",
+      "caught": true,
+      "test": "test_independent_relationship_check_table"
+    },
+    {
+      "removed_check": "zero-work availability",
+      "caught": true,
+      "test": "capacity.orbital.test_checkpoint_mission.CheckpointMission.test_zero_ground_availability_independent_of_planner"
+    },
+    {
+      "removed_check": "energy value ULP",
+      "caught": true,
+      "test": "capacity.orbital.test_platform_verifier_guards.PlatformVerifierGuards.test_energy_value_ulps_supply_only_bounded_roundoff_allowance"
+    },
+    {
+      "removed_check": "preflight imports too early",
+      "caught": true,
+      "test": "test_startup_preflight_manifest_and_import_race"
+    },
+    {
+      "removed_check": "manifest shape omitted",
+      "caught": true,
+      "test": "test_startup_preflight_manifest_and_import_race"
+    },
+    {
+      "removed_check": "ImportError race guard narrowed",
+      "caught": true,
+      "test": "test_startup_preflight_manifest_and_import_race"
+    },
+    {
+      "removed_check": "programmer import error swallowed",
+      "caught": true,
+      "test": "test_startup_preflight_manifest_and_import_race"
+    }
+  ]
+}
