@@ -97,6 +97,25 @@ ordinary variance reports compare actuals against each scenario's own plan.
   identity, rates and source/runtime provenance. Revisions create new plan IDs;
   they do not overwrite a previous plan. Hashes identify bytes, not trustworthy
   authors, observed truth or execution approval.
+- **Identity is not authenticity.** `plan_id` is an unkeyed digest: anyone can
+  edit a plan and reseal it. `validate_plan` therefore recomputes every row
+  field the plan itself determines (envelope, reservation, inference and
+  training allocation, budget, productivity), using the builder's arithmetic,
+  and requires exact equality. The band is not stored, so the forecast rows
+  must admit one common band: each row bounds it to an interval two ulps wide
+  either side, and lower bounds must fit the result. The `_shares_one_band`
+  docstring proves every `forecast()` output passes. The slack is a few ulps
+  per row (about 1e-12 GPU-h at 1,000 GPU-h), and the check does not say which
+  band was used. Rows share one rate, at most the builder's 1e6 ceiling.
+- `validate_plan(plan, history=...)` also re-derives the forecast and the two
+  ratios from the supplied history. That proves **consistency with that
+  history**, not that the history is true or who produced either: a plan built
+  from an edited history validates against the edited history. Telling them
+  apart needs an anchor the reader already trusts, such as a `plan_id` recorded
+  elsewhere. No keys or signatures are added.
+- Old plans keep the source hashes they were built with; validation does not
+  compare them with the current source. New plans bind the current source, so
+  a source change gives new plans new `plan_id` values with unchanged numbers.
 - Versioned [plan](schemas/plan.schema.json) and [actual](schemas/actual.schema.json)
   schemas fix units, workload/hardware identity and the synthetic evidence label.
   Replay requires matching sources and Python/NumPy versions. Reports also record

@@ -2,14 +2,18 @@
 import copy
 from dataclasses import asdict
 import json
+import math
 from pathlib import Path
+import random
 
+import numpy as np
 import pytest
 
 from capacity.report import digest
 from sim.simulator import Config, Simulation, STEPS_PER_HOUR
 from capacity.planning.model import (observe, build_plan, actual_artifact, validate_plan,
-                                     validate_actual, forecast, seal, ACCOUNT)
+                                     validate_actual, forecast, seal, ACCOUNT,
+                                     _shares_one_band)
 from capacity.planning.ledger import Ledger
 from capacity.planning.__main__ import publish_directory, read_json, main
 
@@ -114,7 +118,11 @@ def test_plan_digest_and_rehashed_temporal_mismatch(bundle):
 def test_sql_independent_arithmetic_and_no_change(bundle):
     # Construct hand-worked homogeneous plan: nominal 128, envelope 100,
     # allocated 20 inference + 60 training, productive 15 + 50 = 65.
+    # The plan stays derivable: an all-day cap of 0.78125 x 128 gives envelope
+    # 100; ceil(15 x 1.3) = 20; 80 x 0.75 = 60; 60 x (50/60) = 50.
     p=copy.deepcopy(bundle[1])
+    p['config'].update(power_envelope=True,power_start_hour=0,power_hours=24,power_frac=.78125)
+    p.update(headroom=.3,training_fill_ratio=.75,training_retention_ratio=50/60)
     for r,f in zip(p['rows'],p['forecast']['rows']):
         f.update(demand_gpu_h=15.,lower_gpu_h=15.,upper_gpu_h=15.)
         r.update(envelope_gpu_h=100.,inf_alloc_gpu_h=20.,inf_demand_gpu_h=15.,
@@ -346,3 +354,147 @@ def test_original_published_36_run_grid_is_unchanged():
         for key,value in result.items():
             expected=row[key] if isinstance(value,str) else float(row[key])
             assert value==expected,(row['scenario'],row['seed'],row['policy'],key)
+
+
+# Plan derivation (task103). plan_id identifies bytes; it does not
+# authenticate them, so every edit below is resealed before validation.
+def _shift_band(p, hour_index, delta):
+    f = p['forecast']['rows'][hour_index]
+    f['upper_gpu_h'] += delta
+
+
+def _reserve(p, i, delta):
+    r = p['rows'][i]
+    r['reservation_gpus'] += delta; r['inf_alloc_gpu_h'] += delta
+    r['training_budget_gpu_h'] -= delta
+    r['inf_productive_gpu_h'] = min(r['inf_demand_gpu_h'], r['reservation_gpus'])
+
+
+DERIVATION_EDITS = {
+    'headroom': lambda p: p.update(headroom=.9),
+    'fill_ratio': lambda p: p.update(training_fill_ratio=p['training_fill_ratio'] / 2),
+    'retention_ratio': lambda p: p.update(training_retention_ratio=p['training_retention_ratio'] / 2),
+    'reservation_one_gpu': lambda p: _reserve(p, 5, -1),
+    'train_alloc': lambda p: p['rows'][7].update(train_alloc_gpu_h=p['rows'][7]['train_alloc_gpu_h'] * .9),
+    'train_productive': lambda p: p['rows'][7].update(train_productive_gpu_h=p['rows'][7]['train_productive_gpu_h'] * .5),
+    'train_productive_tiny': lambda p: p['rows'][7].update(train_productive_gpu_h=p['rows'][7]['train_productive_gpu_h'] - 1e-9),
+    'budget_and_envelope': lambda p: p['rows'][3].update(envelope_gpu_h=p['rows'][3]['envelope_gpu_h'] + 1,
+                                                         training_budget_gpu_h=p['rows'][3]['training_budget_gpu_h'] + 1),
+    'reservation_float': lambda p: p['rows'][2].update(reservation_gpus=float(p['rows'][2]['reservation_gpus'])),
+    'rate_one_row': lambda p: p['rows'][4].update(rate_usd_per_allocated_gpu_h=3.),
+    'rate_above_builder_ceiling': lambda p: [r.update(rate_usd_per_allocated_gpu_h=1e300) for r in p['rows']],
+    'band_one_row': lambda p: _shift_band(p, 6, 1.),
+    'band_every_upper': lambda p: [f.update(upper_gpu_h=f['upper_gpu_h'] + 1e6) for f in p['forecast']['rows']],
+}
+
+
+@pytest.mark.parametrize('edit', sorted(DERIVATION_EDITS))
+def test_resealed_underivable_plan_is_refused_then_rebuild_recovers(bundle, edit):
+    history, plan, _ = bundle
+    p = copy.deepcopy(plan); DERIVATION_EDITS[edit](p); p = reseal(p, 'plan_id')
+    with pytest.raises(ValueError):
+        validate_plan(p)
+    # Recovery: the builder's own output for the same inputs validates.
+    rebuilt = build_plan(plan['config'], history, plan['cutoff_hour'])
+    validate_plan(rebuilt); validate_plan(rebuilt, history=history)
+    assert rebuilt == plan
+
+
+def test_generated_plans_validate_exactly_across_methods_and_settings(bundle):
+    history, plan, _ = bundle
+    for method in ('seasonal', 'last_value'):
+        for bias, headroom in ((0., 0.), (.7, .1), (1., .3), (3, 1)):
+            p = json.loads(json.dumps(build_plan(plan['config'], history, 72, method=method,
+                                                 bias=bias, headroom=headroom)))
+            validate_plan(p); validate_plan(p, history=history)
+
+
+def test_supplied_history_rederivation_and_its_limits(bundle):
+    history, plan, _ = bundle
+    validate_plan(plan, history=history)
+    # A replaced history_id is invisible without history, refused with it.
+    p = copy.deepcopy(plan); p['forecast']['history_id'] = '0' * 64; p = reseal(p, 'plan_id')
+    validate_plan(p)
+    with pytest.raises(ValueError, match='re-derive'):
+        validate_plan(p, history=history)
+    # Ratios rebuilt consistently into every row still differ from history.
+    p = build_plan(plan['config'], history, 72); p = copy.deepcopy(p)
+    p['training_fill_ratio'] = p['training_fill_ratio'] / 2
+    for r in p['rows']:
+        r['train_alloc_gpu_h'] = r['training_budget_gpu_h'] * p['training_fill_ratio']
+        r['train_productive_gpu_h'] = r['train_alloc_gpu_h'] * p['training_retention_ratio']
+    p = reseal(p, 'plan_id')
+    validate_plan(p)
+    with pytest.raises(ValueError, match='ratios'):
+        validate_plan(p, history=history)
+
+
+def test_self_consistent_forged_history_is_not_authenticated(bundle):
+    """Negative control: consistency is not authenticity. A plan built from an
+    edited history validates against that edited history; only an anchor the
+    reader already trusts (here, the original plan_id) tells them apart."""
+    history, plan, _ = bundle
+    forged = copy.deepcopy(history)
+    for row in forged[48:]:
+        row['inf_demand_gpu_h'] = min(row['inf_demand_gpu_h'] * 1.5, row['inf_alloc_gpu_h'])
+        row['inf_productive_gpu_h'] = min(row['inf_productive_gpu_h'], row['inf_demand_gpu_h'])
+    other = build_plan(plan['config'], forged, 72)
+    validate_plan(other, history=forged)
+    assert other['forecast'] != plan['forecast']
+    assert other['plan_id'] != plan['plan_id']
+    with pytest.raises(ValueError):
+        validate_plan(other, history=history)
+
+
+def _band_rows(demands, band):
+    """Rows exactly as forecast() builds them from point estimates and a band."""
+    return [{'hour': h, 'demand_gpu_h': d, 'lower_gpu_h': max(0, d - band), 'upper_gpu_h': d + band}
+            for h, d in enumerate(demands)]
+
+
+def _roundtrip(rows):
+    return json.loads(json.dumps(rows))
+
+
+BAND_DEMANDS = ([0.0, 5e-324, 1e-9, 0.1, 1.0, 3.0, 1e3, 2.0 ** 53 - 1, 1e9, 1e12, 1e15]
+                + [math.nextafter(2.0 ** k, 0) for k in range(-20, 50, 7)]
+                + [2.0 ** k for k in range(-20, 50, 7)])
+BAND_VALUES = [0.0, 5e-324, 1e-15, 1e-9, 0.1, 1.0, 14.000000000003055, 1e3, 1e9, 1e13]
+
+
+@pytest.mark.parametrize('band', BAND_VALUES)
+def test_band_check_accepts_adversarial_valid_forecasts(band):
+    """Mixed scales in one forecast, large demand with a tiny band, zero band,
+    binade edges and zero-clipped lower bounds all come from one band; the
+    check must accept them as floats, NumPy scalars and after a JSON round trip."""
+    rows = _band_rows(BAND_DEMANDS, band)
+    assert _shares_one_band(rows) and _shares_one_band(_roundtrip(rows))
+    assert _shares_one_band(_band_rows([np.float64(d) for d in BAND_DEMANDS], np.float64(band)))
+
+
+def test_band_check_accepts_random_valid_forecasts():
+    rng = random.Random(103)
+    for _ in range(3000):
+        band = 0.0 if rng.random() < .1 else 10 ** rng.uniform(-15, 13)
+        demands = [0.0 if rng.random() < .05 else 10 ** rng.uniform(-9, 15) * rng.choice([1, 1 / 3, math.pi])
+                   for _ in range(rng.choice([1, 24, 384]))]
+        rows = _band_rows(demands, band)
+        assert _shares_one_band(_roundtrip(rows)), (band, demands)
+
+
+BAND_FORGERIES = {
+    'upper_one_row': lambda r: r[5].update(upper_gpu_h=r[5]['upper_gpu_h'] + 1e-9),
+    'upper_16_ulps': lambda r: r[5].update(upper_gpu_h=r[5]['upper_gpu_h'] + 16 * math.ulp(r[5]['upper_gpu_h'])),
+    'lower_one_row': lambda r: r[5].update(lower_gpu_h=r[5]['lower_gpu_h'] + 1e-9),
+    'band_per_row': lambda r: [x.update(upper_gpu_h=x['upper_gpu_h'] + 1e-9 * i) for i, x in enumerate(r)],
+    'clipped_when_not': lambda r: r[5].update(lower_gpu_h=0),
+    'unclipped_when_clipped': lambda r: r[0].update(lower_gpu_h=1e-9),
+}
+
+
+@pytest.mark.parametrize('name', BAND_FORGERIES)
+def test_band_check_refuses_small_inconsistencies(name):
+    rows = _band_rows([3.0] + [1000.0 + 7.3 * i for i in range(1, 24)], 14.000000000003055)
+    assert _shares_one_band(rows)
+    BAND_FORGERIES[name](rows)
+    assert not _shares_one_band(_roundtrip(rows))
