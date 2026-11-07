@@ -12,7 +12,8 @@ import time
 
 import duckdb
 
-from .model import build_plan, observe, actual_artifact, seal, SCENARIOS, provenance
+from .model import (build_plan, observe, actual_artifact, seal, SCENARIOS, provenance, forecast,
+                    horizon_backtest, band_coverage, method_warning)
 from .ledger import Ledger
 
 
@@ -55,7 +56,7 @@ def publish_directory(destination):
         lock.unlink()
 
 
-def markdown(reports, plan):
+def markdown(reports, plan, skill):
     lines = ['# Forecast, allocation and variance review', '',
              '**Synthetic engineering evidence. No execution authority.**', '',
              f"Frozen plan: `{plan['plan_id']}`. Issued at elapsed hour {plan['cutoff_hour']}.",
@@ -75,11 +76,67 @@ def markdown(reports, plan):
               'Rolling one-step errors on history; these do not validate the full frozen forecast horizon.', '']
     for method, result in plan['forecast']['backtest'].items():
         lines.append(f"- {method}: MAE {result['mae_gpu_h']:.3f} GPU-h over {result['observations']} origins.")
+    lines += skill_markdown(skill)
     lines += ['', '## Unchecked domain constraints', '',
               'This replay does not establish topology, thermal, host/I/O, tenancy, live admission or real hardware feasibility.',
               'Existing capacity.placement previews remain the domain interfaces; aggregate hours do not supply a valid per-job admission envelope.',
               'No physical-loss factors are multiplied into this ledger, because their accounting boundaries overlap.', '']
     return '\n'.join(lines)
+
+
+def number(value, digits=1, suffix=''):
+    return 'null' if value is None else f'{value:,.{digits}f}{suffix}'
+
+
+def skill_markdown(skill):
+    lines = ['', '## Forecast error over frozen horizons', '',
+             'Measurement only: forecasts, bands and reservations are unchanged. Historical backtests pool',
+             'every lead available before the cutoff from origins inside history; held-out coverage uses the',
+             'baseline replay after the cutoff. These are synthetic frequencies, not calibrated coverage.', '',
+             '| Method | Origins | Leads (h) | Observations | Historical p90 error (GPU-h) | Held-out hours in band | Held-out coverage |',
+             '|---|---:|---:|---:|---:|---:|---:|']
+    for method, b in skill['historical_backtest'].items():
+        c = skill['held_out_coverage'][method]
+        leads = 'none' if b['lead_range_h'] is None else f"{b['lead_range_h'][0]}-{b['lead_range_h'][1]}"
+        inside = 'null' if c['hours_inside_band'] is None else f"{c['hours_inside_band']} of {c['expected_hours']}"
+        lines.append(f"| {method} | {b['origins']} | {leads} | {b['observations']} | {number(b['p90_abs_error_gpu_h'])} | "
+                     f"{inside} | {number(None if c['coverage'] is None else 100 * c['coverage'], 1, '%')} |")
+    chosen = skill['chosen_method']
+    lines += ['', f"Scope: {skill['historical_backtest'][chosen]['scope']}.",
+              f"The frozen plan forecasts {skill['requested_horizon_h']} h ahead.",
+              f"Warning: {skill['method_warning']}." if skill['method_warning'] else
+              "No method warning. The heuristic warns when the chosen method's historical p90 error is at least twice another's; it is not a significance test."]
+    return lines
+
+
+def forecast_skill(history, plan, baseline, other_baselines):
+    """Historical frozen-horizon error and baseline held-out band coverage for
+    the plan's method and its comparator.
+
+    The comparator has no replay of its own; its band is measured against the
+    demand observed under this plan's baseline replay. That is reported only
+    when the other plans' baseline replays observed exactly the same demand,
+    and is null otherwise.
+    """
+    f = plan['forecast']
+    cutoff, horizon = f['issued_at_hour'], len(plan['rows'])
+    methods = [f['method']] + [m for m in ('seasonal', 'last_value') if m != f['method']]
+    backtests = {m: horizon_backtest(history, cutoff, horizon, method=m, bias=f['bias']) for m in methods}
+    demand = [r['inf_demand_gpu_h'] for r in baseline['rows']]
+    same_demand = bool(other_baselines) and all(
+        a['scenario'] == 'baseline' and [r['inf_demand_gpu_h'] for r in a['rows']] == demand for a in other_baselines)
+    coverage = {f['method']: band_coverage(plan, baseline)}
+    for m in methods[1:]:
+        coverage[m] = band_coverage(plan, baseline, forecast(history, cutoff, cutoff + horizon, method=m, bias=f['bias']))
+        if not same_demand:
+            coverage[m].update(hours_inside_band=None, coverage=None,
+                               scope='not computed: observed demand differed between plans')
+    return {'schema': 'capacity-forecast-skill/v1', 'evidence_kind': 'synthetic', 'plan_id': plan['plan_id'],
+            'chosen_method': f['method'], 'requested_horizon_h': horizon,
+            'historical_backtest': backtests, 'held_out_coverage': coverage,
+            'method_warning': method_warning(backtests, f['method']),
+            'baseline_demand_identical_across_plans': same_demand, 'plans_compared': 1 + len(other_baselines),
+            'interpretation': 'measurement only; no method selection, band change or calibrated coverage claim'}
 
 
 def demo(destination, *, days=30, history_days=14, seed=42):
@@ -112,10 +169,11 @@ def demo(destination, *, days=30, history_days=14, seed=42):
             reports['missing_event'] = ledger.report(incomplete['actual_id'])
             write_json(stage / 'actual-missing-event.json', incomplete)
             write_json(stage / 'variance-missing-event.json', reports['missing_event'])
-            comparisons = {}
+            comparisons, alternatives = {}, []
             for name, parameters in [('forecast_underestimate', {'bias': .7}), ('higher_headroom', {'headroom': .3})]:
                 alternative = build_plan(config, history, history_days * 24, **parameters)
                 actual = actual_artifact(alternative)
+                alternatives.append(actual)
                 ledger.ingest(alternative, actual)
                 reports[name] = ledger.report(actual['actual_id'])
                 write_json(stage / f'plan-{name}.json', alternative)
@@ -129,7 +187,9 @@ def demo(destination, *, days=30, history_days=14, seed=42):
                     'unmet_inference_delta_gpu_h': s['unmet_inference_gpu_h'] - b['unmet_inference_gpu_h'],
                     'evidence_kind': 'synthetic', 'interpretation': 'paired synthetic replay; tradeoffs, not a universal winner'}
             write_json(stage / 'comparison.json', comparisons)
-        (stage / 'REPORT.md').write_text(markdown(reports, plan))
+            skill = forecast_skill(history, plan, actuals['baseline'], alternatives)
+            write_json(stage / 'forecast-skill.json', skill)
+        (stage / 'REPORT.md').write_text(markdown(reports, plan, skill))
         manifest = {'schema': 'capacity-bundle/v1', 'complete': True, 'evidence_kind': 'synthetic',
                     'execution_authority': False, 'plan_id': plan['plan_id'], 'provenance': provenance(),
                     'duckdb': duckdb.__version__, 'elapsed_seconds': time.perf_counter() - started,

@@ -13,9 +13,9 @@ from capacity.report import digest
 from sim.simulator import Config, Simulation, STEPS_PER_HOUR
 from capacity.planning.model import (observe, build_plan, actual_artifact, validate_plan,
                                      validate_actual, forecast, seal, ACCOUNT,
-                                     _shares_one_band)
+                                     _shares_one_band, horizon_backtest, band_coverage, method_warning)
 from capacity.planning.ledger import Ledger
-from capacity.planning.__main__ import publish_directory, read_json, main
+from capacity.planning.__main__ import publish_directory, read_json, main, forecast_skill
 
 
 @pytest.fixture(scope='module')
@@ -498,3 +498,152 @@ def test_band_check_refuses_small_inconsistencies(name):
     assert _shares_one_band(rows)
     BAND_FORGERIES[name](rows)
     assert not _shares_one_band(_roundtrip(rows))
+
+
+def _step_history(hours, tail=()):
+    """10 GPU-h for the first half of every day and 20 after: the seasonal mean
+    of identical days is exact, and last_value at a midnight origin repeats 20."""
+    return ([{'hour': h, 'inf_demand_gpu_h': 10.0 if h % 24 < 12 else 20.0} for h in range(hours)]
+            + [{'hour': hours + i, 'inf_demand_gpu_h': v} for i, v in enumerate(tail)])
+
+
+def test_horizon_backtest_matches_hand_oracle():
+    # Origins 72 and 96, 24 leads each before cutoff 120: 48 observations.
+    # last_value errs by 10 on the 24 morning hours and 0 otherwise.
+    hist = _step_history(120)
+    lv = horizon_backtest(hist, 120, 24, method='last_value', first_origin=72)
+    assert (lv['origins'], lv['first_origin_hour'], lv['last_origin_hour'], lv['lead_range_h'], lv['observations']) == (2, 72, 96, [1, 24], 48)
+    assert (lv['mae_gpu_h'], lv['p50_abs_error_gpu_h'], lv['p90_abs_error_gpu_h']) == (5.0, 5.0, 10.0)
+    assert lv['scope'].startswith('pooled historical horizons')
+    se = horizon_backtest(hist, 120, 24, method='seasonal', first_origin=72)
+    assert (se['observations'], se['mae_gpu_h'], se['p90_abs_error_gpu_h']) == (48, 0.0, 0.0)
+    # Zero-error comparison: the heuristic never divides and never warns on zero.
+    assert method_warning({'seasonal': se, 'last_value': lv}, 'seasonal') is None
+    assert '10.0' in method_warning({'seasonal': se, 'last_value': lv}, 'last_value')
+    assert method_warning({'seasonal': se, 'last_value': se}, 'last_value') is None
+    assert method_warning({'seasonal': se, 'last_value': {'p90_abs_error_gpu_h': None}}, 'seasonal') is None
+
+
+def test_horizon_backtest_discloses_truncated_horizons_and_insufficient_history():
+    hist = _step_history(120)
+    full = horizon_backtest(hist, 120, 24, method='last_value', first_origin=72)
+    assert (full['lead_range_h'], full['observations']) == ([1, 24], 48)  # two full 24 h horizons
+    assert full['scope'].startswith('pooled historical horizons')
+    # Origin 96 reaches only 24 of 48 leads: the pooled result must say so.
+    partly = horizon_backtest(hist, 120, 48, method='last_value', first_origin=72)
+    assert (partly['lead_range_h'], partly['observations']) == ([1, 48], 72)  # leads 48 + 24
+    assert partly['scope'].startswith('pooled partly truncated') and '1 of them shortened' in partly['scope']
+    short = horizon_backtest(hist, 120, 384, method='last_value', first_origin=72)
+    assert (short['requested_horizon_h'], short['lead_range_h'], short['observations']) == (384, [1, 48], 72)
+    assert 'truncated' in short['scope'] and 'not validation of the requested 384 h' in short['scope']
+    empty = horizon_backtest(hist, 120, 24, method='seasonal')  # first origin 168 >= cutoff
+    assert (empty['origins'], empty['observations'], empty['lead_range_h']) == (0, 0, None)
+    assert empty['mae_gpu_h'] is empty['p50_abs_error_gpu_h'] is empty['p90_abs_error_gpu_h'] is None
+    assert empty['scope'].startswith('insufficient history')
+
+
+def test_horizon_backtest_ignores_everything_at_or_after_cutoff():
+    base = horizon_backtest(_step_history(120), 120, 384, method='seasonal', first_origin=72)
+    for tail in ([1e9] * 50, [float('nan'), -5.0, 'not a number']):
+        assert horizon_backtest(_step_history(120, tail), 120, 384, method='seasonal', first_origin=72) == base
+    earlier = _step_history(120); earlier[100]['inf_demand_gpu_h'] = 99.0
+    assert horizon_backtest(earlier, 120, 384, method='seasonal', first_origin=72) != base
+
+
+@pytest.mark.parametrize('kwargs', [
+    {'method': 'arima'}, {'horizon': 0}, {'horizon': 1.5}, {'horizon': True}, {'cutoff': 71},
+    {'bias': float('nan')}, {'bias': True}, {'bias': 3.5}, {'first_origin': 71}, {'origin_step': 0},
+    {'history': _step_history(119)}, {'history': _step_history(120)[1:]},
+    {'history': _step_history(120)[:60] + _step_history(120)[61:62] + _step_history(120)[60:61] + _step_history(120)[62:]},
+    {'history': [dict(r, inf_demand_gpu_h=float('inf')) if r['hour'] == 5 else r for r in _step_history(120)]},
+    {'history': [{'hour': r['hour']} if r['hour'] == 5 else r for r in _step_history(120)]},
+    {'history': [{'inf_demand_gpu_h': 1.0} if r['hour'] == 5 else r for r in _step_history(120)]},
+    {'history': ['row' if r['hour'] == 5 else r for r in _step_history(120)]},
+])
+def test_horizon_backtest_refuses_invalid_domains(kwargs):
+    args = {'history': _step_history(120), 'cutoff': 120, 'horizon': 24, 'method': 'seasonal', 'first_origin': 72, **kwargs}
+    with pytest.raises(ValueError):
+        horizon_backtest(args.pop('history'), args.pop('cutoff'), args.pop('horizon'), **args)
+
+
+def test_band_coverage_counts_validates_and_nulls_incomplete(bundle):
+    history, plan, actual = bundle
+    band = {r['hour']: r for r in plan['forecast']['rows']}
+    inside = sum(band[r['hour']]['lower_gpu_h'] <= r['inf_demand_gpu_h'] <= band[r['hour']]['upper_gpu_h']
+                 for r in actual['rows'])
+    c = band_coverage(plan, actual)
+    assert (c['expected_hours'], c['observed_hours'], c['hours_inside_band']) == (72, 72, inside)
+    assert c['coverage'] == inside / 72 and c['method'] == 'seasonal'
+    other = forecast(history, 72, 144, method='last_value')
+    assert band_coverage(plan, actual, other)['method'] == 'last_value'
+    incomplete = {k: v for k, v in actual.items() if k != 'actual_id'}
+    incomplete['rows'] = actual['rows'][1:]
+    c = band_coverage(plan, seal(incomplete, 'actual_id'))
+    assert (c['observed_hours'], c['hours_inside_band'], c['coverage']) == (71, None, None)
+    assert c['scope'].startswith('incomplete')
+
+
+def _resealed(actual, **changes):
+    a = {k: v for k, v in actual.items() if k != 'actual_id'}
+    a.update(changes)
+    return seal(a, 'actual_id')
+
+
+def test_band_coverage_refuses_duplicate_unexpected_and_mismatched_inputs(bundle):
+    history, plan, actual = bundle
+    rows = actual['rows']
+    for bad in (_resealed(actual, rows=rows[:1] + rows),
+                _resealed(actual, rows=rows[:-1] + [dict(rows[-1], hour=rows[-1]['hour'] + 1)]),
+                _resealed(actual, plan_id='0' * 64),
+                dict(actual, rows=rows[1:])):  # not resealed
+        with pytest.raises(ValueError):
+            band_coverage(plan, bad)
+    other = forecast(history, 72, 144, method='last_value')
+    shifted = forecast(history[:71] + [dict(history[71], inf_demand_gpu_h=history[71]['inf_demand_gpu_h'] + 1)], 72, 144)
+    for bad in (shifted, dict(other, rows=other['rows'][:-1]), dict(other, issued_at_hour=71),
+                dict(other, rows=[dict(other['rows'][0], lower_gpu_h=other['rows'][0]['upper_gpu_h'] + 1)] + other['rows'][1:])):
+        with pytest.raises(ValueError):
+            band_coverage(plan, actual, bad)
+
+
+def test_forecast_skill_reports_comparator_only_with_identical_demand(bundle):
+    history, plan, actual = bundle
+    twin = actual_artifact(build_plan(plan['config'], history, 72, headroom=.3))
+    skill = forecast_skill(history, plan, actual, [twin])
+    assert skill['baseline_demand_identical_across_plans'] and skill['plans_compared'] == 2
+    assert skill['held_out_coverage']['last_value']['coverage'] is not None
+    assert skill['historical_backtest']['seasonal']['observations'] == 0  # 72 h of history: no origin
+    for others in ([], [actual_artifact(plan, 'demand_surge')]):
+        skill = forecast_skill(history, plan, actual, others)
+        assert not skill['baseline_demand_identical_across_plans']
+        assert skill['held_out_coverage']['last_value']['coverage'] is None
+        assert skill['held_out_coverage']['seasonal']['coverage'] is not None
+
+
+def test_demo_skill_failure_publishes_nothing_and_rerun_is_identical(tmp_path, monkeypatch):
+    import capacity.planning.__main__ as cli
+    def broken(*args, **kwargs):
+        raise RuntimeError('injected backtest failure')
+    monkeypatch.setattr(cli, 'horizon_backtest', broken)
+    with pytest.raises(RuntimeError):
+        cli.demo(tmp_path / 'failed', days=6, history_days=3, seed=2)
+    assert sorted(p.name for p in tmp_path.iterdir()) == []
+    monkeypatch.undo()
+    first = cli.demo(tmp_path / 'one', days=6, history_days=3, seed=2)
+    second = cli.demo(tmp_path / 'two', days=6, history_days=3, seed=2)
+    assert first['plan_id'] == second['plan_id']
+    assert (tmp_path / 'one/forecast-skill.json').read_bytes() == (tmp_path / 'two/forecast-skill.json').read_bytes()
+    assert 'Forecast error over frozen horizons' in (tmp_path / 'one/REPORT.md').read_text()
+
+
+def test_band_coverage_refuses_invalid_comparator_metadata(bundle):
+    history, plan, actual = bundle
+    other = forecast(history, 72, 144, method='last_value')
+    missing = {k: v for k, v in other.items() if k != 'bias'}
+    for bad in (dict(other, method='unknown'), dict(other, bias=float('nan')), dict(other, bias=True),
+                dict(other, bias=4), dict(other, bias='1.0'), missing, 'not a forecast',
+                dict(other, rows=[{'hour': r['hour']} for r in other['rows']])):
+        with pytest.raises(ValueError):
+            band_coverage(plan, actual, bad)
+    # The plan's own forecast copied with valid metadata is still accepted.
+    assert band_coverage(plan, actual, dict(plan['forecast']))['coverage'] == band_coverage(plan, actual)['coverage']

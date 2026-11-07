@@ -28,7 +28,7 @@ scenarios. The existing simulator executes the future reservations and supplies
 observations; its original default policies and published experiments are unchanged.
 
 Outputs include `history.json`, `forecast.json`, `allocation-plan.json`, scenario
-actuals and variance JSON, `ledger.duckdb`, `comparison.json`, `REPORT.md` and a
+actuals and variance JSON, `ledger.duckdb`, `comparison.json`, `forecast-skill.json`, `REPORT.md` and a
 completion manifest with file hashes. Output directories are never overwritten.
 A failed build leaves no completed bundle. A hard process termination may leave
 an unpublished staging directory and `.lock`; inspect these before removing a
@@ -89,6 +89,29 @@ ordinary variance reports compare actuals against each scenario's own plan.
   rolling residual supplies a descriptive band, **not calibrated confidence**.
   This is not a backtest of a 16-day fixed-origin forecast. Bias perturbation does
   not retrain the historical baseline or establish interval coverage.
+- `forecast-skill.json` and the report **measure** frozen-horizon error; they
+  change no forecast, band or reservation. `horizon_backtest` forecasts from
+  each historical origin's own prefix (daily from hour 168), reads nothing at or
+  after the cutoff, and pools leads up to `min(horizon, cutoff - origin)`. It
+  reports the requested horizon, origin count, lead range and observations.
+  With 14 days of history the leads stop at 168 h, so a 384-hour plan gets a
+  **pooled, truncated historical horizon**, labelled as such, not a validation
+  of 384 hours. When only some origins are shortened by the cutoff, the scope
+  says **partly truncated** and how many. Too little history gives 0
+  observations and null metrics; history rows missing a field are refused.
+- `band_coverage` counts held-out baseline hours whose demand lies inside the
+  band, after validating plan/actual identity; duplicate, unexpected or
+  mismatched hours are refused and an incomplete actual gives null coverage.
+  A supplied comparator forecast must carry a known method, a bias in the
+  permitted range and well-formed rows, or it is refused.
+  The comparator method has no replay of its own: its band is measured against
+  the demand observed under the plan's baseline replay, and only when every
+  demo plan observed identical demand. These are synthetic frequencies, not
+  calibrated coverage. On the demo, seasonal covers 83.9% of 384 held-out hours
+  and last_value 22.7%; historical p90 error is 36.7 against 152.3 GPU-h.
+- The method warning fires when the chosen method's historical p90 error is at
+  least twice another's. It is a disclosed heuristic, not a significance test
+  or an automatic method choice.
 - Planned supply uses declared power windows; future stochastic failures are
   unknown. Inference gets forecast plus headroom, capped at supply. Remaining
   training budget is distinct from expected allocation (historical fill ratio)
