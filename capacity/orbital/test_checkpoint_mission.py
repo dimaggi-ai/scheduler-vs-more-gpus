@@ -130,11 +130,21 @@ print(json.dumps(sorted(str(Path(m.__file__).resolve().relative_to(root)) for m 
     def test_zero_ground_availability_independent_of_planner(self):
         s=demo();s['mission']['jobs'][0].update(preprocess_s=0,hybrid_ground_s=0)
         s['mission']['network']['nodes']['G']['unavailable']=[dict(start_s=6.4,end_s=7.4)]
+        for node in s['mission']['network']['nodes'].values():node['preserve_storage']=True
         r=plan(s,'hybrid');self.assertFalse(r['admissible']);self.assertIn('COMPUTE_UNAVAILABLE',[f['code'] for f in r['failures']]);self.assertTrue(verify(s,r)['valid'])
         bad=copy.deepcopy(r);bad['stages'][1]['failures']=[];bad['stages'][1]['completion_s']=dict(numerator='32',denominator='5');bad['jobs'][0]['completion_s']=6.4;bad['failures']=[];bad['admissible']=True
         bad.pop('receipt_id');bad['receipt_id']=digest(bad)
         with patch('capacity.orbital.platform.checkpoint.plan_checkpoint_mission',return_value=bad):
             self.assertIn('FAILURE_COVERAGE',verify(s,bad)['errors'])
+
+    def test_terminal_equal_deadline_and_corrupt_inventory_api(self):
+        s=demo();s['mission']['jobs'][0]['deadline_s']=26
+        report=plan(s,'ground')
+        self.assertEqual(report['jobs'][0]['completion_s'],26)
+        self.assertTrue(report['admissible']);self.assertTrue(verify(s,report)['valid'])
+        for data in (b'['*45000+b']'*45000,json.dumps(['\ud800']).encode()):
+            with patch.object(Path,'read_bytes',return_value=data):
+                self.refusal(source_digest,'SOURCE_UNAVAILABLE')
 
     def test_independent_relationship_check_table(self):
         from .network import plan_network
@@ -194,8 +204,12 @@ print(json.dumps(sorted(str(Path(m.__file__).resolve().relative_to(root)) for m 
             shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
             launcher=capacity/'orbital/platform/checkpoint/cli.py'
             manifest=launcher.with_name('source_inventory.json');original=manifest.read_bytes()
-            for invalid in ({},[],['../escape'],['/absolute'],[3]):
+            for invalid in ({},[],['../escape'],['/absolute'],[3],['\ud800']):
                 manifest.write_text(json.dumps(invalid))
+                run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
+                self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+            for invalid in (b'['*45000+b']'*45000,b'['*2000+b']'*2000):
+                manifest.write_bytes(invalid)
                 run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
                 self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
             manifest.write_bytes(original)
@@ -222,11 +236,13 @@ sys.argv=['cli.py','--request','unused']
 raise SystemExit(ns['main']())
 """
             target=capacity/'orbital/dynamics/__init__.py';hidden=target.with_suffix('.hidden')
-            for action,refuses in [("Path("+repr(str(target))+").rename("+repr(str(hidden))+")",True),("raise ImportError('synthetic programmer error')",False),("raise RuntimeError('synthetic programmer error')",False)]:
+            for action,refuses in [("Path("+repr(str(initializer))+").rename("+repr(str(initializer.with_suffix('.hidden')))+")",True),("Path("+repr(str(target))+").rename("+repr(str(hidden))+")",True),("raise ImportError('synthetic programmer error')",False),("raise RuntimeError('synthetic programmer error')",False)]:
                 wrapper.write_text(template.replace('LAUNCHER',repr(str(launcher))).replace('ACTION',action))
                 run=subprocess.run([sys.executable,str(wrapper)],capture_output=True,text=True,timeout=20)
                 if refuses:
-                    self.assertEqual(run.returncode,2,run.stderr);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE');hidden.rename(target)
+                    self.assertEqual(run.returncode,2,run.stderr);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+                    if hidden.exists():hidden.rename(target)
+                    if initializer.with_suffix('.hidden').exists():initializer.with_suffix('.hidden').rename(initializer)
                 else:self.assertNotEqual(run.returncode,0);self.assertIn('synthetic programmer error',run.stderr);self.assertEqual(run.stdout,'')
 
     def test_parent_and_nominal_routes(self):

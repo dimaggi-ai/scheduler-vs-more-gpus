@@ -35,3 +35,13 @@ The candidate ancestry preserves first module commit `897749d9ce3d6e1fef6ad98cee
 At candidate e582a24 the coordinator reproduced a source-integrity gap: removing an already imported checkpoint/contracts.py from an isolated archive yielded a new incomplete source digest instead of refusal. The explicit required-source inventory now binds every reviewed package/imported-parent source file, while retaining glob discovery of additional executable/data files. Missing or unreadable required source refuses SOURCE_UNAVAILABLE before inherited validation/planning. Parent source pin and algorithms are unchanged.
 
 Thirteen focused tests pass in6.444s, including each required inventory entry and API/tool plan, verify and compare unreadable-source paths. `missing-source.json` records a fresh subprocess using a disposable copied package: import first, rename only that copy's contracts.py, then confirm API and tool refusal. Normal source-bound CLI plan/verify/compare receipts were refreshed. This fixes source completeness; hashes still do not establish authenticity or eliminate filesystem time-of-check/time-of-use races.
+
+## Review208 residual correction
+
+The zero-work availability regression now preserves storage, isolating the verifier availability clause; removing that clause fails the precise assertion. Historical review206 zero-work mutation evidence removed the planner clause instead, and did not establish this isolation. `review208-controls.json` records the distinction. Terminal completion exactly at the deadline is admitted and verifies.
+
+Deeply nested and surrogate inventory forms refuse as SOURCE_UNAVAILABLE at the guarded launcher and source-digest boundary. A root initializer lost after preflight now produces that refusal when import returns a namespace with no source identity; an intact tree with an unexpected identity or programmer exception still raises. Source-bound examples are regenerated. Optional repeated valid-shaped report traversal optimization is deferred: existing byte/node bounds remain, with no wall-time guarantee.
+
+Focused22 tests passed12.577s; two inventory/root-race/deadline methods passed CPython3.14 (0.634s) and3.9 (0.585s). These deterministic filesystem race injections are not concurrent filesystem qualification. Parent production remains unchanged; technical acceptance stays separate.
+
+Composed discovery passed195 tests in32.996s on CPython3.12.6.

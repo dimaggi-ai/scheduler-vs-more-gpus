@@ -23,11 +23,21 @@ BUDGETS={'proposal':{'dynamics adapter event budget exceeds10000'},'dynamics':{'
 # Explicit reviewed inventory: globs additionally bind newly present source files,
 # but can never silently erase a required cached module from the source receipt.
 import json
-REQUIRED_SOURCE = tuple(json.loads((Path(__file__).parent/'source_inventory.json').read_text()))
+def required_source():
+    try:
+        data=(Path(__file__).resolve().parent/'source_inventory.json').read_bytes()
+        if len(data)>100_000:raise ValueError('inventory budget')
+        names=json.loads(data)
+        if type(names) is not list or not names or len(names)>1000 or any(type(n) is not str or not n or '\x00' in n or Path(n).is_absolute() or '..' in Path(n).parts for n in names):raise ValueError('inventory shape')
+        for name in names:name.encode('utf-8')
+        return tuple(names)
+    except (OSError,ValueError,RecursionError):
+        raise Refuse('SOURCE_UNAVAILABLE','required local inventory missing/unreadable/invalid') from None
+REQUIRED_SOURCE = required_source()
 
 def source_digest():
     root=Path(__file__).resolve().parents[2]
-    paths={root.parent/name for name in REQUIRED_SOURCE}
+    paths={root.parent/name for name in required_source()}
     paths.update(p for p in root.glob('*.py') if not p.name.startswith('test_'))
     for folder in ('platform','network','dynamics','diligence','agentic','reliability','platform/checkpoint'):
         paths.update(p for p in (root/folder).glob('*.py') if not p.name.startswith('test_'))
