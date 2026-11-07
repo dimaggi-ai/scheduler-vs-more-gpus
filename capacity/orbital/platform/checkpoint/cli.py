@@ -15,11 +15,15 @@ def main():
         names=json.loads(manifest)
         if type(names) is not list or not names or any(type(n) is not str or Path(n).is_absolute() or '..' in Path(n).parts for n in names):raise ValueError('inventory shape')
         for name in names:(capacity/name).read_bytes()
-    except (OSError,json.JSONDecodeError,ValueError):
+    except (OSError,ValueError,RecursionError):
         return unavailable()
     sys.path.insert(0,str(capacity.parent))
     try:
         import capacity as package
+        if package.__file__ is None:
+            try:(capacity/'__init__.py').read_bytes()
+            except OSError:return unavailable()
+            raise RuntimeError('imported capacity has no source identity')
         if Path(package.__file__).resolve() != capacity/'__init__.py':
             raise RuntimeError('imported capacity is outside preflighted source tree')
         from capacity.orbital.platform.checkpoint.__main__ import main as run

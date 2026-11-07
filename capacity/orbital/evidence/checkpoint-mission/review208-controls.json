@@ -1,0 +1,8 @@
+{
+  "verifier_availability_removed": {
+    "caught": true,
+    "test": "test_zero_ground_availability_independent_of_planner",
+    "storage_preserved": true
+  },
+  "historical_review206_note": "Earlier zero-work mutation removed planner availability; not proof of verifier-clause isolation."
+}
