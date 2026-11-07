@@ -1,12 +1,12 @@
 {
   "classification": "synthetic two-process export/verify, not physical qualification",
-  "provisional_base": "73d0e28fd954bd479beeda4f8950124aa00d4361",
-  "bundle_source_sha256": "eeb6bfbedcfb528a7b00193c157ecf066e7b4e3d770148a596df8d1e26c4d546",
-  "checkpoint_source_sha256": "d44b77ac4b085d83e8234bb282d486f023cd17cb3bb4d09583e3720a0328d3aa",
-  "envelope_sha256": "d2947b4357c0aa2b9f10c198c39fa2f4eb264634326c405651b763f45da45500",
+  "provisional_base": "169bd8ae081d4393f8555c8fc28ad8628a1611b0",
+  "bundle_source_sha256": "4b022c45721a8c05406d5d28bf0cabc9b8a3f6080551aee6cbc27de030f3e73c",
+  "checkpoint_source_sha256": "78bc6436df27b94a15c1b93a2a296f183f32449be091e9bdcf00dd2d4ac2b958",
+  "envelope_sha256": "c8c2cb270c1ad601862c29097969800d5472665ea719d2bd42113f324f97e559",
   "request_bytes": 5103,
   "bundle_bytes": 37222,
-  "elapsed_s": 0.25644133309833705,
+  "elapsed_s": 0.25549920788034797,
   "python": "3.12.6",
   "verification": {
     "admissible": true,
@@ -16,5 +16,5 @@
     "execution_performed": false,
     "valid": true
   },
-  "correction": "review206 F1-F6"
+  "correction": "review208 startup and inventory residuals"
 }

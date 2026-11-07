@@ -1,0 +1,18 @@
+[
+  {
+    "control": "comment control",
+    "expected_behavior_observed": true
+  },
+  {
+    "control": "import recheck removed",
+    "expected_behavior_observed": true
+  },
+  {
+    "control": "programmer import swallowed",
+    "expected_behavior_observed": true
+  },
+  {
+    "control": "manifest shape removed",
+    "expected_behavior_observed": true
+  }
+]

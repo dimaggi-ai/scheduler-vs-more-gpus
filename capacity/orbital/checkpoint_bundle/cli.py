@@ -18,10 +18,14 @@ def main():
             if type(rows) is not list or not rows or len(rows)>1000 or any(type(n) is not str or not n or '\x00' in n or Path(n).is_absolute() or '..' in Path(n).parts for n in rows):raise ValueError('inventory shape')
             names.extend(rows)
         for name in names:(capacity/name).read_bytes()
-    except (OSError,ValueError):return unavailable()
+    except (OSError,ValueError,RecursionError):return unavailable()
     sys.path.insert(0,str(capacity.parent))
     try:
         import capacity as package
+        if package.__file__ is None:
+            try:(capacity/'__init__.py').read_bytes()
+            except OSError:return unavailable()
+            raise RuntimeError('imported capacity has no source identity')
         if Path(package.__file__).resolve()!=capacity/'__init__.py':raise RuntimeError('imported capacity differs from preflighted tree')
         from capacity.orbital.checkpoint_bundle.__main__ import main as run
     except ImportError:

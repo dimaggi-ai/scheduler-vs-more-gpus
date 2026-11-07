@@ -7,7 +7,7 @@ from .contracts import Refuse,fields,raw,parse,wire,text,pin,INNER,REPORT,BUNDLE
 
 SCHEMA='capacity-orbital/checkpoint-evidence-bundle-v1'
 CLASSIFICATION='selected-route synthetic checkpoint evidence; consistency not authenticity or acceptance'
-CHECKPOINT_SOURCE='d44b77ac4b085d83e8234bb282d486f023cd17cb3bb4d09583e3720a0328d3aa'
+CHECKPOINT_SOURCE='78bc6436df27b94a15c1b93a2a296f183f32449be091e9bdcf00dd2d4ac2b958'
 
 def required_sources():
     root=Path(__file__).resolve().parents[1];capacity=root.parent
@@ -20,8 +20,9 @@ def required_sources():
         parent=inventory(root/'platform/checkpoint/source_inventory.json')
         for names in (own,parent):
             if type(names) is not list or not names or len(names)>1000 or any(type(p) is not str or not p or '\x00' in p or Path(p).is_absolute() or '..' in Path(p).parts for p in names):raise Refuse('SOURCE_UNAVAILABLE','invalid source inventory')
+        for name in own+parent:name.encode('utf-8')
         return capacity,{capacity/p for p in own+parent}
-    except (OSError,UnicodeError,ValueError):raise Refuse('SOURCE_UNAVAILABLE','required source inventory missing/unreadable') from None
+    except (OSError,UnicodeError,ValueError,RecursionError):raise Refuse('SOURCE_UNAVAILABLE','required source inventory missing/unreadable') from None
 
 def source_digest():
     capacity,required=required_sources()

@@ -224,6 +224,54 @@ except Refuse as e: print(e.code)
             self.assertEqual(run.returncode,0,run.stderr);self.assertTrue(allowed.exists())
             self.assertTrue(verify(allowed.read_bytes())['valid'])
 
+    def test_startup_preflight_manifest_and_import_race(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);capacity=root/'capacity'
+            shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
+            launcher=capacity/'orbital/checkpoint_bundle/cli.py'
+            manifest=launcher.with_name('source_inventory.json');original=manifest.read_bytes()
+            for invalid in ({},[],['../escape'],['/absolute'],[3],['\ud800']):
+                manifest.write_text(json.dumps(invalid))
+                run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
+                self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+            for invalid in (b'['*45000+b']'*45000,b'['*2000+b']'*2000):
+                manifest.write_bytes(invalid)
+                run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
+                self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+            manifest.write_bytes(original)
+            # Missing a non-eager source must refuse before any project import.
+            initializer=capacity/'__init__.py';saved=initializer.read_bytes();marker=root/'imported'
+            initializer.write_text("from pathlib import Path\nPath("+repr(str(marker))+").write_text('imported')\n")
+            unused=capacity/'orbital/benchmark.py';hidden=unused.with_suffix('.hidden');unused.rename(hidden)
+            run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
+            self.assertEqual(run.returncode,2);self.assertFalse(marker.exists())
+            hidden.rename(unused);initializer.write_bytes(saved)
+            wrapper=root/'probe.py'
+            template="""import runpy,builtins,sys
+from pathlib import Path
+ns=runpy.run_path(LAUNCHER)
+real=builtins.__import__;triggered=False
+def intercept(name,*args,**kwargs):
+ global triggered
+ if name=='capacity' and not triggered:
+  triggered=True
+  ACTION
+ return real(name,*args,**kwargs)
+builtins.__import__=intercept
+sys.argv=['cli.py','export','--request','unused','--output','never-written.json']
+raise SystemExit(ns['main']())
+"""
+            target=capacity/'orbital/checkpoint_bundle/contracts.py';hidden=target.with_suffix('.hidden')
+            for action,refuses in [("Path("+repr(str(initializer))+").rename("+repr(str(initializer.with_suffix('.hidden')))+")",True),("Path("+repr(str(target))+").rename("+repr(str(hidden))+")",True),("raise ImportError('synthetic programmer error')",False),("raise RuntimeError('synthetic programmer error')",False)]:
+                wrapper.write_text(template.replace('LAUNCHER',repr(str(launcher))).replace('ACTION',action))
+                run=subprocess.run([sys.executable,str(wrapper)],capture_output=True,text=True,timeout=20)
+                if refuses:
+                    self.assertEqual(run.returncode,2,run.stderr);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+                    if hidden.exists():hidden.rename(target)
+                    if initializer.with_suffix('.hidden').exists():initializer.with_suffix('.hidden').rename(initializer)
+                else:self.assertNotEqual(run.returncode,0);self.assertIn('synthetic programmer error',run.stderr);self.assertEqual(run.stdout,'')
+
     def test_guarded_startup_and_source_restore(self):
         with tempfile.TemporaryDirectory() as td:
             capacity=Path(td)/'capacity';shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
@@ -236,6 +284,13 @@ except Refuse as e: print(e.code)
                 finally:hidden.rename(path)
             p=subprocess.run([sys.executable,str(launcher),'export','--request',str(src),'--output',str(Path(td)/'recovered.json')],capture_output=True,text=True,timeout=20)
             self.assertEqual(p.returncode,0,p.stderr)
+
+    def test_deep_and_surrogate_inventory_api(self):
+        for data in (b'['*45000+b']'*45000,json.dumps(['\ud800']).encode()):
+            with patch.object(Path,'read_bytes',return_value=data):
+                self.refused(source_digest,'SOURCE_UNAVAILABLE')
+                result=dispatch_json(canonical(self.tool('export',dict(request_json=self.inner()))))
+                self.assertEqual(result['code'],'SOURCE_UNAVAILABLE')
 
     def test_committed_portable_fixture(self):
         root=Path(__file__).parent
