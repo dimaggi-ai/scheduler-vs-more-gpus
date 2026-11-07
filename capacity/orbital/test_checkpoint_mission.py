@@ -142,6 +142,9 @@ print(json.dumps(sorted(str(Path(m.__file__).resolve().relative_to(root)) for m 
         report=plan(s,'ground')
         self.assertEqual(report['jobs'][0]['completion_s'],26)
         self.assertTrue(report['admissible']);self.assertTrue(verify(s,report)['valid'])
+        zero=demo();zero['mission']['jobs'][0].update(preprocess_s=0,hybrid_ground_s=0,deadline_s=6.4)
+        report=plan(zero,'hybrid');self.assertEqual(report['jobs'][0]['completion_s'],6.4)
+        self.assertTrue(report['admissible']);self.assertTrue(verify(zero,report)['valid'])
         for data in (b'['*45000+b']'*45000,json.dumps(['\ud800']).encode()):
             with patch.object(Path,'read_bytes',return_value=data):
                 self.refusal(source_digest,'SOURCE_UNAVAILABLE')
