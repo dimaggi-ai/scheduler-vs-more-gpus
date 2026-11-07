@@ -4,6 +4,17 @@ For offline JSON replay, workload-specific capacity projections and adapters to
 the existing torus/admission packages, see [capacity interfaces](capacity/README.md).
 These extend the simulator; they are not production scheduler bindings.
 
+**Report verification boundary.** `validate_report` checks the wire schema and
+accounting identities; `compare` also checks compatible provenance and calibrations.
+Neither independently replays the simulation. In reports supplied by another
+sender, the split among `idle`, `inference_reservation` and
+`training_overhead_and_discarded` is sender-asserted: redistributing GPU-hours among
+these buckets can pass validation. `run_id` hashes the supplied provenance and
+workload projections, not the complete result ledger, and is not a signature or
+proof of execution. Before relying on that breakdown, independently replay the
+recorded configuration and policy using the recorded source and runtime, with the
+same workload calibrations, and compare the reproduced buckets.
+
 **The AI-infrastructure market prices GPUs, power, and interconnect. It does not price the layer that converts them into usable capacity: allocation.** This repository examines how allocation policies change modeled usable capacity, using a reproducible simulator and public research. The results are scenario comparisons, not a universal return-on-investment ranking.
 
 <!-- research:headline:begin -->
@@ -173,8 +184,10 @@ model's mechanisms, causal effect or productive-capacity gain. **Sanity** points
 external evidence: emergency kills under power contraction lose
 ~1,350-2,100 GPU-h per two weeks that graceful checkpoint-preemption
 preserves by construction (real Borg-style preemption warns and kills,
-so it is harsher than the graceful branch here [25]); queueing grows
-with offered load below saturation in every seed; and demand-tracking
+so it is harsher than the graceful branch here [25]); a controlled FIFO
+case gives longer waits at 0.95 than at 0.85 offered load for the same
+sixty full-cluster two-hour jobs, using deterministic arrival intervals
+(not a monotonicity claim across different seeded workloads); and demand-tracking
 cuts reservation stranding 3.4× at equal SLO — deterministic constant
 arithmetic whose mechanism, not magnitude, comes from the carrier
 pattern [41]. Synthetic data is the seeded workload generator itself,
