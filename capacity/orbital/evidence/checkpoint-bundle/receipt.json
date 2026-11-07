@@ -1,0 +1,20 @@
+{
+  "classification": "synthetic two-process export/verify, not physical qualification",
+  "provisional_base": "169bd8ae081d4393f8555c8fc28ad8628a1611b0",
+  "bundle_source_sha256": "4b022c45721a8c05406d5d28bf0cabc9b8a3f6080551aee6cbc27de030f3e73c",
+  "checkpoint_source_sha256": "78bc6436df27b94a15c1b93a2a296f183f32449be091e9bdcf00dd2d4ac2b958",
+  "envelope_sha256": "c8c2cb270c1ad601862c29097969800d5472665ea719d2bd42113f324f97e559",
+  "request_bytes": 5103,
+  "bundle_bytes": 37222,
+  "elapsed_s": 0.25549920788034797,
+  "python": "3.12.6",
+  "verification": {
+    "admissible": true,
+    "authenticity_established": false,
+    "binding_mode": "expected-pin",
+    "errors": [],
+    "execution_performed": false,
+    "valid": true
+  },
+  "correction": "review208 startup and inventory residuals"
+}

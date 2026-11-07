@@ -1,0 +1,7 @@
+{
+  "case_alias_supported": true,
+  "baseline": "8890122f7a164510041b575d0d643747c8efde82",
+  "finding": "case alias beneath reserved own package allowed a nested output",
+  "correction": "walk ancestor directory identities; preserve nonrecursive parent evidence paths",
+  "test": "test_reserved_subtree_identity_and_permitted_evidence"
+}
