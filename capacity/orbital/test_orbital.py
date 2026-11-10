@@ -362,6 +362,20 @@ class OrbitalTests(unittest.TestCase):
             self.assertEqual(result.stderr.strip(),'REFUSE: JSON nesting is too deep')
             self.assertFalse(out.exists())
 
+    def test_transfer_end_is_clamped_to_window_and_deadline(self):
+        # Finding 8: a transfer sized to the exact window capacity ended after the window by float rounding.
+        start,stop,goodput=1.4,7.7,3.0
+        exact=(stop-start)*goodput/8
+        self.assertGreater(start+exact*8/goodput,stop)  # the unclamped arithmetic overshoots for these values
+        s=synthetic(jobs=1)
+        s['contacts']=[dict(id='only',start_s=start,end_s=stop,goodput_gbps=goodput,usd_per_gb=.2)]
+        s['jobs'][0].update(release_s=0,deadline_s=stop,onboard_s=1,result_gb=exact,compressed_gb=5)
+        r=plan_route(s,'onboard')
+        self.assertEqual(r['jobs'][0]['status'],'planned')
+        self.assertEqual(r['jobs'][0]['completion_s'],stop)
+        downlink=[e for e in r['events'] if e['kind']=='downlink']
+        self.assertEqual([(e['start_s'],e['end_s'],e['gb']) for e in downlink],[(start,stop,exact)])
+
     def test_scenario_with_jobs_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'s.json';path.write_text(json.dumps(synthetic(jobs=1)))
