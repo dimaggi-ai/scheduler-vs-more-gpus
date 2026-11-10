@@ -251,6 +251,23 @@ class OrbitalTests(unittest.TestCase):
             kept=[p for p in root.rglob('a') if p.is_file()]
             self.assertEqual([p.read_text() for p in kept],['another writer'])
 
+    def test_no_hard_link_support_refuses_and_leaves_nothing(self):
+        # Finding 5: the hard-link requirement is documented; this pins the documented refusal.
+        import contextlib, errno, io
+        from .__main__ import main
+        unsupported=OSError(errno.EOPNOTSUPP,os.strerror(errno.EOPNOTSUPP))
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);stderr=io.StringIO();stdout=io.StringIO()
+            with patch('capacity.orbital.output.os.link',side_effect=unsupported), \
+                 contextlib.redirect_stderr(stderr),contextlib.redirect_stdout(stdout):
+                code=main(['--demo','continuous','--output',str(root/'r.json'),'--html',str(root/'r.html')])
+            self.assertEqual(code,2)
+            self.assertIn('REFUSE: ',stderr.getvalue());self.assertIn(os.strerror(errno.EOPNOTSUPP),stderr.getvalue())
+            self.assertEqual(stdout.getvalue(),'')
+            self.assertEqual(list(root.iterdir()),[])
+        readme=(Path(__file__).parent/'README.md').read_text()
+        self.assertIn('needs a filesystem that supports hard links',readme)
+
     def test_publish_preflight_and_staging_failure_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);a=root/'a';b=root/'b'

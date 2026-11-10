@@ -71,6 +71,8 @@ def publish(outputs, input_path=None):
         for temporary, identity, path in staged:
             # Hard-link creation is atomic and refuses an existing destination;
             # rename/replace would silently overwrite a concurrent creator.
+            # A filesystem without hard links raises OSError here: the run is
+            # refused and rolled back (see README).
             os.link(temporary, path)
             published.append((path, identity))
     except BaseException:

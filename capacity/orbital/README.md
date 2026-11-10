@@ -30,7 +30,10 @@ the file identity, so a foreign file that replaced a destination is not
 deleted. It is linked back without overwrite; if that fails, it stays in the
 `.rollback` directory and the error names it. A foreign file can be absent from
 its path for a moment during this step, so use an output directory that no
-other writer shares. No successful report is printed to stdout until
+other writer shares. Publication needs a filesystem that supports hard links,
+because a hard link is how a file is published without overwrite. Where hard
+links are not supported, the run exits 2 with `REFUSE:` and the operating
+system error, and leaves no output or staged file. No successful report is printed to stdout until
 file publication succeeds. This is **not** a multi-file atomic transaction under
 process death, power loss or cleanup failure; inspect exit status and the complete
 expected artifact set. Cleanup failures surface as errors rather than a success.
