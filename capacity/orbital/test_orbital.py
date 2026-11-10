@@ -152,6 +152,22 @@ class OrbitalTests(unittest.TestCase):
         self.assertIn('viewport',html)
         self.assertNotIn('https://',html)
 
+    def test_html_escapes_crafted_report_values(self):
+        # Finding 3: a caller-built report dictionary could inject an attribute through `status`.
+        s=synthetic(jobs=1);clean=html_report(compare(s))
+        report=compare(s);payload='planned" onmouseover="alert(1)'
+        report['comparisons'][0]['jobs'][0]['status']=payload
+        html=html_report(report)
+        self.assertNotIn('onmouseover="',html)
+        self.assertIn('class="planned&quot; onmouseover=&quot;alert(1)"',html)
+        report=compare(s)
+        report['comparisons'][0]['summary'].update(planned='<img src=x onerror=alert(1)>',refused='<b>')
+        html=html_report(report)
+        self.assertNotIn('<img',html);self.assertNotIn('<b>',html)
+        # A report from the planner renders with the same class names and counts as before.
+        self.assertIn('<td class="planned">planned</td>',clean)
+        self.assertIn('<p class="count">1 planned <span>/ 1 jobs</span></p>',clean)
+
     def test_cli_success_error_recovery_and_no_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);scenario=root/'scenario.json';out=root/'report.json';html=root/'report.html'
