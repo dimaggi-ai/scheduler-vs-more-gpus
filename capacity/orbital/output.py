@@ -1,7 +1,10 @@
 """Stage output siblings and publish without overwrite; roll back ordinary errors.
 
-Not a multi-file atomic transaction across process crashes. No files owned by
-another run are deleted during rollback, even if a destination is replaced.
+Not a multi-file atomic transaction across process crashes. Rollback never
+unlinks a path it has not identified as this run's file: the entry is first
+moved into a private directory and checked there. A foreign file that replaced
+a destination is linked back without overwrite. If that fails, it stays in the
+`.rollback` directory and the error names it.
 """
 import os
 from pathlib import Path
@@ -14,11 +17,35 @@ def _identity(path):
 
 
 def _remove_owned(path, identity):
+    # There is no unlink-if-identity call. Checking a path and then unlinking
+    # the same path can delete a file that replaced it between the two calls.
+    path = Path(path)
     try:
-        if _identity(path) == identity:
-            os.unlink(path)
+        if _identity(path) != identity:
+            return
     except FileNotFoundError:
-        pass
+        return
+    holder = Path(tempfile.mkdtemp(prefix='.' + path.name + '.', suffix='.rollback', dir=path.parent))
+    aside = holder / path.name
+    try:
+        try:
+            os.rename(path, aside)
+        except FileNotFoundError:
+            return
+        if _identity(aside) == identity:
+            os.unlink(aside)
+            return
+        try:
+            os.link(aside, path, follow_symlinks=False)
+        except OSError as exc:
+            raise OSError('rollback moved a file this run does not own and could not put it back; '
+                          'it is preserved at ' + str(aside)) from exc
+        os.unlink(aside)
+    finally:
+        try:
+            os.rmdir(holder)
+        except OSError:
+            pass  # not empty: it holds a preserved foreign file
 
 
 def publish(outputs, input_path=None):

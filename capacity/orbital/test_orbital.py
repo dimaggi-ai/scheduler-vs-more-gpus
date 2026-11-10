@@ -196,6 +196,45 @@ class OrbitalTests(unittest.TestCase):
             self.assertEqual(b.read_text(),'another writer')
             self.assertEqual(list(root.iterdir()),[b])
 
+    def test_rollback_keeps_file_placed_after_identity_check(self):
+        # Finding 2: a file that replaced a destination between the identity check and the unlink was deleted.
+        from . import output
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);a=root/'a';b=root/'b';foreign=root/'foreign';link=os.link;real=output._identity;raced=[]
+            def failing(src,dst,**kwargs):
+                if Path(dst)==b:
+                    raise OSError('publish failure')
+                link(src,dst,**kwargs)
+            def racing(path):
+                result=real(path)
+                if Path(path)==a and not raced:
+                    raced.append(path)
+                    foreign.write_text('another writer');os.replace(foreign,a)
+                return result
+            with patch('capacity.orbital.output.os.link',side_effect=failing), \
+                 patch('capacity.orbital.output._identity',side_effect=racing):
+                with self.assertRaises(OSError):
+                    publish([(a,'first'),(b,'second')])
+            self.assertEqual(len(raced),1)
+            self.assertEqual(a.read_text(),'another writer')
+            self.assertEqual(list(root.iterdir()),[a])
+        with tempfile.TemporaryDirectory() as tmp:
+            # The foreign file cannot be put back: it is preserved and the error names where.
+            root=Path(tmp);a=root/'a';foreign=root/'foreign';a.write_text('ours');owned=real(a);raced=[]
+            os.link(a,root/'staged')  # as in publish: the staged link keeps the inode in use
+            def racing(path):
+                result=real(path)
+                if Path(path)==a and not raced:
+                    raced.append(path)
+                    foreign.write_text('another writer');os.replace(foreign,a)
+                return result
+            with patch('capacity.orbital.output.os.link',side_effect=FileExistsError('taken')), \
+                 patch('capacity.orbital.output._identity',side_effect=racing):
+                with self.assertRaisesRegex(OSError,'preserved at'):
+                    output._remove_owned(a,owned)
+            kept=[p for p in root.rglob('a') if p.is_file()]
+            self.assertEqual([p.read_text() for p in kept],['another writer'])
+
     def test_publish_preflight_and_staging_failure_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);a=root/'a';b=root/'b'

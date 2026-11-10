@@ -24,8 +24,13 @@ fresh paths for reruns; this preserves evidence rather than silently overwriting
 it. `--jobs` is valid only with `--demo`. Invalid input exits 2 with `REFUSE:`.
 All output parents and destinations are checked before any write. Output files
 are staged in temporary siblings, then published without overwrite. On ordinary
-write/publish errors, only files created by this run are removed; concurrent
-foreign files are preserved. No successful report is printed to stdout until
+write/publish errors, only files created by this run are removed. Rollback
+moves each of its paths into a private `.rollback` directory before it checks
+the file identity, so a foreign file that replaced a destination is not
+deleted. It is linked back without overwrite; if that fails, it stays in the
+`.rollback` directory and the error names it. A foreign file can be absent from
+its path for a moment during this step, so use an output directory that no
+other writer shares. No successful report is printed to stdout until
 file publication succeeds. This is **not** a multi-file atomic transaction under
 process death, power loss or cleanup failure; inspect exit status and the complete
 expected artifact set. Cleanup failures surface as errors rather than a success.
