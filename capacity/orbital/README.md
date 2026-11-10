@@ -50,6 +50,17 @@ Caller-provided fingerprints are not authenticated. Identical input, source and
 outcome replay to the same ID; changes to any binding change it. A planning
 receipt is not an execution-idempotency key or authorization to charge a bill.
 
+Saved exports are labelled. `--save-scenario` writes a
+`capacity-orbital/scenario-export-v1` file: the scenario plus its classification,
+the assumption list, the model version, `input_sha256` and `source_sha256`.
+`--scenario` accepts this export or a bare v1 scenario. An export whose
+`input_sha256` does not match its embedded scenario is refused. Benchmark JSON
+(`capacity-orbital/benchmark-v1`) carries the same assumption list, the source
+fingerprint and one `input_sha256` per measurement. Saved exports require a
+source fingerprint, and the CLI and the benchmark always supply it. Only a
+direct API call may omit it, and its report is then marked unbound. Do not use
+an unbound report as qualification evidence.
+
 ## A concrete hand calculation
 
 The continuous demo's first job starts in space with 10 decimal GB. At 1 Gbps,

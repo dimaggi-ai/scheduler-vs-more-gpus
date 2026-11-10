@@ -311,6 +311,47 @@ class OrbitalTests(unittest.TestCase):
         for name in ('planner.py','resources.py','contacts.py'):
             self.assertNotIn('usd_per',(root/name).read_text(),name)
 
+    def test_saved_exports_carry_assumptions_and_hashes(self):
+        # Finding 4: saved scenarios and benchmark JSON lacked assumptions and input/source hashes.
+        from . import benchmark, evidence_record
+        from .__main__ import source_digest
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);saved=root/'scenario.json';out=root/'report.json';again=root/'again.json'
+            cli=[sys.executable,'-m','capacity.orbital']
+            first=subprocess.run(cli+['--demo','intermittent','--save-scenario',str(saved),'--output',str(out)],capture_output=True,text=True)
+            self.assertEqual(first.returncode,0,first.stderr)
+            export=json.loads(saved.read_text());report=json.loads(out.read_text())
+            self.assertEqual(export['schema'],evidence_record.EXPORT_SCHEMA)
+            self.assertEqual(export['scenario'],synthetic('intermittent'))
+            self.assertEqual(export['assumptions'],report['assumptions'])
+            self.assertTrue(export['assumptions'])
+            self.assertEqual(export['input_sha256'],report['input_sha256'])
+            self.assertEqual(export['input_sha256'],digest(export['scenario']))
+            self.assertEqual(export['source_sha256'],report['source_sha256'])
+            self.assertEqual(export['source_sha256'],source_digest())
+            self.assertIn('synthetic',export['classification'])
+            # The export is accepted as input and replays to the same report.
+            replay=subprocess.run(cli+['--scenario',str(saved),'--output',str(again)],capture_output=True,text=True)
+            self.assertEqual(replay.returncode,0,replay.stderr)
+            self.assertEqual(again.read_bytes(),out.read_bytes())
+            # An export whose scenario no longer matches its hash is refused.
+            export['scenario']['jobs'][0]['raw_gb']=11;saved.write_text(json.dumps(export));third=root/'third.json'
+            bad=subprocess.run(cli+['--scenario',str(saved),'--output',str(third)],capture_output=True,text=True)
+            self.assertEqual(bad.returncode,2);self.assertIn('input_sha256 does not match',bad.stderr);self.assertFalse(third.exists())
+        # Saved evidence must be bound to a code digest; the pure API stays optional and labelled.
+        with self.assertRaisesRegex(ValueError,'required for saved evidence exports'):
+            evidence_record.scenario_export(synthetic(jobs=1),None)
+        with self.assertRaises(ValueError):
+            evidence_record.evidence_labels('invalid')
+        result=benchmark.run(sizes=((2,'continuous'),(2,'intermittent')))
+        self.assertEqual(result['schema'],evidence_record.BENCHMARK_SCHEMA)
+        self.assertEqual(result['assumptions'],list(evidence_record.ASSUMPTIONS))
+        self.assertEqual(result['source_sha256'],source_digest())
+        self.assertIn('not a production',result['classification'])
+        self.assertEqual([m['input_sha256'] for m in result['measurements']],
+                         [digest(synthetic('continuous',2)),digest(synthetic('intermittent',2))])
+        self.assertEqual([m['planned'] for m in result['measurements']],[[2,2,2],[2,2,2]])
+
     def test_scenario_with_jobs_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'s.json';path.write_text(json.dumps(synthetic(jobs=1)))

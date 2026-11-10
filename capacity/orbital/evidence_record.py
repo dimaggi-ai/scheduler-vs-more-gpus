@@ -3,7 +3,7 @@
 Named evidence_record because the directory `evidence/` holds the checked-in outputs.
 """
 from . import VERSION
-from .contracts import digest
+from .contracts import digest, fields
 
 RECEIPT_SCHEMA = 'capacity-orbital/receipt-v2'
 CLASSIFICATION = 'synthetic offline plan; not measured execution or flight qualification'
@@ -28,3 +28,30 @@ def receipt_id(input_sha256, source_sha256, row, events):
     return digest({'schema': RECEIPT_SCHEMA, 'input_sha256': input_sha256,
                    'source_sha256': source_sha256, 'version': VERSION,
                    'outcome': {k: v for k, v in row.items() if k != 'receipt_id'}, 'events': events})
+
+
+EXPORT_SCHEMA = 'capacity-orbital/scenario-export-v1'
+BENCHMARK_SCHEMA = 'capacity-orbital/benchmark-v1'
+
+
+def evidence_labels(source_sha256):
+    """Labels every saved export carries. A saved export is evidence, so the code digest is required."""
+    if source_sha256 is None:
+        raise ValueError('source_sha256 is required for saved evidence exports')
+    validate_source(source_sha256)
+    return dict(version=VERSION, source_sha256=source_sha256, assumptions=list(ASSUMPTIONS))
+
+
+def scenario_export(scenario, source_sha256):
+    return dict(schema=EXPORT_SCHEMA, classification='synthetic offline planning input; not measured data or flight qualification',
+                **evidence_labels(source_sha256), input_sha256=digest(scenario), scenario=scenario)
+
+
+def scenario_from_export(data):
+    """Return the scenario from a labelled export; pass a bare scenario through for validation."""
+    if not isinstance(data, dict) or data.get('schema') != EXPORT_SCHEMA:
+        return data
+    fields(data, 'schema classification version source_sha256 assumptions input_sha256 scenario', 'scenario export')
+    if digest(data['scenario']) != data['input_sha256']:
+        raise ValueError('scenario export: input_sha256 does not match the embedded scenario')
+    return data['scenario']
