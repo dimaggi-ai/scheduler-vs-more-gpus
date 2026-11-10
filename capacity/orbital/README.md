@@ -25,9 +25,11 @@ it. `--jobs` is valid only with `--demo`. Invalid input exits 2 with `REFUSE:`.
 All output parents and destinations are checked before any write. Output files
 are staged in temporary siblings, then published without overwrite. On ordinary
 write/publish errors, only files created by this run are removed. Rollback
-moves each of its paths into a private `.rollback` directory before it checks
-the file identity, so a foreign file that replaced a destination is not
-deleted. It is linked back without overwrite; if that fails, it stays in the
+first checks the file identity at each of its paths and leaves a path that no
+longer holds this run's file. Otherwise it renames the path into a private
+`.rollback` directory, checks the identity again there and unlinks the file
+only on a match, so a foreign file that replaced a destination is not
+deleted. A foreign file found there is linked back without overwrite; if that fails, it stays in the
 `.rollback` directory and the error names it. Rollback then continues with the
 other paths of this run and reports every such error at the end. A foreign file can be absent from
 its path for a moment during this step, so use an output directory that no

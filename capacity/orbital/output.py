@@ -1,10 +1,12 @@
 """Stage output siblings and publish without overwrite; roll back ordinary errors.
 
 Not a multi-file atomic transaction across process crashes. Rollback never
-unlinks a path it has not identified as this run's file: the entry is first
-moved into a private directory and checked there. A foreign file that replaced
-a destination is linked back without overwrite. If that fails, it stays in the
-`.rollback` directory and the error names it.
+unlinks a path it has not identified as this run's file. It first checks the
+identity at the path and leaves a path that no longer holds this run's file.
+Otherwise it renames the path into a private `.rollback` directory, checks the
+identity again there and unlinks only on a match. A foreign file that replaced
+a destination between the two checks is linked back without overwrite. If that
+fails, it stays in the `.rollback` directory and the error names it.
 """
 import os
 from pathlib import Path
