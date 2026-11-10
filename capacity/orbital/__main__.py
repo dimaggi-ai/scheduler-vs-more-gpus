@@ -20,7 +20,10 @@ def read_json(path):
                 raise ValueError('duplicate JSON key: ' + key)
             result[key] = value
         return result
-    return json.loads(Path(path).read_text(), object_pairs_hook=unique)
+    try:
+        return json.loads(Path(path).read_text(), object_pairs_hook=unique)
+    except RecursionError:
+        raise ValueError('JSON nesting is too deep') from None
 
 
 def source_digest():

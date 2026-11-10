@@ -352,6 +352,16 @@ class OrbitalTests(unittest.TestCase):
                          [digest(synthetic('continuous',2)),digest(synthetic('intermittent',2))])
         self.assertEqual([m['planned'] for m in result['measurements']],[[2,2,2],[2,2,2]])
 
+    def test_deeply_nested_json_refuses_with_exit_2(self):
+        # Finding 7: JSON nested 200,000 levels deep exited 1 with an uncaught RecursionError.
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'deep.json';path.write_text('['*200000+']'*200000);out=Path(tmp)/'report.json'
+            result=subprocess.run([sys.executable,'-m','capacity.orbital','--scenario',str(path),'--output',str(out)],
+                                  capture_output=True,text=True)
+            self.assertEqual(result.returncode,2,result.stderr[-300:])
+            self.assertEqual(result.stderr.strip(),'REFUSE: JSON nesting is too deep')
+            self.assertFalse(out.exists())
+
     def test_scenario_with_jobs_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'s.json';path.write_text(json.dumps(synthetic(jobs=1)))
