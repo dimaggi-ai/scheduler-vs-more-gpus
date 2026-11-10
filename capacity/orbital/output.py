@@ -58,7 +58,15 @@ def publish(outputs, input_path=None):
             raise ValueError('output parent directory does not exist: ' + str(path.parent))
         if os.path.lexists(path):
             raise ValueError('output already exists; choose fresh evidence paths')
-    staged, published = [], []
+    staged, published, errors = [], [], []
+
+    def remove(path, identity):
+        # One entry that cannot be rolled back must not stop the others.
+        try:
+            _remove_owned(path, identity)
+        except OSError as exc:
+            errors.append(exc)
+
     try:
         for path, content in outputs:
             fd, temporary = tempfile.mkstemp(prefix='.' + path.name + '.', suffix='.tmp', dir=path.parent)
@@ -77,8 +85,10 @@ def publish(outputs, input_path=None):
             published.append((path, identity))
     except BaseException:
         for path, identity in reversed(published):
-            _remove_owned(path, identity)
+            remove(path, identity)
         raise
     finally:
         for temporary, identity, _ in staged:
-            _remove_owned(temporary, identity)
+            remove(temporary, identity)
+        if errors:
+            raise OSError('; '.join(str(exc) for exc in errors))

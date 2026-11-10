@@ -28,7 +28,8 @@ write/publish errors, only files created by this run are removed. Rollback
 moves each of its paths into a private `.rollback` directory before it checks
 the file identity, so a foreign file that replaced a destination is not
 deleted. It is linked back without overwrite; if that fails, it stays in the
-`.rollback` directory and the error names it. A foreign file can be absent from
+`.rollback` directory and the error names it. Rollback then continues with the
+other paths of this run and reports every such error at the end. A foreign file can be absent from
 its path for a moment during this step, so use an output directory that no
 other writer shares. Publication needs a filesystem that supports hard links,
 because a hard link is how a file is published without overwrite. Where hard

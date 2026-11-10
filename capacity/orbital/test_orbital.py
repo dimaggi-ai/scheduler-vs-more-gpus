@@ -251,6 +251,53 @@ class OrbitalTests(unittest.TestCase):
             kept=[p for p in root.rglob('a') if p.is_file()]
             self.assertEqual([p.read_text() for p in kept],['another writer'])
 
+    def test_rollback_continues_after_one_entry_cannot_be_put_back(self):
+        # Review finding 2: one rollback error stopped the loop and left this run's other outputs published.
+        from . import output
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);a=root/'a';b=root/'b';c=root/'c';foreign=root/'foreign'
+            link=os.link;real=output._identity;raced=[]
+            def failing(src,dst,**kwargs):
+                if Path(dst)==c:
+                    raise OSError('publish failure')
+                if Path(dst)==b and raced:
+                    raise FileExistsError('taken')  # the foreign file cannot be put back
+                link(src,dst,**kwargs)
+            def racing(path):
+                result=real(path)
+                if Path(path)==b and not raced:
+                    raced.append(path)
+                    foreign.write_text('another writer');os.replace(foreign,b)
+                return result
+            with patch('capacity.orbital.output.os.link',side_effect=failing), \
+                 patch('capacity.orbital.output._identity',side_effect=racing):
+                with self.assertRaisesRegex(OSError,'preserved at') as caught:
+                    publish([(a,'first'),(b,'second'),(c,'third')])
+            self.assertEqual(len(raced),1)
+            self.assertFalse(a.exists())  # the earlier published output is still rolled back
+            self.assertFalse(b.exists());self.assertFalse(c.exists())
+            left=list(root.iterdir())
+            self.assertEqual(len(left),1)  # no staged temporary file remains
+            self.assertTrue(left[0].name.endswith('.rollback'))
+            self.assertEqual((left[0]/'b').read_text(),'another writer')
+            self.assertIn(str(left[0]/'b'),str(caught.exception))
+        with tempfile.TemporaryDirectory() as tmp:
+            # Two entries fail: both are reported and the third staged file is still removed.
+            root=Path(tmp);a=root/'a';b=root/'b';c=root/'c';remove=output._remove_owned;seen=[]
+            def failing(src,dst,**kwargs):
+                raise OSError('publish failure')
+            def broken(path,identity):
+                seen.append(Path(path).name)
+                if len(seen)<3:
+                    raise OSError('cannot remove entry %d'%len(seen))
+                remove(path,identity)
+            with patch('capacity.orbital.output.os.link',side_effect=failing), \
+                 patch('capacity.orbital.output._remove_owned',side_effect=broken):
+                with self.assertRaisesRegex(OSError,'cannot remove entry 1; cannot remove entry 2'):
+                    publish([(a,'first'),(b,'second'),(c,'third')])
+            self.assertEqual(len(seen),3)
+            self.assertEqual(len(list(root.iterdir())),2)
+
     def test_no_hard_link_support_refuses_and_leaves_nothing(self):
         # Finding 5: the hard-link requirement is documented; this pins the documented refusal.
         import contextlib, errno, io
