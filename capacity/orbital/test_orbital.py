@@ -79,6 +79,30 @@ class OrbitalTests(unittest.TestCase):
         s['jobs'][0]['result_gb']=1e-15
         self.assertEqual(plan_route(s,'onboard')['summary']['planned'],0)
 
+    def test_zero_size_output_refused_at_validation(self):
+        # Finding 1: zero-size outputs were planned on onboard and hybrid without any contact.
+        for sizes in (dict(result_gb=0), dict(result_gb=0, compressed_gb=0), dict(result_gb=0.0, compressed_gb=0.0)):
+            for contacts in ('none', 'open'):
+                with self.subTest(sizes=sizes, contacts=contacts):
+                    s = synthetic(jobs=1); s['jobs'][0].update(sizes)
+                    if contacts == 'none':
+                        s['contacts'] = []
+                    with self.assertRaisesRegex(ValueError, 'result_gb: zero-size output is not supported'):
+                        validate(s)
+                    for route in ('onboard', 'hybrid'):
+                        with self.assertRaisesRegex(ValueError, 'zero-size output'):
+                            plan_route(s, route)
+                    with self.assertRaisesRegex(ValueError, 'zero-size output'):
+                        compare(s)
+        with tempfile.TemporaryDirectory() as tmp:
+            s = synthetic(jobs=1); s['contacts'] = []; s['jobs'][0].update(result_gb=0, compressed_gb=0)
+            path = Path(tmp)/'zero.json'; path.write_text(json.dumps(s)); out = Path(tmp)/'report.json'
+            result = subprocess.run([sys.executable, '-m', 'capacity.orbital', '--scenario', str(path), '--output', str(out)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('REFUSE: result_gb: zero-size output is not supported', result.stderr)
+            self.assertFalse(out.exists())
+
     def test_nonfinite_and_wrong_types_refuse(self):
         for val in [None,True,'1',float('nan'),float('inf'),-1,10**1000]:
             with self.subTest(value=str(val)[:20]):

@@ -75,7 +75,10 @@ versions refuse; there are no implicit unit conversions or migrations. A new
 schema needs an explicit adapter and compatibility tests. `horizon_s` is seconds
 from scenario start, at most one year; job and contact lists are bounded at
 10,000 each. This is a validation cap, not a guaranteed latency bound; review-fix
-benchmarks include the cap for two declared fixture shapes only. IDs are unique. Contact windows are ordered and nonoverlapping for
+benchmarks include the cap for two declared fixture shapes only. IDs are unique.
+`result_gb` and `compressed_gb` must be greater than zero. A zero-size output
+is refused at validation, so no route is planned without a contact check.
+Contact windows are ordered and nonoverlapping for
 **one shared terminal**. Both nodes have **one serial compute lane**. Jobs are
 scheduled by `(release_s, id)`, deterministically and greedily. There is no
 optimality claim, backfill optimization, multiple satellite routing or DAG
