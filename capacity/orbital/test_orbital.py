@@ -293,6 +293,24 @@ class OrbitalTests(unittest.TestCase):
         self.assertIn('unbound',compare(s)['source_binding'])
         with self.assertRaises(ValueError):compare(s,source_sha256='invalid')
 
+    def test_economics_and_evidence_are_separate_modules(self):
+        # Finding 6: cost formulas and evidence labels/receipts live in their own modules.
+        from . import economics, evidence_record, planner
+        node=dict(compute_usd_per_hour=2,electricity_usd_per_kwh=0.2)
+        self.assertEqual(economics.compute_cost_usd(node,20,20/3600),20/3600*2+20/3600*0.2)
+        self.assertEqual(economics.transfer_cost_usd(dict(usd_per_gb=0.2),10),2)
+        r=compare(synthetic(jobs=1))
+        ground=r['comparisons'][0]
+        self.assertEqual([e['cost_usd'] for e in ground['events']],[2,20/3600*2+20/3600*0.2])
+        self.assertEqual(ground['summary'],economics.summarize(ground['jobs']))
+        self.assertIs(planner.receipt_id,evidence_record.receipt_id)
+        self.assertEqual(r['assumptions'],list(evidence_record.ASSUMPTIONS))
+        self.assertEqual(r['classification'],evidence_record.CLASSIFICATION)
+        self.assertEqual(r['receipt_schema'],evidence_record.RECEIPT_SCHEMA)
+        root=Path(__file__).parent
+        for name in ('planner.py','resources.py','contacts.py'):
+            self.assertNotIn('usd_per',(root/name).read_text(),name)
+
     def test_scenario_with_jobs_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'s.json';path.write_text(json.dumps(synthetic(jobs=1)))

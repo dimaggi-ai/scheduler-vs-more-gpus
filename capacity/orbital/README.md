@@ -74,6 +74,8 @@ completed jobs is not an economic advantage; inspect counts before costs.
 | `contacts.py` | Shared downlink reservation, decimal GB/Gbps, transfers split across windows |
 | `resources.py` | Serial compute, memory/power/heat envelopes and cumulative compute-energy budget |
 | `planner.py` | Pure route composition and transactional admission; no filesystem/network IO |
+| `economics.py` | Partial cost formulas (compute time, compute electricity, transfer GB) and route summaries |
+| `evidence_record.py` | Classification and assumption labels, source-digest check and receipt-v2 IDs |
 | `report.py` | Escaped self-contained responsive HTML |
 | `__main__.py`, `output.py` | CLI IO, source binding, staged no-overwrite artifact publication and ordinary-error rollback |
 | `benchmark.py` | Reproducible scaling measurement, separate from planning results |
