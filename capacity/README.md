@@ -80,6 +80,19 @@ such binding is implemented and tested.
 
 ## Tests and boundaries
 
+The [batch resource-evidence reference](RESOURCE_EVIDENCE.md) adds scoped CPU,
+host/device memory and storage inequalities plus checkpoint lower-bound meaning
+checks. It consumes explicit quantities/unknowns; it does not measure resources,
+infer a storage service or authorize execution.
+
+The [prediction/observation reference](CALIBRATION_EVIDENCE.md) adds matched
+metric/scope comparison, explicit tolerance and freshness cases. It leaves the
+operator intake empty and never turns an error measurement into resource fit.
+
+The [requirement coverage reference](RESOURCE_COVERAGE.md) checks the explicit
+scope/component set without hiding omissions or counting shared capacity twice.
+It reuses scalar predicates and leaves real manifest completeness unproven.
+
 ```bash
 python -m pip install pytest
 python -m pytest capacity/tests -q

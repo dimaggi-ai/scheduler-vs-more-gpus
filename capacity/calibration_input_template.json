@@ -1,0 +1,66 @@
+{
+  "schema_version": "calibration-intake/v0.1-proposed",
+  "status": "unbound_template",
+  "note": "Class labels describe the required role, not existing evidence. No operator or lab observation exists. Replace unit explicitly for another metric. as_of_utc is populated only at comparison time. All nulls are unresolved requirements.",
+  "input": {
+    "prediction": {
+      "context": {
+        "workload_id": null,
+        "config_id": null,
+        "hardware_id": null,
+        "topology_id": null,
+        "scope_id": null,
+        "metric": null,
+        "statistic": null,
+        "protocol_id": null
+      },
+      "value": null,
+      "unit": "byte",
+      "state": "missing",
+      "source_id": null,
+      "evidence_class": "synthetic_model",
+      "measurement_start_utc": null,
+      "observed_at_utc": null,
+      "valid_until_utc": null
+    },
+    "observation": {
+      "context": {
+        "workload_id": null,
+        "config_id": null,
+        "hardware_id": null,
+        "topology_id": null,
+        "scope_id": null,
+        "metric": null,
+        "statistic": null,
+        "protocol_id": null
+      },
+      "value": null,
+      "unit": "byte",
+      "state": "missing",
+      "source_id": null,
+      "evidence_class": "operator_observed",
+      "measurement_start_utc": null,
+      "observed_at_utc": null,
+      "valid_until_utc": null
+    },
+    "absolute_tolerance": {
+      "value": null,
+      "unit": "byte",
+      "source_id": null
+    },
+    "as_of_utc": null
+  },
+  "coverage_manifest": {
+    "artifact_sha256": null,
+    "runtime_versions": null,
+    "rank_to_device_to_host": null,
+    "metric_coverage": null,
+    "sampling_resolution_s": null,
+    "known_gaps": null,
+    "validity_justification": null,
+    "tolerance_justification": null,
+    "predeclared_at_utc": null,
+    "source_content_sha256": null,
+    "baseline_decision_id": null
+  }
+}
