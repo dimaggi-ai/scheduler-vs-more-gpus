@@ -1,5 +1,6 @@
 """Transactional reservations for one serial compute lane per node."""
 from copy import deepcopy
+from .economics import compute_cost_usd
 
 
 class Refusal(ValueError):
@@ -33,7 +34,7 @@ def compute(scenario, state, job, node_name, earliest, duration):
     end = start + duration
     if end > job['deadline_s']:
         raise Refusal(node_name + ': deadline exceeded')
-    cost = duration / 3600 * node['compute_usd_per_hour'] + energy * node['electricity_usd_per_kwh']
+    cost = compute_cost_usd(node, duration, energy)
     resource['free_s'] = end
     resource['energy_kwh'] += energy
     state['events'].append(dict(job_id=job['id'], kind='compute', resource=node_name,
