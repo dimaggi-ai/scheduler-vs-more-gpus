@@ -1,0 +1,45 @@
+{
+  "schema": "capacity-kv-envelope/v1",
+  "scenario_label": "Synthetic health IT continuity planning; no clinical decision",
+  "evidence_kind": "declared_scenario",
+  "sources": [
+    {
+      "uri": "urn:dimaggi:synthetic:kv-envelope-v1",
+      "revision": "fixture-v1",
+      "sha256": "ab6d8274a28f8b2143b5a663e030fd37ad08e51a8bb399576b41f4fce6000d83",
+      "license": "CC0-1.0",
+      "retrieved_at": "2026-11-12"
+    }
+  ],
+  "assumptions": [
+    "All hardware and architecture values are synthetic declarations.",
+    "No prefix sharing; full token blocks reserved.",
+    "Fixture source digest hashes literal dimaggi-synthetic-kv-envelope-v1, not a hardware measurement."
+  ],
+  "architecture": {
+    "kind": "uniform_standard_attention",
+    "model_revision": "synthetic-uniform-v1",
+    "tokenizer_revision": "synthetic-tokens-v1",
+    "layers": 32,
+    "kv_heads": 8,
+    "head_dimension": 128,
+    "k_bits": 16,
+    "v_bits": 16
+  },
+  "allocation": {
+    "prefix_sharing": "none",
+    "block_tokens": 16,
+    "metadata_bytes_per_block": 0,
+    "overhead_bytes_per_request": 0
+  },
+  "device": {
+    "usable_hbm_bytes": 16777216,
+    "resident_weights_bytes": 4194304,
+    "workspace_bytes": 2097152,
+    "headroom_bytes": 2097152
+  },
+  "demand": {
+    "max_resident_context_tokens": 17,
+    "requested_concurrency": 2
+  }
+}
