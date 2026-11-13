@@ -27,7 +27,8 @@ admission approval. Omitted or null required declarations return
 `insufficient_evidence`, explicit missing paths and exit 2. Malformed or unsupported
 supplied values return `refused`, a code/path and exit 2, taking precedence over
 missing values. Correct the declarations and rerun: the input is never changed.
-Argument syntax/help uses normal argparse text; structured JSON applies after a
+Callers must inspect the JSON `status` to distinguish missing declarations from
+malformed input; exit 2 alone cannot distinguish them. Argument syntax/help uses normal argparse text; structured JSON applies after a
 single scenario path is supplied. File failures return structured refusal.
 
 Library: `evaluate_bytes(raw_bytes)` hashes exact supplied UTF-8JSON bytes;
@@ -55,7 +56,9 @@ inputs; they do not authenticate a publisher or the truth of declarations.
   `model_revision`, `tokenizer_revision`, positive integers `layers`, `kv_heads`,
   `head_dimension`, and `k_bits`, `v_bits` each 8, 16 or 32. KV heads, not query heads,
   determine storage. No MLA, mixed/sliding layers, recurrent architecture,
-  subbyte packing, tensor/pipeline sharding or multiple-device pooling.
+  subbyte packing, tensor/pipeline sharding or multiple-device pooling. Architecture
+labels are declarations: this utility cannot detect a hybrid or sliding-window
+model mislabeled as uniform standard attention; verify that mapping independently.
 - `allocation`: `prefix_sharing` exactly `none`, positive `block_tokens`,
   nonnegative `metadata_bytes_per_block`, `overhead_bytes_per_request`. Explicit
   zero overhead is permitted; omitted overhead is unknown, not zero. Per-block
@@ -69,9 +72,16 @@ inputs; they do not authenticate a publisher or the truth of declarations.
   inferred sum of provider counters. Trace mapping and tokenizer calibration
   are deliberately outside this first increment.
 
-All unknown fields and duplicate JSON keys are rejected. Integer fields refuse
+All unknown fields and duplicate JSON keys are rejected. Duplicate-key refusal
+reports the document root `$`, not the nested object location. Integer fields refuse
 booleans, floats, negatives and values above 2^53−1. Derived integer quantities are
-also bounded to this range for interoperable exact JSON arithmetic. Text is at
+also bounded to this range for interoperable exact JSON arithmetic. If only the
+negative remaining bytes or positive deficit exceed this range, the result still
+refuses with `derived_integer_limit`, rather than returning an infeasibility
+report. No value is silently capped, omitted or converted to floating point. Text refuses Unicode control (`Cc`) and format (`Cf`) characters, including
+DEL, C1 controls and bidi overrides/isolates; ordinary multilingual text is
+permitted. This display hygiene is not identity authentication or complete
+confusable-character detection. Text is at
 most 512 characters; bytes at most 64 KiB; nesting at most 8; traversed values at most
 1,024. The object API rejects unsupported objects and bounds traversal before
 serialization. The CLI reads only a regular nonsymlink file through POSIX

@@ -88,6 +88,49 @@ class KVEnvelopeTests(unittest.TestCase):
         self.data['architecture']['layers'] = MAX_INTEGER
         self.assertEqual(evaluate(self.data)['code'], 'derived_integer_limit')
 
+    def test_remaining_integer_boundary_is_refused_not_capped(self):
+        self.data['architecture'].update(layers=1, kv_heads=1, head_dimension=1, k_bits=8, v_bits=8)
+        self.data['allocation'].update(block_tokens=1, metadata_bytes_per_block=0, overhead_bytes_per_request=0)
+        self.data['demand'].update(max_resident_context_tokens=2**51, requested_concurrency=1)
+        self.data['device'].update(usable_hbm_bytes=1, resident_weights_bytes=2**52,
+                                   workspace_bytes=0, headroom_bytes=0)
+        # Each positive term is in range; negative remaining is exactly -MAX_INTEGER.
+        out = evaluate(self.data)
+        self.assertEqual(out['status'], 'simulated')
+        self.assertEqual(out['metrics']['reason'], 'infeasible_non_kv_budget')
+        self.assertEqual(out['metrics']['remaining_bytes'], -MAX_INTEGER)
+        self.assertEqual(out['metrics']['deficit_bytes'], MAX_INTEGER)
+        # One extra reserved byte makes only the derived remaining/deficit exceed range.
+        self.data['device']['resident_weights_bytes'] += 1
+        out = evaluate(self.data)
+        self.assertEqual(out['status'], 'refused')
+        self.assertEqual(out['code'], 'derived_integer_limit')
+        self.assertNotIn('metrics', out)
+
+    def test_display_controls_and_format_characters_are_refused(self):
+        for char in ('\x00', '\x1e', '\x1f', '\x7f', '\x85', '\x9f',
+                     '\u202a', '\u202e', '\u2066', '\u2069', '\u200b', '\ufeff'):
+            for field in ('label', 'assumption', 'provenance', 'model_revision', 'tokenizer_revision'):
+                with self.subTest(char=repr(char), field=field):
+                    data = copy.deepcopy(self.data)
+                    value = 'before' + char + 'after'
+                    if field == 'label':
+                        data['scenario_label'] = value
+                    elif field == 'assumption':
+                        data['assumptions'][0] = value
+                    elif field == 'provenance':
+                        data['sources'][0]['revision'] = value
+                    else:
+                        data['architecture'][field] = value
+                    out = evaluate(data)
+                    self.assertEqual(out['status'], 'refused')
+                    self.assertEqual(out['code'], 'invalid_text')
+                    self.assertNotIn('declarations', out)
+        # Space is not a control; ordinary multilingual and combining text remains valid.
+        for value in ('before after', 'café 東京 العربية', 'e\u0301 evidence'):
+            self.data['scenario_label'] = value
+            self.assertEqual(evaluate(self.data)['status'], 'simulated')
+
     def test_duplicate_depth_size_unicode_and_structural_bounds(self):
         for raw in (b'{"schema":1,"schema":2}', b'{"x":NaN}', b'\xff', b'[' * 9 + b']' * 9,
                     b' ' * (MAX_BYTES + 1), b'[]', b'null', b'{'):
