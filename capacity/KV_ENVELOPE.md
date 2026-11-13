@@ -78,9 +78,11 @@ booleans, floats, negatives and values above 2^53−1. Derived integer quantitie
 also bounded to this range for interoperable exact JSON arithmetic. If only the
 negative remaining bytes or positive deficit exceed this range, the result still
 refuses with `derived_integer_limit`, rather than returning an infeasibility
-report. No value is silently capped, omitted or converted to floating point. Text refuses Unicode control (`Cc`) and format (`Cf`) characters, including
+report. No value is silently capped, omitted or converted to floating point. Text refuses Unicode control (`Cc`), format (`Cf`) and surrogate (`Cs`) code points, including
 DEL, C1 controls and bidi overrides/isolates; ordinary multilingual text is
-permitted. This display hygiene is not identity authentication or complete
+permitted, including valid non-BMP scalar characters. Escaped lone high/low
+surrogates are refused by both APIs and the CLI. ZWJ/ZWNJ remain intentionally
+refused as format characters; no Unicode normalization is performed. This display hygiene is not identity authentication or complete
 confusable-character detection. Text is at
 most 512 characters; bytes at most 64 KiB; nesting at most 8; traversed values at most
 1,024. The object API rejects unsupported objects and bounds traversal before

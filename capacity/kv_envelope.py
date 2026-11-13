@@ -85,7 +85,7 @@ def _validate(data):
         return value
 
     def text(value, path):
-        if type(value) is not str or not value.strip() or len(value) > 512 or any(unicodedata.category(c) in ('Cc', 'Cf') for c in value):
+        if type(value) is not str or not value.strip() or len(value) > 512 or any(unicodedata.category(c) in ('Cc', 'Cf', 'Cs') for c in value):
             raise Refusal('invalid_text', path)
 
     def number(value, path, minimum=0):

@@ -131,6 +131,34 @@ class KVEnvelopeTests(unittest.TestCase):
             self.data['scenario_label'] = value
             self.assertEqual(evaluate(self.data)['status'], 'simulated')
 
+    def test_surrogate_scalars_both_apis_and_cli(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'scalar.json'
+            # Escaped lone high/low surrogates are JSON-parseable, not Unicode scalars.
+            for char in ('\ud800', '\udfff'):
+                self.data['scenario_label'] = 'before' + char + 'after'
+                raw = json.dumps(self.data).encode('ascii')
+                for result in (evaluate(self.data), evaluate_bytes(raw)):
+                    self.assertEqual(result['status'], 'refused')
+                    self.assertEqual(result['code'], 'invalid_text')
+                    self.assertNotIn('declarations', result)
+                path.write_bytes(raw)
+                proc = subprocess.run([sys.executable, '-m', 'capacity.kv_envelope', str(path)],
+                                      cwd=ROOT, capture_output=True, text=True, timeout=10)
+                self.assertEqual(proc.returncode, 2)
+                self.assertEqual(json.loads(proc.stdout)['code'], 'invalid_text')
+            # A valid non-BMP character may arrive as UTF-8 or a JSON surrogate pair.
+            self.data['scenario_label'] = 'Orbital \U0001f680'
+            for ascii_escaped in (True, False):
+                raw = json.dumps(self.data, ensure_ascii=ascii_escaped).encode('utf-8')
+                self.assertEqual(evaluate_bytes(raw)['status'], 'simulated')
+                self.assertEqual(evaluate(self.data)['status'], 'simulated')
+                path.write_bytes(raw)
+                proc = subprocess.run([sys.executable, '-m', 'capacity.kv_envelope', str(path)],
+                                      cwd=ROOT, capture_output=True, text=True, timeout=10)
+                self.assertEqual(proc.returncode, 0)
+                self.assertEqual(json.loads(proc.stdout)['declarations']['scenario_label'], 'Orbital \U0001f680')
+
     def test_duplicate_depth_size_unicode_and_structural_bounds(self):
         for raw in (b'{"schema":1,"schema":2}', b'{"x":NaN}', b'\xff', b'[' * 9 + b']' * 9,
                     b' ' * (MAX_BYTES + 1), b'[]', b'null', b'{'):
