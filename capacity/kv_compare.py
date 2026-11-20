@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 import stat
 
@@ -23,10 +24,10 @@ def _canonical(value):
 
 
 def _bounded(value):
-    pending = [(value, 0)]
+    pending = [(value, 0, '$')]
     nodes = 0
     while pending:
-        item, depth = pending.pop()
+        item, depth, path = pending.pop()
         nodes += 1
         if nodes > 3 * envelope.MAX_NODES + 8 or depth > envelope.MAX_DEPTH + 1:
             raise envelope.Refusal('structure_limit')
@@ -36,11 +37,14 @@ def _bounded(value):
             for key, child in item.items():
                 if type(key) is not str or len(key) > 512:
                     raise envelope.Refusal('invalid_key')
-                pending.append((child, depth + 1))
+                pending.append((child, depth + 1, path + '.' + key))
         elif type(item) is list:
             if len(item) > 3 * envelope.MAX_NODES:
                 raise envelope.Refusal('structure_limit')
-            pending.extend((child, depth + 1) for child in item)
+            pending.extend((child, depth + 1, f'{path}[{index}]')
+                           for index, child in enumerate(item))
+        elif type(item) is float and not math.isfinite(item):
+            raise envelope.Refusal('nonfinite_number', path)
         elif type(item) not in (str, int, float, bool, type(None)):
             raise envelope.Refusal('invalid_json_object')
         elif type(item) is str and len(item) > MAX_BYTES:
@@ -128,7 +132,7 @@ def evaluate_bytes(raw):
             delta = {key: reports['candidate']['metrics'][key] - reports[reference]['metrics'][key]
                      for key in MEMORY_METRICS}
             if any(abs(v) > envelope.MAX_INTEGER for v in delta.values()):
-                raise envelope.Refusal('delta_integer_limit', '$.candidate_minus_' + reference)
+                raise envelope.Refusal('delta_integer_limit', '$.deltas.candidate_minus_' + reference)
             deltas['candidate_minus_' + reference] = delta
         changes = {n: {key: {'baseline': data['baseline'][key], n: data[n][key]}
                        for key in ('allocation', 'device', 'sources', 'assumptions', 'scenario_label')
@@ -155,7 +159,9 @@ def evaluate(bundle):
                         'authenticity': 'not_established', 'qualification': 'not_established'},
                        status='refused', code=exc.code, path=exc.path)
     except (ValueError, TypeError, UnicodeError, RecursionError, RuntimeError):
-        return evaluate_bytes(None)
+        return _finish({'schema': 'capacity-kv-comparison-result/v1', 'comparator_version': VERSION,
+                        'authenticity': 'not_established', 'qualification': 'not_established'},
+                       status='refused', code='invalid_json_object', path='$')
 
 
 def main(argv=None):

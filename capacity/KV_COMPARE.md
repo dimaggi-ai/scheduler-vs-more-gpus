@@ -38,12 +38,26 @@ explicitly disclosed against baseline. Sources and assumptions retain list order
 Complete original declarations and recomputed envelope reports are included for a
 successful comparison. Missing or null required values produce
 `insufficient_evidence`, not a fabricated zero. Malformed fields in another
-scenario take precedence over missing declarations. Unknown fields, duplicate keys
+scenario take precedence over missing declarations. Nonfinite object floats and parsed overflowing JSON numbers such as `1e400`
+are refused as `nonfinite_number` with the field/list-index path before scenario
+evaluation. Literal JSON NaN/Infinity tokens are refused during parsing, where
+only the root path is available. Other object serialization errors report
+`invalid_json_object`, not `expected_bytes` (reserved for non-byte bytes-API input).
+Unknown fields, duplicate keys
 (including nested scenario objects), unsupported schema, nonfinite values and
 oversized/deep inputs are refused. No semantic equivalence is inferred from hashes.
 
 Bundle limit: 197632 UTF-8 bytes; at most 3080 visited JSON values and depth 9.
 Each envelope independently retains its 65536-byte, 1024-value, depth-8 bounds.
+The scenario byte bound is measured by the unchanged envelope **object API** after
+sorted compact JSON serialization with `ensure_ascii=True`, including Unicode
+escape expansion. This applies to both comparator entry points: bundle bytes are
+parsed, then each raw scenario is passed to `kv_envelope.evaluate`. A scenario
+smaller than 65536 bytes in literal UTF-8 may therefore be refused as
+`input_size_limit` at `$.candidate` (or the other scenario) when its escaped form
+exceeds that bound, even though `kv_envelope.evaluate_bytes` accepts the literal
+UTF-8 scenario directly. This conservative difference is retained intentionally;
+no alternate serialization route bypasses the accepted envelope object contract.
 Object callers are bounded and serialized to a snapshot before evaluations; callers
 must not mutate objects concurrently during serialization. Byte callers preserve
 exact input bytes in `input_sha256`; object callers hash sorted compact JSON.
@@ -66,7 +80,9 @@ Deltas are signed **candidate minus baseline** and **candidate minus active** fo
 and `deficit_bytes` (bytes). Counts, booleans and reasons are not subtracted.
 No direction is universally preferred. All arithmetic is exact integer arithmetic;
 if any signed delta exceeds ±(2^53−1), the whole comparison is refused with
-`delta_integer_limit`, even when the individual scenarios are valid.
+`delta_integer_limit`, even when the individual scenarios are valid. The refusal path
+`$.deltas.candidate_minus_baseline` (or `candidate_minus_active`) names the intended
+output delta group; no partial `deltas` object is emitted on refusal.
 
 The example baseline fits exactly; active reserves one additional workspace byte
 and is one byte short. Candidate changes block allocation from 16 tokens to 1.

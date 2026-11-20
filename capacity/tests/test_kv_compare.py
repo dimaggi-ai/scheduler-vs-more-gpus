@@ -33,6 +33,46 @@ class KVCompareTests(unittest.TestCase):
         digest = out.pop('result_sha256')
         self.assertEqual(digest, hashlib.sha256(compare._canonical(out)).hexdigest())
 
+    def test_nonfinite_object_cause_and_path(self):
+        for value in (float('inf'), float('-inf'), float('nan')):
+            with self.subTest(value=value):
+                out = compare.evaluate({'schema': value})
+                self.assertEqual(out['code'], 'nonfinite_number')
+                self.assertEqual(out['path'], '$.schema')
+                data = copy.deepcopy(self.data)
+                data['candidate']['device']['workspace_bytes'] = value
+                out = compare.evaluate(data)
+                self.assertEqual(out['code'], 'nonfinite_number')
+                self.assertEqual(out['path'], '$.candidate.device.workspace_bytes')
+        data = copy.deepcopy(self.data)
+        data['active']['assumptions'][1] = float('inf')
+        self.assertEqual(compare.evaluate(data)['path'], '$.active.assumptions[1]')
+        raw = json.dumps(self.data).replace('"workspace_bytes": 2097152',
+                                           '"workspace_bytes": 1e400', 1).encode()
+        out = compare.evaluate_bytes(raw)
+        self.assertEqual(out['code'], 'nonfinite_number')
+        self.assertEqual(out['path'], '$.baseline.device.workspace_bytes')
+        self.assertEqual(compare.evaluate({'schema': '\ud800'})['code'], 'invalid_json_object')
+        self.assertEqual(compare.evaluate_bytes(None)['code'], 'expected_bytes')
+
+    def test_escaped_scenario_limit_is_preserved_and_documented(self):
+        from capacity import kv_envelope
+        data = copy.deepcopy(self.data)
+        data['candidate']['assumptions'] = ['界' * 512] * 22
+        utf8 = compare._canonical(data['candidate'])
+        escaped = json.dumps(data['candidate'], sort_keys=True, separators=(',', ':')).encode()
+        self.assertLess(len(utf8), kv_envelope.MAX_BYTES)
+        self.assertGreater(len(escaped), kv_envelope.MAX_BYTES)
+        self.assertEqual(kv_envelope.evaluate_bytes(utf8)['status'], 'simulated')
+        self.assertEqual(kv_envelope.evaluate(data['candidate'])['code'], 'input_size_limit')
+        for result in (compare.evaluate(data), compare.evaluate_bytes(compare._canonical(data))):
+            self.assertEqual(result['status'], 'refused')
+            self.assertEqual(result['errors'][0]['code'], 'input_size_limit')
+            self.assertEqual(result['errors'][0]['path'], '$.candidate')
+        data['candidate']['assumptions'] = ['界' * 512] * 20
+        self.assertEqual(compare.evaluate(data)['status'], 'compared')
+        self.assertEqual(compare.evaluate_bytes(compare._canonical(data))['status'], 'compared')
+
     def test_same_controls(self):
         for name in ('active', 'candidate'):
             self.data[name] = copy.deepcopy(self.data['baseline'])
@@ -106,6 +146,11 @@ class KVCompareTests(unittest.TestCase):
         self.data['candidate']['device'].update(usable_hbm_bytes=MAX_INTEGER, resident_weights_bytes=0)
         out = compare.evaluate(self.data)
         self.assertEqual(out['code'], 'delta_integer_limit')
+        self.assertEqual(out['path'], '$.deltas.candidate_minus_baseline')
+        self.data['baseline'] = copy.deepcopy(self.data['candidate'])
+        second = compare.evaluate(self.data)
+        self.assertEqual(second['code'], 'delta_integer_limit')
+        self.assertEqual(second['path'], '$.deltas.candidate_minus_active')
         self.assertNotIn('deltas', out)
 
     def test_signed_delta_boundary(self):
