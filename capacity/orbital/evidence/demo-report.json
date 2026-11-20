@@ -1,0 +1,390 @@
+{
+  "schema": "capacity-orbital/report-v1",
+  "version": "0.1.1",
+  "name": "Synthetic intermittent EO comparison",
+  "input_sha256": "4f06c4fcec0943a35b33e9469f494c3509790dfad420d9bf279e0cb78755e085",
+  "source_sha256": "6493bb6986a2c2c3cc263c71cae3bc54ca1f9f71ca95449258a02115db73bc2f",
+  "receipt_schema": "capacity-orbital/receipt-v2",
+  "source_binding": "caller-supplied",
+  "provenance": {
+    "kind": "synthetic",
+    "source": "DIMAGGI task105 hand-computable fixture, not vendor data",
+    "licence": "MIT (repository licence)",
+    "generated_on": "2026-11-05"
+  },
+  "classification": "synthetic offline plan; not measured execution or flight qualification",
+  "assumptions": [
+    "All jobs originate in space and results terminate on the ground.",
+    "Ground quality 1.0 is a synthetic reference assumption, not measured perfect AI accuracy.",
+    "Each route is a separate counterfactual with the same workload and resource inputs.",
+    "One serial compute lane per node; one shared downlink terminal.",
+    "One assumed job power_kw applies on both nodes; hardware-specific power profiles are not modeled.",
+    "Release-time then job-id greedy planning; no optimality guarantee.",
+    "Static power and heat rejection envelopes, total compute-energy budgets; no orbital/thermal dynamics.",
+    "Transfer energy, lifecycle capex, qualification, radiation and unplanned runtime failures excluded.",
+    "Refused plans reserve nothing; no claim that failed execution is free.",
+    "Receipts are deterministic planning IDs, not signatures or production metering."
+  ],
+  "comparisons": [
+    {
+      "route": "ground",
+      "jobs": [
+        {
+          "job_id": "image-00000",
+          "route": "ground",
+          "deadline_s": 180,
+          "required_quality": 0.95,
+          "quality": 1.0,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 160.0,
+          "downlink_gb": 10,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 2.0122222222222224,
+          "receipt_id": "0be8de514a5e1bee250f3e0f168a3d43645cb91a77426e4b882d5729649a7f78"
+        },
+        {
+          "job_id": "image-00001",
+          "route": "ground",
+          "deadline_s": 380,
+          "required_quality": 0.95,
+          "quality": 1.0,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 360.0,
+          "downlink_gb": 10,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 2.0122222222222224,
+          "receipt_id": "c39050ce9f2c6dd008a88b810923c2f7aa457b185174eaf387a5cb1495cfd7bd"
+        },
+        {
+          "job_id": "image-00002",
+          "route": "ground",
+          "deadline_s": 580,
+          "required_quality": 0.95,
+          "quality": 1.0,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 560.0,
+          "downlink_gb": 10,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 2.0122222222222224,
+          "receipt_id": "a09182de5069ba8fa41c2295d75dbf928d87de40c926e323b5e15900abcd90c4"
+        }
+      ],
+      "events": [
+        {
+          "job_id": "image-00000",
+          "kind": "downlink",
+          "resource": "pass-0",
+          "start_s": 60,
+          "end_s": 140.0,
+          "gb": 10,
+          "cost_usd": 2.0
+        },
+        {
+          "job_id": "image-00000",
+          "kind": "compute",
+          "resource": "ground",
+          "start_s": 140.0,
+          "end_s": 160.0,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 0.012222222222222223
+        },
+        {
+          "job_id": "image-00001",
+          "kind": "downlink",
+          "resource": "pass-1",
+          "start_s": 260,
+          "end_s": 340.0,
+          "gb": 10,
+          "cost_usd": 2.0
+        },
+        {
+          "job_id": "image-00001",
+          "kind": "compute",
+          "resource": "ground",
+          "start_s": 340.0,
+          "end_s": 360.0,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 0.012222222222222223
+        },
+        {
+          "job_id": "image-00002",
+          "kind": "downlink",
+          "resource": "pass-2",
+          "start_s": 460,
+          "end_s": 540.0,
+          "gb": 10,
+          "cost_usd": 2.0
+        },
+        {
+          "job_id": "image-00002",
+          "kind": "compute",
+          "resource": "ground",
+          "start_s": 540.0,
+          "end_s": 560.0,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 0.012222222222222223
+        }
+      ],
+      "summary": {
+        "planned": 3,
+        "refused": 0,
+        "downlink_gb": 30,
+        "energy_kwh": 0.016666666666666666,
+        "cost_usd": 6.036666666666667,
+        "cost_per_planned_result_usd": 2.0122222222222224
+      }
+    },
+    {
+      "route": "onboard",
+      "jobs": [
+        {
+          "job_id": "image-00000",
+          "route": "onboard",
+          "deadline_s": 180,
+          "required_quality": 0.95,
+          "quality": 0.98,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 60.8,
+          "downlink_gb": 0.1,
+          "energy_kwh": 0.008333333333333333,
+          "cost_usd": 0.03833333333333334,
+          "receipt_id": "a566517b17661bf67f92596f4ba3cd5d94e0f4aec5c05578f5148818d5c4f6fa"
+        },
+        {
+          "job_id": "image-00001",
+          "route": "onboard",
+          "deadline_s": 380,
+          "required_quality": 0.95,
+          "quality": 0.98,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 260.8,
+          "downlink_gb": 0.1,
+          "energy_kwh": 0.008333333333333333,
+          "cost_usd": 0.03833333333333334,
+          "receipt_id": "696696abd844b2b6dc2b7daa7e69bbf4ac16c3f0d56720b95d56a5e26c97eec4"
+        },
+        {
+          "job_id": "image-00002",
+          "route": "onboard",
+          "deadline_s": 580,
+          "required_quality": 0.95,
+          "quality": 0.98,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 460.8,
+          "downlink_gb": 0.1,
+          "energy_kwh": 0.008333333333333333,
+          "cost_usd": 0.03833333333333334,
+          "receipt_id": "eacc86388c23d412c26bf3b93ee712b7488417031573aad0c167e910445932c2"
+        }
+      ],
+      "events": [
+        {
+          "job_id": "image-00000",
+          "kind": "compute",
+          "resource": "orbital",
+          "start_s": 0,
+          "end_s": 30,
+          "energy_kwh": 0.008333333333333333,
+          "cost_usd": 0.018333333333333333
+        },
+        {
+          "job_id": "image-00000",
+          "kind": "downlink",
+          "resource": "pass-0",
+          "start_s": 60,
+          "end_s": 60.8,
+          "gb": 0.1,
+          "cost_usd": 0.020000000000000004
+        },
+        {
+          "job_id": "image-00001",
+          "kind": "compute",
+          "resource": "orbital",
+          "start_s": 200,
+          "end_s": 230,
+          "energy_kwh": 0.008333333333333333,
+          "cost_usd": 0.018333333333333333
+        },
+        {
+          "job_id": "image-00001",
+          "kind": "downlink",
+          "resource": "pass-1",
+          "start_s": 260,
+          "end_s": 260.8,
+          "gb": 0.1,
+          "cost_usd": 0.020000000000000004
+        },
+        {
+          "job_id": "image-00002",
+          "kind": "compute",
+          "resource": "orbital",
+          "start_s": 400,
+          "end_s": 430,
+          "energy_kwh": 0.008333333333333333,
+          "cost_usd": 0.018333333333333333
+        },
+        {
+          "job_id": "image-00002",
+          "kind": "downlink",
+          "resource": "pass-2",
+          "start_s": 460,
+          "end_s": 460.8,
+          "gb": 0.1,
+          "cost_usd": 0.020000000000000004
+        }
+      ],
+      "summary": {
+        "planned": 3,
+        "refused": 0,
+        "downlink_gb": 0.30000000000000004,
+        "energy_kwh": 0.025,
+        "cost_usd": 0.11500000000000002,
+        "cost_per_planned_result_usd": 0.03833333333333334
+      }
+    },
+    {
+      "route": "hybrid",
+      "jobs": [
+        {
+          "job_id": "image-00000",
+          "route": "hybrid",
+          "deadline_s": 180,
+          "required_quality": 0.95,
+          "quality": 0.98,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 78.0,
+          "downlink_gb": 1,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 0.21222222222222223,
+          "receipt_id": "01d3caa255ce7707bc44786f33289750e764e85e9c7dbead7667cc9d9554f3b3"
+        },
+        {
+          "job_id": "image-00001",
+          "route": "hybrid",
+          "deadline_s": 380,
+          "required_quality": 0.95,
+          "quality": 0.98,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 278.0,
+          "downlink_gb": 1,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 0.21222222222222223,
+          "receipt_id": "7f98d3c244d4ff995de31bf77c0d2d851237aabacb9bdc1ae0b92b5c57f0fa28"
+        },
+        {
+          "job_id": "image-00002",
+          "route": "hybrid",
+          "deadline_s": 580,
+          "required_quality": 0.95,
+          "quality": 0.98,
+          "status": "planned",
+          "reason": null,
+          "completion_s": 478.0,
+          "downlink_gb": 1,
+          "energy_kwh": 0.005555555555555556,
+          "cost_usd": 0.21222222222222223,
+          "receipt_id": "810be120473a207f42da5143badb2140fbd95502c6f4ff1abfc7fc5d313b54ab"
+        }
+      ],
+      "events": [
+        {
+          "job_id": "image-00000",
+          "kind": "compute",
+          "resource": "orbital",
+          "start_s": 0,
+          "end_s": 10,
+          "energy_kwh": 0.002777777777777778,
+          "cost_usd": 0.006111111111111111
+        },
+        {
+          "job_id": "image-00000",
+          "kind": "downlink",
+          "resource": "pass-0",
+          "start_s": 60,
+          "end_s": 68.0,
+          "gb": 1,
+          "cost_usd": 0.2
+        },
+        {
+          "job_id": "image-00000",
+          "kind": "compute",
+          "resource": "ground",
+          "start_s": 68.0,
+          "end_s": 78.0,
+          "energy_kwh": 0.002777777777777778,
+          "cost_usd": 0.006111111111111111
+        },
+        {
+          "job_id": "image-00001",
+          "kind": "compute",
+          "resource": "orbital",
+          "start_s": 200,
+          "end_s": 210,
+          "energy_kwh": 0.002777777777777778,
+          "cost_usd": 0.006111111111111111
+        },
+        {
+          "job_id": "image-00001",
+          "kind": "downlink",
+          "resource": "pass-1",
+          "start_s": 260,
+          "end_s": 268.0,
+          "gb": 1,
+          "cost_usd": 0.2
+        },
+        {
+          "job_id": "image-00001",
+          "kind": "compute",
+          "resource": "ground",
+          "start_s": 268.0,
+          "end_s": 278.0,
+          "energy_kwh": 0.002777777777777778,
+          "cost_usd": 0.006111111111111111
+        },
+        {
+          "job_id": "image-00002",
+          "kind": "compute",
+          "resource": "orbital",
+          "start_s": 400,
+          "end_s": 410,
+          "energy_kwh": 0.002777777777777778,
+          "cost_usd": 0.006111111111111111
+        },
+        {
+          "job_id": "image-00002",
+          "kind": "downlink",
+          "resource": "pass-2",
+          "start_s": 460,
+          "end_s": 468.0,
+          "gb": 1,
+          "cost_usd": 0.2
+        },
+        {
+          "job_id": "image-00002",
+          "kind": "compute",
+          "resource": "ground",
+          "start_s": 468.0,
+          "end_s": 478.0,
+          "energy_kwh": 0.002777777777777778,
+          "cost_usd": 0.006111111111111111
+        }
+      ],
+      "summary": {
+        "planned": 3,
+        "refused": 0,
+        "downlink_gb": 3,
+        "energy_kwh": 0.016666666666666666,
+        "cost_usd": 0.6366666666666667,
+        "cost_per_planned_result_usd": 0.21222222222222223
+      }
+    }
+  ]
+}
