@@ -34,7 +34,11 @@ no deltas. The only supported evidence kind currently is `declared_scenario`, so
 other kinds fail the underlying envelope contract before comparability is assessed.
 
 Allocation/device/source/assumption/scenario-label differences are allowed and
-explicitly disclosed against baseline. Sources and assumptions retain list order.
+explicitly disclosed against baseline in `changed_declarations_vs_baseline`.
+There is no separate candidate-versus-active declaration-difference summary, even
+though metric deltas are reported against both references. Callers needing that
+summary must compare the retained declarations; the full inputs are included.
+Sources and assumptions retain list order.
 Complete original declarations and recomputed envelope reports are included for a
 successful comparison. Missing or null required values produce
 `insufficient_evidence`, not a fabricated zero. Malformed fields in another
@@ -62,6 +66,17 @@ Conversely, whitespace in a supplied scenario is removed during compact canonica
 serialization: a scenario with more than 65536 supplied bytes of whitespace may
 compare if its canonical form fits. The complete raw bundle still must fit the
 197632-byte bound.
+
+Some oversized scenarios are refused with less specific diagnostics by the unchanged
+envelope object API. For example, a 65537-character scenario-label string that fits
+the bundle bound yields `invalid_json_object` at `$.candidate`; direct envelope
+bytes input yields `input_size_limit`. This is a current diagnostic limitation,
+not a relaxation of either bound. Similarly, an object bundle containing a lone
+Unicode surrogate is refused as root `invalid_json_object` during UTF-8 encoding.
+The same surrogate represented as a JSON escape in bytes input can instead reach
+field validation and report `invalid_text` at `$.candidate.scenario_label`. Both
+routes refuse it; their reason codes and paths are not interchangeable.
+
 Object callers are bounded and serialized to a snapshot before evaluations; callers
 must not mutate objects concurrently during serialization. Pre-serialization
 validation visits siblings lazily with a depth-bounded stack and constructs the
@@ -80,10 +95,19 @@ exact input bytes in `input_sha256`; object callers hash sorted compact JSON.
 
 ## Results and arithmetic
 
-Comparator version is `kv-scenario-comparator/v1`. `scenario_sha256` identifies each
-canonical scenario evaluated by the envelope. `result_sha256` hashes sorted compact
-UTF-8 JSON of the result **excluding `result_sha256` itself**. These digests establish
-byte identity only. Every result says `authenticity: not_established` and
+Comparator version is `kv-scenario-comparator/v1`. The digest encodings differ:
+
+- `scenario_sha256` hashes each scenario's sorted, compact, **ASCII-escaped JSON**
+  encoded as UTF-8 (`ensure_ascii=True`), exactly as evaluated by the envelope object
+  API. It is not the scenario's raw-file digest. For non-ASCII text it also differs
+  from a digest of sorted compact JSON containing literal UTF-8 characters.
+- `input_sha256` hashes the exact supplied bundle bytes for the bytes API. For the
+  object API it hashes sorted compact JSON encoded as UTF-8 with
+  `ensure_ascii=False`, after the bounded snapshot encoding succeeds.
+- `result_sha256` hashes sorted compact JSON encoded as UTF-8 with
+  `ensure_ascii=False`, **excluding `result_sha256` itself**.
+
+These digests establish byte identity only. Every result says `authenticity: not_established` and
 `qualification: not_established`.
 
 `compared` means declarations satisfy the comparison contract. It does not mean
