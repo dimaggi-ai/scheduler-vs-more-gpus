@@ -161,6 +161,8 @@ unrelated file that reuses the descriptor number after a failed owning wrapper.
 A close `OSError` produces the reader's existing structured file-refusal JSON and
 exit 2. For the envelope, this specifically replaces an exceptional raw-close
 traceback; normal output and exit behavior are unchanged. Synthetic
-`KeyboardInterrupt` and `MemoryError` propagate after descriptor cleanup; the
+`KeyboardInterrupt` and `MemoryError` propagate after descriptor cleanup unless
+the final raw close itself raises `OSError`. That close error replaces the
+in-flight exception and produces the existing file-refusal JSON with exit 2. The
 tests inject exceptions rather than exhausting resources. No retry of a failed
 raw close is attempted, since its descriptor number may already have been reused.
