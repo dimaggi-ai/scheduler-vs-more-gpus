@@ -109,7 +109,8 @@ class KVCompareTests(unittest.TestCase):
 
     def test_exact_comparator_bounds_and_whitespace_compaction(self):
         raw = compare._canonical(self.data)
-        padded = raw + b' ' * (compare.MAX_BYTES - len(raw))
+        self.assertEqual(compare.MAX_BYTES, 197632)
+        padded = raw + b' ' * (197632 - len(raw))
         self.assertEqual(compare.evaluate_bytes(padded)['status'], 'compared')
         self.assertEqual(compare.evaluate_bytes(padded + b' ')['code'], 'input_size_limit')
         for count, expected in ((1577, 'unknown_field'), (1578, 'structure_limit')):
