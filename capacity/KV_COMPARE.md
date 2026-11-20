@@ -68,7 +68,12 @@ validation visits siblings lazily with a depth-bounded stack and constructs the
 escaped diagnostic path only on error; it does not queue a full ancestor string
 per sibling. Shared object references count on every visit, and cycles fail the
 depth bound. The limits bound this traversal, not the caller's pre-existing object
-allocation or total process RSS. A synthetic 30,741-byte wide/deep regression checks
+allocation or total process RSS. Object input is then canonically encoded
+incrementally: accumulation stops at the bundle byte cap before joining an
+oversized document. Valid canonical bytes/digests are unchanged. Each transient
+encoder chunk is bounded by the already-checked scalar/key lengths (a maximum
+input string can require Unicode/escape expansion); the implementation does not
+claim the byte cap is a hard peak-memory limit. A synthetic 30,741-byte wide/deep regression checks
 that traced incremental allocations stay below 8 MiB on the tested Pythons; it is
 not a general process-memory or production-isolation guarantee. Byte callers preserve
 exact input bytes in `input_sha256`; object callers hash sorted compact JSON.

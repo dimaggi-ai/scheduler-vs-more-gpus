@@ -23,6 +23,19 @@ def _canonical(value):
                       ensure_ascii=False, allow_nan=False).encode('utf-8')
 
 
+def _canonical_input(value):
+    """Same canonical bytes as _canonical, but stop before joining oversized input."""
+    encoder = json.JSONEncoder(sort_keys=True, separators=(',', ':'),
+                               ensure_ascii=False, allow_nan=False)
+    raw = bytearray()
+    for chunk in encoder.iterencode(value):
+        encoded = chunk.encode('utf-8')
+        if len(raw) + len(encoded) > MAX_BYTES:
+            raise envelope.Refusal('input_size_limit')
+        raw.extend(encoded)
+    return bytes(raw)
+
+
 def _bounded(value):
     # Depth is checked before recursion: at most eleven live traversal frames, including the refused depth.
     # Keep one mutable path, not a copied ancestor string for every sibling.
@@ -175,7 +188,7 @@ def evaluate(bundle):
     """Bound, serialize and snapshot before evaluation; callers must not mutate concurrently."""
     try:
         _bounded(bundle)
-        return evaluate_bytes(_canonical(bundle))
+        return evaluate_bytes(_canonical_input(bundle))
     except envelope.Refusal as exc:
         return _finish({'schema': 'capacity-kv-comparison-result/v1', 'comparator_version': VERSION,
                         'authenticity': 'not_established', 'qualification': 'not_established'},

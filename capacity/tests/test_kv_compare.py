@@ -122,12 +122,12 @@ class KVCompareTests(unittest.TestCase):
         deep = 0
         for _ in range(10):
             deep = [deep]
-        original_canonical = compare._canonical
+        original_canonical = compare._canonical_input
         def reject_input_serialization(value):
             if value is deep:
                 raise AssertionError('serialized before bounding')
             return original_canonical(value)
-        with mock.patch.object(compare, '_canonical', side_effect=reject_input_serialization):
+        with mock.patch.object(compare, '_canonical_input', side_effect=reject_input_serialization):
             self.assertEqual(compare.evaluate(deep)['code'], 'structure_limit')
         text = raw.decode().replace('"candidate":{', '"candidate":{' + ' ' * 70000, 1)
         self.assertEqual(compare.evaluate_bytes(text.encode())['status'], 'compared')
@@ -197,15 +197,37 @@ class KVCompareTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), raw)
 
     def test_object_serialization_runtime_error_is_refused(self):
-        original = compare._canonical
+        original = compare._canonical_input
         def concurrent_mutation(value):
             if value is self.data:
                 raise RuntimeError('synthetic concurrent mutation')
             return original(value)
-        with mock.patch.object(compare, '_canonical', side_effect=concurrent_mutation):
+        with mock.patch.object(compare, '_canonical_input', side_effect=concurrent_mutation):
             out = compare.evaluate(self.data)
         self.assertEqual((out['status'], out['code']), ('refused', 'invalid_json_object'))
         self.assertEqual(out['path'], '$')
+
+    def test_object_serialization_stops_at_byte_limit(self):
+        # Shared caller-owned string expands to ~3 MiB; never construct huge stress inputs.
+        value = {'x': ['界' * 65536] * 16}
+        tracemalloc.start()
+        try:
+            out = compare.evaluate(value)
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        self.assertEqual((out['status'], out['code']), ('refused', 'input_size_limit'))
+        self.assertLess(peak, 2 * 1024 * 1024)
+        for value in (self.data, {'é': ['text', 1, 1.5, True, None]}, {'z': '😀'}):
+            self.assertEqual(compare._canonical_input(value), compare._canonical(value))
+        self.assertEqual(compare.evaluate(self.data), compare.evaluate_bytes(compare._canonical(self.data)))
+        # Exact canonical byte edge remains accepted by encoding, one more refuses.
+        value = {'x': 'a' * (197632 - len(b'{"x":""}'))}
+        self.assertEqual(len(compare._canonical_input(value)), 197632)
+        value['x'] += 'a'
+        with self.assertRaises(compare.envelope.Refusal) as raised:
+            compare._canonical_input(value)
+        self.assertEqual(raised.exception.code, 'input_size_limit')
 
     def test_shared_objects_cycles_and_long_error_paths(self):
         shared = [0] * 64
