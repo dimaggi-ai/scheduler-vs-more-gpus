@@ -20,7 +20,145 @@ from capacity.kv_envelope import MAX_INTEGER
 ROOT = Path(__file__).resolve().parents[2]
 
 
-class KVCompareTests(unittest.TestCase):
+class ReaderOwnershipCases:
+    """Same lifecycle contract for both readers, using real scratch descriptors."""
+    def test_after_construction_failure_preserves_unrelated_descriptor(self):
+        real_fdopen = os.fdopen
+        for exception in (OSError, MemoryError):
+            with self.subTest(exception=exception.__name__), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / 'input.json'
+                path.write_text(json.dumps(self.data))
+                victims = []
+                def fail_after_build(fd, *args, **kwargs):
+                    stream = real_fdopen(fd, *args, **kwargs)
+                    stream.close()
+                    victims.append(os.open(path, os.O_RDONLY))
+                    raise exception('synthetic failure after construction')
+                try:
+                    with mock.patch.object(os, 'fdopen', side_effect=fail_after_build), contextlib.redirect_stdout(io.StringIO()):
+                        if exception is MemoryError:
+                            with self.assertRaises(MemoryError):
+                                self.reader.main([str(path)])
+                        else:
+                            self.assertEqual(self.reader.main([str(path)]), 2)
+                    self.assertEqual(len(victims), 1)
+                    # The old owning wrapper releases fd; its finally then closes
+                    # the unrelated file that reused that number. Count alone misses it.
+                    self.assertEqual(os.read(victims[0], 1), b'{')
+                finally:
+                    for fd in victims:
+                        try:
+                            os.close(fd)
+                        except OSError:
+                            pass
+
+    def test_interruptions_propagate_and_close_raw_fd(self):
+        real_open = os.open
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'
+            path.write_text(json.dumps(self.data))
+            for stage in ('fstat', 'fdopen'):
+                for exception in (KeyboardInterrupt, MemoryError):
+                    with self.subTest(stage=stage, exception=exception.__name__):
+                        opened = []
+                        def track(*args, **kwargs):
+                            opened.append(real_open(*args, **kwargs))
+                            return opened[-1]
+                        with mock.patch.object(os, 'open', side_effect=track), \
+                             mock.patch.object(os, stage, side_effect=exception('synthetic')), \
+                             contextlib.redirect_stdout(io.StringIO()):
+                            with self.assertRaises(exception):
+                                self.reader.main([str(path)])
+                        for fd in opened:
+                            with self.assertRaises(OSError):
+                                os.fstat(fd)
+
+    def test_read_bound_and_close_failures(self):
+        real_open, real_fdopen, real_close = os.open, os.fdopen, os.close
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'
+            path.write_text(json.dumps(self.data))
+            for stage in ('success', 'read', 'stream_close', 'raw_close'):
+                with self.subTest(stage=stage):
+                    opened, closes, bounds = [], [], []
+                    def track(*args, **kwargs):
+                        opened.append(real_open(*args, **kwargs)); return opened[-1]
+                    class Stream:
+                        def __init__(self, stream): self.stream = stream
+                        def __enter__(self): return self
+                        def fileno(self): return self.stream.fileno()
+                        def read(self, count):
+                            bounds.append(count)
+                            if stage == 'read': raise OSError('synthetic read')
+                            return self.stream.read(count)
+                        def __exit__(self, *args):
+                            self.stream.close()
+                            if stage == 'stream_close': raise OSError('synthetic stream close')
+                    def wrap(fd, *args, **kwargs): return Stream(real_fdopen(fd, *args, **kwargs))
+                    def close(fd):
+                        closes.append(fd); real_close(fd)
+                        if stage == 'raw_close': raise OSError('synthetic raw close')
+                    output = io.StringIO()
+                    with mock.patch.object(os, 'open', side_effect=track), \
+                         mock.patch.object(os, 'fdopen', side_effect=wrap), \
+                         mock.patch.object(os, 'close', side_effect=close), contextlib.redirect_stdout(output):
+                        code = self.reader.main([str(path)])
+                    self.assertEqual(code, 0 if stage == 'success' else 2)
+                    if stage != 'success':
+                        refusal = json.loads(output.getvalue())
+                        self.assertEqual(refusal['status'], 'refused')
+                        expected = 'input_file_refused' if self.reader is compare else 'input_unreadable'
+                        self.assertEqual(refusal['code'], expected)
+                    self.assertEqual(bounds, [self.reader.MAX_BYTES + 1])
+                    self.assertEqual(closes, opened, 'raw owner closes each descriptor exactly once')
+                    for fd in opened:
+                        with self.assertRaises(OSError): os.fstat(fd)
+
+    def test_repeated_preconstruction_refusal_has_no_fd_growth(self):
+        real_open = os.open
+        opened = []
+        def track(*args, **kwargs):
+            opened.append(real_open(*args, **kwargs)); return opened[-1]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'; path.write_text(json.dumps(self.data))
+            before = len(os.listdir('/dev/fd')) if Path('/dev/fd').is_dir() else None
+            with mock.patch.object(os, 'open', side_effect=track), \
+                 mock.patch.object(os, 'fdopen', side_effect=OSError('synthetic construction')), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                for _ in range(24):
+                    self.assertEqual(self.reader.main([str(path)]), 2)
+            for fd in set(opened):
+                with self.assertRaises(OSError): os.fstat(fd)
+            if before is not None:
+                self.assertEqual(len(os.listdir('/dev/fd')), before)
+
+    def test_fd_zero_only_in_isolated_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'; path.write_text(json.dumps(self.data))
+            script = '''import contextlib, io, os, sys
+from unittest import mock
+from capacity import MODULE as reader
+real_open=os.open
+opened=[]
+def track(*args, **kwargs):
+    opened.append(real_open(*args, **kwargs)); return opened[-1]
+os.close(0)
+with mock.patch.object(os, 'open', side_effect=track):
+    code=reader.main([sys.argv[1]])
+assert opened == [0], opened
+try: os.fstat(0)
+except OSError: pass
+else: raise AssertionError('fd0 leaked')
+raise SystemExit(code)
+'''.replace('MODULE', self.reader.__name__.split('.')[-1])
+            proc = subprocess.run([sys.executable, '-c', script, str(path)], cwd=ROOT,
+                                  capture_output=True, text=True, timeout=10)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertIn(json.loads(proc.stdout)['status'], ('compared', 'simulated'))
+
+
+class KVCompareTests(ReaderOwnershipCases, unittest.TestCase):
+    reader = compare
     def setUp(self):
         self.data = json.loads((ROOT / 'examples/kv-compare.json').read_text())
 

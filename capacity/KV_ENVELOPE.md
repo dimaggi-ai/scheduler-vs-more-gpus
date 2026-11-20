@@ -137,3 +137,16 @@ GQA/MHA head changes, precision/metadata accounting, refusal, missing evidence,
 bounded malformed inputs, provenance, synthetic-domain nonclaims and real CLI
 corrected recovery/file guards. Existing CI discovers the new test file under
 `capacity/tests`; no workflow or dependency changes are needed.
+
+### CLI descriptor ownership
+
+The reader keeps ownership of its raw file descriptor throughout the read. Its
+stream wrapper uses `closefd=False`; the raw descriptor is closed once in
+`finally`, including construction and read failures. This avoids closing an
+unrelated file that reuses the descriptor number after a failed owning wrapper.
+A close `OSError` produces the reader's existing structured file-refusal JSON and
+exit 2. For the envelope, this specifically replaces an exceptional raw-close
+traceback; normal output and exit behavior are unchanged. Synthetic
+`KeyboardInterrupt` and `MemoryError` propagate after descriptor cleanup; the
+tests inject exceptions rather than exhausting resources. No retry of a failed
+raw close is attempted, since its descriptor number may already have been reused.

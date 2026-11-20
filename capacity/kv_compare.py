@@ -214,8 +214,8 @@ def main(argv=None):
             before = os.fstat(fd)
             if not stat.S_ISREG(before.st_mode):
                 raise OSError('not regular')
-            stream = os.fdopen(fd, 'rb')
-            fd = None  # ownership transfers only after fdopen succeeds
+            stream = os.fdopen(fd, 'rb', closefd=False)
+            # The raw descriptor always remains ours, even if wrapping fails.
             with stream:
                 raw = stream.read(MAX_BYTES + 1)
                 after = os.fstat(stream.fileno())
