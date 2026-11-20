@@ -210,15 +210,21 @@ def main(argv=None):
             fd = os.open(args.bundle, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         except ValueError as exc:
             raise OSError('invalid path') from exc
-        with os.fdopen(fd, 'rb') as stream:
-            before = os.fstat(stream.fileno())
+        try:
+            before = os.fstat(fd)
             if not stat.S_ISREG(before.st_mode):
                 raise OSError('not regular')
-            raw = stream.read(MAX_BYTES + 1)
-            after = os.fstat(stream.fileno())
-            identity = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
-            if identity(before) != identity(after):
-                raise OSError('changed file')
+            stream = os.fdopen(fd, 'rb')
+            fd = None  # ownership transfers only after fdopen succeeds
+            with stream:
+                raw = stream.read(MAX_BYTES + 1)
+                after = os.fstat(stream.fileno())
+                identity = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+                if identity(before) != identity(after):
+                    raise OSError('changed file')
+        finally:
+            if fd is not None:
+                os.close(fd)
         result = evaluate_bytes(raw)
     except OSError:
         result = evaluate_bytes(None)

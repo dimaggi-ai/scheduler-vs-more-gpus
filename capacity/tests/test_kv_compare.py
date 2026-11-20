@@ -366,6 +366,85 @@ class KVCompareTests(unittest.TestCase):
         circular = {}; circular['self'] = circular
         self.assertEqual(compare.evaluate(circular)['status'], 'refused')
 
+    def test_directory_refusals_do_not_leak_raw_descriptors(self):
+        opened = []
+        real_open = os.open
+        def tracked_open(*args, **kwargs):
+            fd = real_open(*args, **kwargs)
+            opened.append(fd)
+            return fd
+        with tempfile.TemporaryDirectory() as directory:
+            before = len(os.listdir('/dev/fd')) if Path('/dev/fd').is_dir() else None
+            try:
+                with mock.patch.object(compare.os, 'open', side_effect=tracked_open):
+                    for _ in range(24):
+                        output = io.StringIO()
+                        with contextlib.redirect_stdout(output):
+                            self.assertEqual(compare.main([directory]), 2)
+                        self.assertEqual(json.loads(output.getvalue())['code'], 'input_file_refused')
+                alive = []
+                for fd in set(opened):
+                    try:
+                        os.fstat(fd)
+                        alive.append(fd)
+                    except OSError:
+                        pass
+                self.assertEqual(alive, [], 'every refused raw descriptor must close')
+                if before is not None:
+                    self.assertEqual(len(os.listdir('/dev/fd')), before)
+            finally:
+                # Clean up a failing baseline reproduction without hiding the failure.
+                for fd in set(opened):
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+
+    def test_descriptor_ownership_on_setup_read_failure_and_success(self):
+        real_open, real_fdopen = os.open, os.fdopen
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'bundle.json'
+            path.write_text(json.dumps(self.data))
+            for failure in ('fstat', 'fdopen', 'read', 'none'):
+                with self.subTest(failure=failure):
+                    opened, streams = [], []
+                    def tracked_open(*args, **kwargs):
+                        fd = real_open(*args, **kwargs)
+                        opened.append(fd)
+                        return fd
+                    def wrap(fd, *args, **kwargs):
+                        if failure == 'fdopen':
+                            raise OSError('synthetic fdopen failure')
+                        stream = real_fdopen(fd, *args, **kwargs)
+                        streams.append(stream)
+                        if failure == 'read':
+                            stream.read = mock.Mock(side_effect=OSError('synthetic read failure'))
+                        return stream
+                    output = io.StringIO()
+                    try:
+                        with mock.patch.object(compare.os, 'open', side_effect=tracked_open), \
+                             mock.patch.object(compare.os, 'fdopen', side_effect=wrap), \
+                             contextlib.redirect_stdout(output):
+                            if failure == 'fstat':
+                                with mock.patch.object(compare.os, 'fstat', side_effect=OSError('synthetic fstat failure')):
+                                    code = compare.main([str(path)])
+                            else:
+                                code = compare.main([str(path)])
+                        self.assertEqual(code, 0 if failure == 'none' else 2)
+                        self.assertEqual(json.loads(output.getvalue())['status'], 'compared' if failure == 'none' else 'refused')
+                        self.assertTrue(all(stream.closed for stream in streams))
+                        for fd in opened:
+                            with self.assertRaises(OSError):
+                                os.fstat(fd)
+                    finally:
+                        for stream in streams:
+                            stream.close()
+                        for fd in opened:
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+
     def test_in_process_cli_nul_path(self):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -396,6 +475,9 @@ class KVCompareTests(unittest.TestCase):
             link = Path(directory) / 'alias'; link.symlink_to(path)
             self.assertEqual(run(link)[1]['code'], 'input_file_refused')
             self.assertEqual(run(directory)[1]['code'], 'input_file_refused')
+            fifo = Path(directory) / 'fifo'
+            os.mkfifo(fifo)
+            self.assertEqual(run(fifo)[1]['code'], 'input_file_refused')
             self.assertEqual(run(Path(directory) / 'absent')[0], 2)
             path.write_bytes(b'x' * (compare.MAX_BYTES+1))
             self.assertEqual(run(path)[1]['code'], 'input_size_limit')
