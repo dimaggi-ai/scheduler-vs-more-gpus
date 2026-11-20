@@ -9,6 +9,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
+from types import SimpleNamespace
+import os
 
 from capacity import kv_compare as compare
 from capacity.kv_envelope import MAX_INTEGER
@@ -54,6 +57,7 @@ class KVCompareTests(unittest.TestCase):
         self.assertEqual(out['path'], '$.baseline.device.workspace_bytes')
         self.assertEqual(compare.evaluate({'schema': '\ud800'})['code'], 'invalid_json_object')
         self.assertEqual(compare.evaluate_bytes(None)['code'], 'expected_bytes')
+        self.assertEqual(compare.evaluate({'schema': 10 ** 5000})['code'], 'invalid_json_object')
         for key in ('\ud800', 'a.b', '\n'):
             out = compare.evaluate({key: float('inf')})
             self.assertEqual(out['code'], 'nonfinite_number')
@@ -76,6 +80,93 @@ class KVCompareTests(unittest.TestCase):
         data['candidate']['assumptions'] = ['界' * 512] * 20
         self.assertEqual(compare.evaluate(data)['status'], 'compared')
         self.assertEqual(compare.evaluate_bytes(compare._canonical(data))['status'], 'compared')
+
+    def test_explicit_null_schema_and_all_scenarios(self):
+        for name in ('schema', *compare.NAMES):
+            data = copy.deepcopy(self.data)
+            data[name] = None
+            out = compare.evaluate(data)
+            self.assertEqual(out['status'], 'insufficient_evidence')
+            self.assertEqual(out['missing_paths'], ['$.' + name])
+            self.assertNotIn('deltas', out)
+
+    def test_all_errors_prefixed_and_label_disclosure(self):
+        self.data['baseline']['device']['workspace_bytes'] = True
+        self.data['candidate']['demand']['requested_concurrency'] = True
+        out = compare.evaluate(self.data)
+        self.assertEqual(out['status'], 'refused')
+        self.assertEqual([e['path'] for e in out['errors']],
+                         ['$.baseline.device.workspace_bytes', '$.candidate.demand.requested_concurrency'])
+        self.assertEqual([e['scenario'] for e in out['errors']], ['baseline', 'candidate'])
+        self.setUp()
+        self.data['candidate']['scenario_label'] = 'Synthetic logistics only'
+        out = compare.evaluate(self.data)
+        self.assertEqual(out['changed_declarations_vs_baseline']['candidate']['scenario_label'],
+                         {'baseline': self.data['baseline']['scenario_label'],
+                          'candidate': 'Synthetic logistics only'})
+        self.data['active']['demand']['requested_concurrency'] += 1
+        self.assertEqual(compare.evaluate(self.data)['comparison_reference'], 'baseline')
+
+    def test_exact_comparator_bounds_and_whitespace_compaction(self):
+        raw = compare._canonical(self.data)
+        padded = raw + b' ' * (compare.MAX_BYTES - len(raw))
+        self.assertEqual(compare.evaluate_bytes(padded)['status'], 'compared')
+        self.assertEqual(compare.evaluate_bytes(padded + b' ')['code'], 'input_size_limit')
+        for count, expected in ((1577, 'unknown_field'), (1578, 'structure_limit')):
+            # Root + two lists + 1500 + count scalar nodes = 3080 or 3081.
+            self.assertEqual(compare.evaluate({'left': [0] * 1500, 'right': [0] * count})['code'], expected)
+        self.assertEqual(compare.evaluate_bytes(b'[' * 9 + b'0' + b']' * 9)['code'], 'expected_object')
+        self.assertEqual(compare.evaluate_bytes(b'[' * 10 + b'0' + b']' * 10)['code'], 'depth_limit')
+        deep = 0
+        for _ in range(10):
+            deep = [deep]
+        original_canonical = compare._canonical
+        def reject_input_serialization(value):
+            if value is deep:
+                raise AssertionError('serialized before bounding')
+            return original_canonical(value)
+        with mock.patch.object(compare, '_canonical', side_effect=reject_input_serialization):
+            self.assertEqual(compare.evaluate(deep)['code'], 'structure_limit')
+        text = raw.decode().replace('"candidate":{', '"candidate":{' + ' ' * 70000, 1)
+        self.assertEqual(compare.evaluate_bytes(text.encode())['status'], 'compared')
+
+    def test_exact_signed_delta_limit_is_allowed(self):
+        for name in compare.NAMES:
+            s = self.data[name]
+            s['architecture'].update(layers=1, kv_heads=1, head_dimension=1, k_bits=8, v_bits=8)
+            s['allocation'].update(block_tokens=1, metadata_bytes_per_block=0, overhead_bytes_per_request=0)
+            s['demand'].update(max_resident_context_tokens=1, requested_concurrency=1)
+            s['device'].update(usable_hbm_bytes=1, resident_weights_bytes=MAX_INTEGER-2,
+                               workspace_bytes=0, headroom_bytes=0)
+        self.data['candidate']['device'].update(usable_hbm_bytes=3, resident_weights_bytes=0)
+        out = compare.evaluate(self.data)
+        self.assertEqual(out['status'], 'compared')
+        self.assertEqual(out['deltas']['candidate_minus_baseline']['remaining_bytes'], MAX_INTEGER)
+        self.data['candidate']['device']['usable_hbm_bytes'] += 1
+        self.assertEqual(compare.evaluate(self.data)['code'], 'delta_integer_limit')
+
+    def test_cli_metadata_change_and_nonregular_refusal_deterministically(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'
+            path.write_text(json.dumps(self.data))
+            original = os.fstat
+            calls = []
+            def changed(fd):
+                value = original(fd)
+                fields = {k: getattr(value, k) for k in
+                          ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode')}
+                calls.append(None)
+                if len(calls) == 2:
+                    fields['st_mtime_ns'] += 1
+                return SimpleNamespace(**fields)
+            output = io.StringIO()
+            with mock.patch.object(compare.os, 'fstat', side_effect=changed), contextlib.redirect_stdout(output):
+                self.assertEqual(compare.main([str(path)]), 2)
+            self.assertEqual(json.loads(output.getvalue())['code'], 'input_file_refused')
+            output = io.StringIO()
+            with mock.patch.object(compare.stat, 'S_ISREG', return_value=False), contextlib.redirect_stdout(output):
+                self.assertEqual(compare.main([str(path)]), 2)
+            self.assertEqual(json.loads(output.getvalue())['code'], 'input_file_refused')
 
     def test_same_controls(self):
         for name in ('active', 'candidate'):
@@ -205,6 +296,12 @@ class KVCompareTests(unittest.TestCase):
             path.write_text(json.dumps(self.data))
             code, out = run(path)
             self.assertEqual((code, out['status']), (0, 'compared'))
+            missing = copy.deepcopy(self.data)
+            missing['schema'] = None
+            path.write_text(json.dumps(missing))
+            missing_code, missing_out = run(path)
+            self.assertEqual((missing_code, missing_out['status']), (2, 'insufficient_evidence'))
+            self.assertEqual(missing_out['missing_paths'], ['$.schema'])
             path.write_text('{')
             self.assertEqual(run(path)[0], 2)
             path.write_text(json.dumps(self.data))

@@ -58,6 +58,10 @@ smaller than 65536 bytes in literal UTF-8 may therefore be refused as
 exceeds that bound, even though `kv_envelope.evaluate_bytes` accepts the literal
 UTF-8 scenario directly. This conservative difference is retained intentionally;
 no alternate serialization route bypasses the accepted envelope object contract.
+Conversely, whitespace in a supplied scenario is removed during compact canonical
+serialization: a scenario with more than 65536 supplied bytes of whitespace may
+compare if its canonical form fits. The complete raw bundle still must fit the
+197632-byte bound.
 Object callers are bounded and serialized to a snapshot before evaluations; callers
 must not mutate objects concurrently during serialization. Byte callers preserve
 exact input bytes in `input_sha256`; object callers hash sorted compact JSON.
@@ -77,7 +81,9 @@ compared normally, with their feasibility/deficit/reason preserved in reports.
 Deltas are signed **candidate minus baseline** and **candidate minus active** for
 `kv_bytes_per_token` (bytes/token), `kv_bytes_per_request` (bytes/request),
 `non_kv_reserved_bytes`, `kv_budget_bytes`, `requested_kv_bytes`, `remaining_bytes`,
-and `deficit_bytes` (bytes). Counts, booleans and reasons are not subtracted.
+and `deficit_bytes` (bytes). Counts, booleans and reasons are not subtracted. Under the required identical
+architecture, `kv_bytes_per_token` deltas are necessarily zero; they are retained
+as a consistency indicator, not an independently variable improvement metric.
 No direction is universally preferred. All arithmetic is exact integer arithmetic;
 if any signed delta exceeds ±(2^53−1), the whole comparison is refused with
 `delta_integer_limit`, even when the individual scenarios are valid. The refusal path
