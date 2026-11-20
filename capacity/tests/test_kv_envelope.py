@@ -1,4 +1,6 @@
 """Independent arithmetic oracles and bounded CLI journeys (synthetic only)."""
+from capacity import kv_envelope
+from capacity.tests.test_kv_compare import ReaderOwnershipCases
 import copy
 import hashlib
 import json
@@ -15,7 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLE = ROOT / 'examples/kv-envelope.json'
 
 
-class KVEnvelopeTests(unittest.TestCase):
+class KVEnvelopeTests(ReaderOwnershipCases, unittest.TestCase):
+    reader = kv_envelope
     def setUp(self):
         self.data = json.loads(EXAMPLE.read_text())
 
