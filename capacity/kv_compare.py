@@ -37,7 +37,8 @@ def _bounded(value):
             for key, child in item.items():
                 if type(key) is not str or len(key) > 512:
                     raise envelope.Refusal('invalid_key')
-                pending.append((child, depth + 1, path + '.' + key))
+                suffix = '.' + key if key.isascii() and key.isidentifier() else '[' + json.dumps(key, ensure_ascii=True) + ']'
+                pending.append((child, depth + 1, path + suffix))
         elif type(item) is list:
             if len(item) > 3 * envelope.MAX_NODES:
                 raise envelope.Refusal('structure_limit')

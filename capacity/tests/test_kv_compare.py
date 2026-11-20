@@ -54,6 +54,10 @@ class KVCompareTests(unittest.TestCase):
         self.assertEqual(out['path'], '$.baseline.device.workspace_bytes')
         self.assertEqual(compare.evaluate({'schema': '\ud800'})['code'], 'invalid_json_object')
         self.assertEqual(compare.evaluate_bytes(None)['code'], 'expected_bytes')
+        for key in ('\ud800', 'a.b', '\n'):
+            out = compare.evaluate({key: float('inf')})
+            self.assertEqual(out['code'], 'nonfinite_number')
+            self.assertEqual(out['path'], '$[' + json.dumps(key, ensure_ascii=True) + ']')
 
     def test_escaped_scenario_limit_is_preserved_and_documented(self):
         from capacity import kv_envelope
