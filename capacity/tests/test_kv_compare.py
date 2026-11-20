@@ -253,6 +253,7 @@ class KVCompareTests(unittest.TestCase):
         # Original reverse insertion/list order still chooses the same first error.
         self.assertEqual(compare.evaluate({'first': float('inf'), 'last': [float('inf')]})['path'],
                          '$.last[0]')
+        self.assertEqual(compare.evaluate({'a': [float('inf'), float('nan')]})['path'], '$.a[1]')
 
     def test_same_controls(self):
         for name in ('active', 'candidate'):
