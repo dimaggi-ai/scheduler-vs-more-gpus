@@ -24,32 +24,53 @@ def _canonical(value):
 
 
 def _bounded(value):
-    pending = [(value, 0, '$')]
+    # Depth is checked before recursion: at most eleven live traversal frames, including the refused depth.
+    # Keep one mutable path, not a copied ancestor string for every sibling.
     nodes = 0
-    while pending:
-        item, depth, path = pending.pop()
+    segments = []
+
+    def error_path():
+        parts = ['$']
+        for kind, part in segments:
+            if kind == 'index':
+                parts.append(f'[{part}]')
+            elif part.isascii() and part.isidentifier():
+                parts.append('.' + part)
+            else:
+                parts.append('[' + json.dumps(part, ensure_ascii=True) + ']')
+        return ''.join(parts)
+
+    def visit(item, depth):
+        nonlocal nodes
         nodes += 1
         if nodes > 3 * envelope.MAX_NODES + 8 or depth > envelope.MAX_DEPTH + 1:
             raise envelope.Refusal('structure_limit')
         if type(item) is dict:
             if len(item) > 3 * envelope.MAX_NODES:
                 raise envelope.Refusal('structure_limit')
-            for key, child in item.items():
+            for key in item:
                 if type(key) is not str or len(key) > 512:
                     raise envelope.Refusal('invalid_key')
-                suffix = '.' + key if key.isascii() and key.isidentifier() else '[' + json.dumps(key, ensure_ascii=True) + ']'
-                pending.append((child, depth + 1, path + suffix))
+            # Match the original LIFO diagnostic order without queuing siblings.
+            for key in reversed(item):
+                segments.append(('key', key))
+                visit(item[key], depth + 1)
+                segments.pop()
         elif type(item) is list:
             if len(item) > 3 * envelope.MAX_NODES:
                 raise envelope.Refusal('structure_limit')
-            pending.extend((child, depth + 1, f'{path}[{index}]')
-                           for index, child in enumerate(item))
+            for index in range(len(item) - 1, -1, -1):
+                segments.append(('index', index))
+                visit(item[index], depth + 1)
+                segments.pop()
         elif type(item) is float and not math.isfinite(item):
-            raise envelope.Refusal('nonfinite_number', path)
+            raise envelope.Refusal('nonfinite_number', error_path())
         elif type(item) not in (str, int, float, bool, type(None)):
             raise envelope.Refusal('invalid_json_object')
         elif type(item) is str and len(item) > MAX_BYTES:
             raise envelope.Refusal('input_size_limit')
+
+    visit(value, 0)
 
 
 def _paths(left, right, prefix):

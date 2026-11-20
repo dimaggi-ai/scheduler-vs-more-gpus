@@ -63,7 +63,14 @@ serialization: a scenario with more than 65536 supplied bytes of whitespace may
 compare if its canonical form fits. The complete raw bundle still must fit the
 197632-byte bound.
 Object callers are bounded and serialized to a snapshot before evaluations; callers
-must not mutate objects concurrently during serialization. Byte callers preserve
+must not mutate objects concurrently during serialization. Pre-serialization
+validation visits siblings lazily with a depth-bounded stack and constructs the
+escaped diagnostic path only on error; it does not queue a full ancestor string
+per sibling. Shared object references count on every visit, and cycles fail the
+depth bound. The limits bound this traversal, not the caller's pre-existing object
+allocation or total process RSS. A synthetic 30,741-byte wide/deep regression checks
+that traced incremental allocations stay below 8 MiB on the tested Pythons; it is
+not a general process-memory or production-isolation guarantee. Byte callers preserve
 exact input bytes in `input_sha256`; object callers hash sorted compact JSON.
 
 ## Results and arithmetic

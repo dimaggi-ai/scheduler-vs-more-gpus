@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tracemalloc
 import unittest
 from unittest import mock
 from types import SimpleNamespace
@@ -58,7 +59,7 @@ class KVCompareTests(unittest.TestCase):
         self.assertEqual(compare.evaluate({'schema': '\ud800'})['code'], 'invalid_json_object')
         self.assertEqual(compare.evaluate_bytes(None)['code'], 'expected_bytes')
         self.assertEqual(compare.evaluate({'schema': 10 ** 5000})['code'], 'invalid_json_object')
-        for key in ('\ud800', 'a.b', '\n'):
+        for key in ('\ud800', 'a.b', '\n', 'é'):
             out = compare.evaluate({key: float('inf')})
             self.assertEqual(out['code'], 'nonfinite_number')
             self.assertEqual(out['path'], '$[' + json.dumps(key, ensure_ascii=True) + ']')
@@ -168,6 +169,68 @@ class KVCompareTests(unittest.TestCase):
             with mock.patch.object(compare.stat, 'S_ISREG', return_value=False), contextlib.redirect_stdout(output):
                 self.assertEqual(compare.main([str(path)]), 2)
             self.assertEqual(json.loads(output.getvalue())['code'], 'input_file_refused')
+
+    def test_wide_deep_paths_have_bounded_auxiliary_memory(self):
+        # Small serialized input that formerly queued ~96 MB of copied paths.
+        value = 0
+        for _ in range(4):
+            value = {'界' * 512: [0] * 3071 + [value]}
+        raw = json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode()
+        self.assertLess(len(raw), 40000)
+        for api, argument in ((compare.evaluate_bytes, raw), (compare.evaluate, value)):
+            tracemalloc.start()
+            try:
+                out = api(argument)
+                _, peak = tracemalloc.get_traced_memory()
+            finally:
+                tracemalloc.stop()
+            self.assertEqual((out['status'], out['code']), ('refused', 'structure_limit'))
+            self.assertLess(peak, 8 * 1024 * 1024, 'auxiliary traversal path amplification')
+        # Exercise the same hostile structure through the real bounded file reader.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'wide.json'
+            path.write_bytes(raw)
+            proc = subprocess.run([sys.executable, '-m', 'capacity.kv_compare', str(path)],
+                                  cwd=ROOT, capture_output=True, text=True, timeout=10)
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)['code'], 'structure_limit')
+            self.assertEqual(path.read_bytes(), raw)
+
+    def test_object_serialization_runtime_error_is_refused(self):
+        original = compare._canonical
+        def concurrent_mutation(value):
+            if value is self.data:
+                raise RuntimeError('synthetic concurrent mutation')
+            return original(value)
+        with mock.patch.object(compare, '_canonical', side_effect=concurrent_mutation):
+            out = compare.evaluate(self.data)
+        self.assertEqual((out['status'], out['code']), ('refused', 'invalid_json_object'))
+        self.assertEqual(out['path'], '$')
+
+    def test_shared_objects_cycles_and_long_error_paths(self):
+        shared = [0] * 64
+        for value in ([shared] * 64,):
+            tracemalloc.start()
+            try:
+                out = compare.evaluate(value)
+                _, peak = tracemalloc.get_traced_memory()
+            finally:
+                tracemalloc.stop()
+            self.assertEqual(out['code'], 'structure_limit')
+            self.assertLess(peak, 8 * 1024 * 1024)
+        cycle = []; cycle.append(cycle)
+        self.assertEqual(compare.evaluate(cycle)['code'], 'structure_limit')
+        keys = ['é' * 511 + str(i) for i in range(8)]
+        value = float('inf')
+        for key in reversed(keys):
+            value = {key: value}
+        out = compare.evaluate(value)
+        self.assertEqual(out['code'], 'nonfinite_number')
+        self.assertEqual(out['path'], '$' + ''.join('[' + json.dumps(k) + ']' for k in keys))
+        self.assertEqual(compare.evaluate({'x' * 513: value})['code'], 'invalid_key')
+        # Original reverse insertion/list order still chooses the same first error.
+        self.assertEqual(compare.evaluate({'first': float('inf'), 'last': [float('inf')]})['path'],
+                         '$.last[0]')
 
     def test_same_controls(self):
         for name in ('active', 'candidate'):
