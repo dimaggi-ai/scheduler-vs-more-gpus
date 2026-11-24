@@ -80,10 +80,11 @@ class ReservationTests(unittest.TestCase):
 
     def test_fcfs_head_of_line_and_prefix_invariance(self):
         req=[Request(0,1,3),Request(0,1,1),Request(0,1,1)]
-        # Budget10: first8 blocks next8 although final4 could fit; do not bypass.
-        out=run(req,[8,8,4],hbm=70)
-        self.assertEqual(out['peak_concurrency'],1)
-        self.assertLess(out['requests'][1]['ttft_s'],out['requests'][2]['ttft_s'])
+        # Budget12: first8 leaves4, enough for final4 but not the next8.
+        # FCFS must wait for the next8, then admit it alongside final4.
+        out=run(req,[8,8,4],hbm=72)
+        self.assertEqual(out['peak_concurrency'],2)
+        self.assertLessEqual(out['requests'][1]['ttft_s'],out['requests'][2]['ttft_s'])
         uncached=run([Request(0,16,1)]*2,[78]*2)
         cached=run([Request(0,16,1,16)]*2,[78]*2)
         self.assertEqual(uncached['memory_accounting'],cached['memory_accounting'])
