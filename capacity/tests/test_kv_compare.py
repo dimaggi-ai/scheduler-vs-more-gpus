@@ -106,7 +106,10 @@ class ReaderOwnershipCases:
                          mock.patch.object(os, 'close', side_effect=close), \
                          contextlib.redirect_stdout(output):
                         if close_fails:
-                            self.assertEqual(self.reader.main([str(path)]), 2)
+                            try:
+                                self.assertEqual(self.reader.main([str(path)]), 2)
+                            except KeyboardInterrupt:
+                                self.fail('interrupt escaped despite close OSError')
                         else:
                             with self.assertRaises(KeyboardInterrupt):
                                 self.reader.main([str(path)])
