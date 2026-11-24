@@ -94,3 +94,72 @@ Not implemented: live fleet synchronization, Kubernetes/Slurm bindings,
 prefix-cache routing, topology inside the simulation loop, cross-repository
 failure replay, multi-tenant scheduling or automatic actions. This is an offline
 foundation for a capacity twin, not a live digital twin.
+
+## Declared inference memory reservations
+
+`capacity.inference.simulate` can use explicit peak memory reservations while
+retaining its existing FCFS scheduler and prefill/decode service model:
+
+```python
+from capacity.inference import Hardware, Request, simulate
+
+hardware = Hardware('synthetic', 1000, 216, 1000, efficiency=1)
+report = simulate(
+    [Request(0, 16, 1), Request(0, 16, 1)], hardware,
+    parameters=5, bytes_per_parameter=2, kv_bytes_per_token=2,
+    request_reservations_bytes=[78, 78], workspace_headroom_bytes=50,
+)
+assert report['memory_accounting']['kv_budget_bytes'] == 156
+assert report['memory_accounting']['peak_reserved_bytes'] == 156
+assert report['memory_accounting']['final_remaining_bytes'] == 156
+```
+
+These tiny numbers are synthetic arithmetic, not a hardware configuration.
+Both new keyword arguments default to `None`, preserving the legacy behavior,
+validation and output shape when neither is supplied. Supplying either selects
+explicit mode, which requires a finite `list` or `tuple` reservation vector in
+**original request order**, before arrival sorting. An omitted global reservation
+means declared zero. A global reservation without a vector is refused.
+
+Each vector entry is the full positive peak request reservation, including any
+caller-declared block rounding, metadata or allocation overhead. It must be at
+least `(input_tokens + output_tokens) * kv_bytes_per_token`; cached prefix tokens
+never reduce this storage floor. The vector is snapshotted before execution.
+Resident weights are `parameters * bytes_per_parameter`; global workspace and
+headroom are reserved once, separately from weights and per-request memory.
+Hardware memory remains the original usable HBM declaration. The request budget
+is `HBM - weights - workspace/headroom`. A negative budget raises `ValueError`;
+a zero budget is valid and rejects every positive reservation. Legacy mode
+continues to refuse weights greater than or equal to HBM.
+
+Explicit mode requires actual integer memory values and parameters, excluding
+booleans; it does not round the legacy `parameters=7e9` float default. Callers
+must declare an integer parameter count. Requests must be `Request` values.
+The mode consumes at most 129 requests before refusing more than 128; it accepts
+at most 100,000 aggregate output tokens and a `max_batch` of at most 128. Every
+reservation, fixed-memory sum, raw maximum-context KV footprint and aggregate
+reservation sum is bounded by `2**53 - 1`. Empty requests with an empty vector
+are valid. Malformed declarations raise `ValueError` without a partial report;
+service-rate and conservative elapsed-time bounds are checked before the loop,
+and nonfinite result metrics are refused.
+
+Admission acquires the exact declared request reservation; completion releases
+that same value once. Requests are rejected exactly when their reservation
+exceeds the total request budget, using the existing rejection reason strings.
+Otherwise they may wait. FCFS head-of-line blocking is preserved: a pending
+request can block smaller requests behind it. Successful sequential completion
+therefore does not establish simultaneous cohort fit, and observed peak
+concurrency is not a packing limit. For a separately declared simultaneous
+cohort, its total reservation must be compared with the budget independently.
+
+Only explicit-mode output adds `memory_accounting`, recording original HBM,
+weights, global reservation, request budget, original-order reservation vector,
+observed peak reserved bytes and final remaining bytes. These are declarations
+and simulated accounting, not authenticated allocator evidence.
+
+**Timing boundary:** reservations affect admission and queueing only. The
+existing prefill compute and decode weight/raw-KV bandwidth formulas are
+unchanged. Real allocator metadata, padding, workspace and headroom may also
+change timing; those costs are **not modeled**. This interface is not yet bound
+to the KV envelope or a trace adapter, and establishes no measured hardware
+performance, latency guarantee or production qualification.
