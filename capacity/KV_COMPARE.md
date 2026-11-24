@@ -52,6 +52,9 @@ Unknown fields, duplicate keys
 oversized/deep inputs are refused. No semantic equivalence is inferred from hashes.
 
 Bundle limit: 197632 UTF-8 bytes; at most 3080 visited JSON values and depth 9.
+Each object or array also has a separate maximum of 3072 members. Exceeding
+that per-container bound returns `structure_limit` at `$`, even when the total
+value count would remain within 3080.
 Each envelope independently retains its 65536-byte, 1024-value, depth-8 bounds.
 The scenario byte bound is measured by the unchanged envelope **object API** after
 sorted compact JSON serialization with `ensure_ascii=True`, including Unicode
@@ -134,7 +137,11 @@ memory arithmetic outcomes, not measured speed, accuracy, reliability or savings
 
 ## CLI and file boundary
 
-Output is JSON on stdout only. Exit 0 means `compared`; exit 2 means any other
+Structured results are JSON on stdout with sorted keys, ASCII escaping
+(`ensure_ascii=True`), default `, ` and `: ` separators, and exactly one trailing
+newline. This display encoding differs from the compact, non-ASCII-escaped
+serialization used for `result_sha256`; do not hash stdout as the result digest.
+Exit 0 means `compared`; exit 2 means any other
 result (`refused`, `insufficient_evidence`, or `not_comparable`). Argparse usage
 errors also exit 2 and help exits 0; callers must parse JSON status for evaluation
 outcomes. The Python object and bytes APIs do not write files.
@@ -166,3 +173,50 @@ the final raw close itself raises `OSError`. That close error replaces the
 in-flight exception and produces the existing file-refusal JSON with exit 2. The
 tests inject exceptions rather than exhausting resources. No retry of a failed
 raw close is attempted, since its descriptor number may already have been reused.
+
+
+## Refusal diagnostics
+
+Every structured CLI refusal has `status: refused` and exit 2. Top-level codes
+below have a `path`; delegated scenario refusals instead appear in `errors`.
+Missing declarations (`insufficient_evidence`) and protected-field differences
+(`not_comparable`) also exit 2 but are not refusal codes. Normal argparse usage/help
+is text rather than structured result JSON.
+
+| Top-level code | Trigger | Path |
+| --- | --- | --- |
+| `input_file_refused` | Unsupported no-follow platform; failed/malformed path, symlink, nonregular file (including directory/FIFO), file I/O/close error or detected metadata change | `$` |
+| `input_size_limit` | Bundle exceeds 197632 bytes, or a traversed string exceeds that character count | `$` |
+| `depth_limit` | JSON text nesting exceeds 9 | `$` |
+| `structure_limit` | More than 3080 visited values, traversal depth above 9, or object/array above 3072 members | `$` |
+| `invalid_key` | Object key exceeds 512 characters (or non-string key in the object API) | `$` |
+| `duplicate_key` | Duplicate JSON key anywhere in the bundle | `$` |
+| `nonfinite_number` | Literal JSON NaN/Infinity/-Infinity, or nonfinite parsed/object float | `$` for literal tokens; exact traversal path for floats |
+| `invalid_json` | Caught decoding/parsing/value/type/recursion error | `$` |
+| `expected_object` | Bundle root is not an object | `$` |
+| `unknown_field` | Unsupported bundle root field | `$` |
+| `unsupported_schema` | Non-null bundle schema differs from the supported schema | `$.schema` |
+| `delta_integer_limit` | Signed delta magnitude exceeds 2^53−1 | `$.deltas.candidate_minus_baseline` or `$.deltas.candidate_minus_active` (intended output group) |
+
+For float diagnostics, arrays use `[index]`; ASCII identifier keys use `.key`;
+other keys use JSON-escaped bracket notation. Other table entries intentionally
+report `$` rather than inventing a more precise location.
+
+Scenario errors use the envelope **object API** and the codes in
+[KV_ENVELOPE.md](KV_ENVELOPE.md#refusal-diagnostics), including
+`invalid_json_object` for object traversal/serialization refusal. Each error has
+`scenario`, `code`, and the envelope path prefixed by `$.baseline`, `$.active`, or
+`$.candidate`; an envelope root refusal becomes, for example, `$.candidate`.
+The result has an `errors` array rather than a single top-level `code`/`path`.
+Envelope file-reader codes cannot arise from this delegation: the comparator
+passes parsed objects, not paths. No per-scenario process exit occurs.
+
+Library entry checks have no exit status: non-bytes `evaluate_bytes` input returns
+`expected_bytes` at `$`; unsupported object values or caught object serialization
+errors in `evaluate` return `invalid_json_object` at `$`. Pre-serialization
+traversal may instead return the relevant bound/key/nonfinite code above. These
+object-only errors must not be confused with file refusals. `result_sha256` is
+included even on refusal; `input_sha256` exists only after bounded byte input is
+available. File failures and object pre-serialization refusals have no input digest.
+Unhandled exceptions/interrupts are not guaranteed JSON; descriptor-cleanup
+precedence remains as documented above.

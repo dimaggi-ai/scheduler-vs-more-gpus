@@ -31,6 +31,11 @@ Callers must inspect the JSON `status` to distinguish missing declarations from
 malformed input; exit 2 alone cannot distinguish them. Argument syntax/help uses normal argparse text; structured JSON applies after a
 single scenario path is supplied. File failures return structured refusal.
 
+Structured CLI results use JSON with sorted keys, ASCII escaping
+(`ensure_ascii=True`), default `, ` and `: ` separators, and exactly one trailing
+newline on stdout. This display serialization is distinct from compact JSON used
+by the object API for input hashing; CLI output bytes are not that input digest.
+
 Library: `evaluate_bytes(raw_bytes)` hashes exact supplied UTF-8JSON bytes;
 `evaluate(scenario_dict)` hashes canonical JSON serialization. Both return an
 outcome rather than approving an operation. Semantically equal documents with
@@ -152,3 +157,45 @@ the final raw close itself raises `OSError`. That close error replaces the
 in-flight exception and produces the existing file-refusal JSON with exit 2. The
 tests inject exceptions rather than exhausting resources. No retry of a failed
 raw close is attempted, since its descriptor number may already have been reused.
+
+
+## Refusal diagnostics
+
+Each structured CLI refusal below has `status: refused` and exit 2. Paths name
+input fields unless noted. `$` is the document root; source/assumption indices use
+dotted decimal segments, for example `$.sources.0.uri`. The first detected problem
+may take precedence over another. Missing/null declarations instead return
+`insufficient_evidence` with `missing_paths`, not a refusal code.
+
+| Code | Trigger | Path |
+| --- | --- | --- |
+| `unsupported_platform` | `O_NOFOLLOW` unavailable | `$` |
+| `expected_regular_file` | Opened descriptor is not regular, including a directory or FIFO | `$` |
+| `input_unreadable` | Open/read/stat/wrap/close `OSError`, or embedded-NUL path rejected by open | `$` |
+| `input_size_limit` | Supplied bytes exceed 65,536 | `$` |
+| `depth_limit` | JSON text scanner sees nesting beyond 8 | `$` |
+| `structure_limit` | Parsed value traversal exceeds 1,024 values or depth 8 | `$` |
+| `duplicate_key` | Duplicate JSON object key, including nested keys | `$` |
+| `nonfinite_number` | JSON NaN/Infinity/-Infinity token | `$` |
+| `invalid_json` | UTF-8/JSON decoding or caught value/recursion error | `$` |
+| `expected_object` | Root, section or source entry is not an object | Offending object path |
+| `unknown_field` | Object contains an unsupported key | Containing object path, not the unknown key |
+| `invalid_text` | Wrong type, blank, over 512 characters, or forbidden Unicode category | Field or assumption element path |
+| `invalid_integer` | Wrong integer type (including bool/float) or outside the field range | Numeric field path |
+| `unsupported_value` | Unsupported schema, evidence kind, architecture kind or prefix sharing | Respective field path |
+| `unsupported_precision` | Positive in-range integer precision other than 8, 16 or 32 | `$.architecture.k_bits` or `$.architecture.v_bits` |
+| `invalid_assumptions` | Not a list of 1–32 entries | `$.assumptions` |
+| `invalid_sources` | Not a list of 1–16 entries | `$.sources` |
+| `invalid_sha256` | Source digest is not 64 lowercase hex characters | `$.sources.<index>.sha256` |
+| `invalid_uri` | Source URI violates the URI contract | `$.sources.<index>.uri` |
+| `invalid_date` | Retrieval date is not a canonical ISO calendar date | `$.sources.<index>.retrieved_at` |
+| `derived_integer_limit` | Bounded derived quantity or remaining-byte magnitude exceeds 2^53−1 | `$` |
+
+Library-only entry checks have no process exit status: `evaluate_bytes` returns
+`expected_bytes` at `$` for non-bytes input; `evaluate` returns
+`invalid_json_object` at `$` for rejected object traversal/serialization. The
+object route can therefore refuse structural input before byte evaluation with
+a different code. Oversized/wrong-type bytes and file refusals do not carry an
+input digest; bounded bytes that reach evaluation do. Normal argparse usage/help
+is text rather than this JSON contract. Unhandled exceptions and interrupts are
+not promised structured refusals; descriptor-cleanup precedence is described above.
