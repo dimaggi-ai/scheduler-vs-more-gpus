@@ -138,12 +138,15 @@ class ReservationTests(unittest.TestCase):
 
     def test_caps_before_loop_and_bounded_generator_consumption(self):
         consumed=[]
-        def endless():
-            while True:
+        def finite_over_cap():
+            # One sentinel beyond the 129-item read bound keeps a missing-islice
+            # regression finite and reports overconsumption as an assertion.
+            for _ in range(130):
                 consumed.append(1)
                 yield Request(0,1,1)
-        with self.assertRaises(ValueError): run(endless(),[4]*128)
-        self.assertEqual(len(consumed),129)
+        with self.assertRaises(ValueError): run(finite_over_cap(),[4]*128)
+        self.assertEqual(len(consumed),129,
+                         'explicit request reader must stop after 129 items')
         with self.assertRaises(ValueError): run([Request(0,1,100001)],[200004])
         with self.assertRaises(ValueError): run([Request(0,1,1)],[4],max_batch=129)
         # Exactly the work cap remains valid when memory rejects it before service.
