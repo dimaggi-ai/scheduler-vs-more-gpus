@@ -2,6 +2,8 @@
 from capacity import kv_envelope
 from capacity.tests.test_kv_compare import ReaderOwnershipCases
 import copy
+import contextlib
+import io
 import hashlib
 import json
 import os
@@ -21,6 +23,17 @@ class KVEnvelopeTests(ReaderOwnershipCases, unittest.TestCase):
     reader = kv_envelope
     def setUp(self):
         self.data = json.loads(EXAMPLE.read_text())
+
+    def test_embedded_nul_path_refusal_and_recovery(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(kv_envelope.main(['synthetic\x00path']), 2)
+        self.assertEqual(json.loads(output.getvalue()),
+                         {'status': 'refused', 'code': 'input_unreadable', 'path': '$'})
+        recovered = io.StringIO()
+        with contextlib.redirect_stdout(recovered):
+            self.assertEqual(kv_envelope.main([str(EXAMPLE)]), 0)
+        self.assertEqual(json.loads(recovered.getvalue()), evaluate_bytes(EXAMPLE.read_bytes()))
 
     def test_oracle_exact_fit_and_concurrency(self):
         out = evaluate(self.data)

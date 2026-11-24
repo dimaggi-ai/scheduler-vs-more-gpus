@@ -251,7 +251,10 @@ def main(argv=None):
     try:
         if not hasattr(os, 'O_NOFOLLOW'):
             raise Refusal('unsupported_platform')
-        fd = os.open(args.scenario, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            fd = os.open(args.scenario, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        except ValueError as exc:
+            raise Refusal('input_unreadable') from exc
         try:
             if not stat.S_ISREG(os.fstat(fd).st_mode):
                 raise Refusal('expected_regular_file')
