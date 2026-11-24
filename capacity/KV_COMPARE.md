@@ -186,9 +186,9 @@ is text rather than structured result JSON.
 | Top-level code | Trigger | Path |
 | --- | --- | --- |
 | `input_file_refused` | Unsupported no-follow platform; failed/malformed path, symlink, nonregular file (including directory/FIFO), file I/O/close error or detected metadata change | `$` |
-| `input_size_limit` | Bundle exceeds 197632 bytes, or a traversed string exceeds that character count | `$` |
+| `input_size_limit` | Bundle exceeds 197632 bytes, or a traversed string exceeds that character count (object API) | `$` |
 | `depth_limit` | JSON text nesting exceeds 9 | `$` |
-| `structure_limit` | More than 3080 visited values, traversal depth above 9, or object/array above 3072 members | `$` |
+| `structure_limit` | More than 3080 visited values, traversal depth above 9 (object API), or object/array above 3072 members | `$` |
 | `invalid_key` | Object key exceeds 512 characters (or non-string key in the object API) | `$` |
 | `duplicate_key` | Duplicate JSON key anywhere in the bundle | `$` |
 | `nonfinite_number` | Literal JSON NaN/Infinity/-Infinity, or nonfinite parsed/object float | `$` for literal tokens; exact traversal path for floats |
