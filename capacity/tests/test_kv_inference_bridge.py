@@ -1,5 +1,6 @@
 """Bounded synthetic bridge journeys and independent integer/timing oracles."""
 import copy
+from fractions import Fraction
 import hashlib
 import io
 import json
@@ -238,12 +239,14 @@ class BridgeTests(unittest.TestCase):
         with patch.object(bridge,'MAX_OUTPUT_BYTES',512):
             refused=bridge.evaluate(data)
         self.assertEqual(refused['code'],'output_size_limit')
+        self.assertEqual(refused['schema'],expected['schema'])
         for key in ('raw_input_sha256','canonical_input_sha256'):
             self.assertEqual(refused[key],expected[key])
         self.assertNotIn('service_simulation',refused)
         malformed=dict(expected, unsupported=object())
         refused=bridge._bounded_result(malformed)
         self.assertEqual(refused['code'],'bridge_consistency_violation')
+        self.assertEqual(refused['schema'],expected['schema'])
         self.assertEqual(refused['raw_input_sha256'],expected['raw_input_sha256'])
         data['service']['hardware_name']='x'*513
         self.assertEqual(bridge.evaluate(data)['path'],'$.service.hardware_name')
@@ -344,6 +347,68 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(result['status'],'simulated')
         self.assertEqual(len(result['simulated_admission']['completed_ids']),128)
         self.assertEqual(result['timing_precision']['event_addition_bound'],256)
+
+    def test_engine_timing_fields_are_validated_before_precision(self):
+        real_engine=bridge.inference.simulate
+        missing=object()
+        invalid_values=(missing,None,'not a time',True,float('nan'),float('inf'),-1,10**1000)
+        for field in ('makespan_s','ttft_s','max_itl_s'):
+            for value in invalid_values:
+                with self.subTest(field=field,value_type=type(value).__name__):
+                    def malformed(*args,**kwargs):
+                        result=real_engine(*args,**kwargs)
+                        target=result if field=='makespan_s' else result['requests'][0]
+                        if value is missing:target.pop(field)
+                        else:target[field]=value
+                        return result
+                    with patch.object(bridge.inference,'simulate',side_effect=malformed):
+                        for evaluate in (lambda:bridge.evaluate(fixture()),lambda:bridge.evaluate_bytes(canonical(fixture()))):
+                            result=evaluate()
+                            self.assertEqual(result['status'],'refused')
+                            self.assertEqual(result['code'],'bridge_consistency_violation')
+                            self.assertEqual(result['path'],'$.service_simulation')
+                            self.assertIn('raw_input_sha256',result)
+                            self.assertNotIn('service_simulation',result)
+                            self.assertNotIn('timing_precision',result)
+        def no_makespan(*args,**kwargs):
+            result=real_engine(*args,**kwargs);result.pop('makespan_s');return result
+        output=io.StringIO()
+        with patch.object(bridge.inference,'simulate',side_effect=no_makespan),patch('sys.stdout',output):
+            self.assertEqual(bridge.main([str(ROOT/'examples/kv-inference-bridge.json')]),2)
+        self.assertEqual(json.loads(output.getvalue())['code'],'bridge_consistency_violation')
+        with patch.object(bridge.inference,'simulate',side_effect=KeyboardInterrupt()):
+            with self.assertRaises(KeyboardInterrupt):bridge.evaluate(fixture())
+
+    def test_clock_scale_includes_service_span_rational_tie(self):
+        data=fixture()
+        data['requests']=[dict(data['requests'][0],request_id='r'+str(i),input_tokens=1,output_tokens=1,max_resident_context_tokens=2) for i in range(128)]
+        data['parent_envelope']['demand'].update(requested_concurrency=128,max_resident_context_tokens=2)
+        # Two requests per batch: prefill 20/1000 s plus decode max(20,14)/1000 s.
+        # Rows 48 and 49 finish in batch 25, at exactly the declared one-second SLO.
+        batch_time=Fraction(20,1000)+max(Fraction(20,1000),Fraction(14,1000))
+        exact_ttft=25*batch_time
+        self.assertEqual(exact_ttft,Fraction(1))
+        real_engine=bridge.inference.simulate;captured={}
+        def capture(*args,**kwargs):
+            result=real_engine(*args,**kwargs);captured.update(result);return result
+        with patch.object(bridge.inference,'simulate',side_effect=capture):
+            result=bridge.evaluate(data)
+        for index in (48,49):
+            self.assertGreater(captured['requests'][index]['ttft_s'],float(exact_ttft))
+            self.assertFalse(captured['requests'][index]['slo_met'])
+        self.assertEqual(result['code'],'timing_precision_indeterminate')
+
+    def test_resolution_multiplier_refuses_small_nonzero_duration(self):
+        data=fixture()
+        data['service'].update(compute_flops_s=2**53-1,memory_bandwidth_bytes_s=2**53-1)
+        for request in data['requests']:request['arrival_s']=1
+        real_engine=bridge.inference.simulate;captured={}
+        def capture(*args,**kwargs):
+            result=real_engine(*args,**kwargs);captured.update(result);return result
+        with patch.object(bridge.inference,'simulate',side_effect=capture):
+            result=bridge.evaluate(data)
+        self.assertGreater(captured['requests'][0]['ttft_s'],0)
+        self.assertEqual(result['code'],'timing_precision_indeterminate')
 
     def test_child_engine_consistency_and_engine_errors(self):
         real=kv_envelope.evaluate

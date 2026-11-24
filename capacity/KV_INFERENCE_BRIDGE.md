@@ -30,7 +30,7 @@ Bounds: 262,144 input bytes, nesting depth 8, 8,192 structural nodes, strings up
 | `infeasible` | Complete declarations reserve more fixed memory than available; engine not called | 0 |
 | `simulated` | Valid nonnegative memory budget; engine ran, including scenarios where all requests are rejected | 0 |
 
-Exit zero means a valid scenario conclusion, not readiness or fit. Syntactic corruption takes precedence over missingness. An engine exception after preflight is `engine_contract_violation`, not a fixed-memory infeasibility conclusion. Child/engine budget or feasibility disagreement is `bridge_consistency_violation`; no partial successful simulation is returned. Bounded refusals retain raw and canonical input digests when those validated identity fields fit within the output cap. Structural string refusals identify the offending field or list index.
+Exit zero means a valid scenario conclusion, not readiness or fit. Syntactic corruption takes precedence over missingness. An engine exception after preflight is `engine_contract_violation`, not a fixed-memory infeasibility conclusion. Child/engine budget or feasibility disagreement is `bridge_consistency_violation`; no partial successful simulation is returned. Bounded refusals retain raw and canonical input digests when those validated identity fields fit within the output cap. Structural string refusals identify the offending field or list index. Paths use dotted diagnostic notation, so unsupported keys containing literal dots can be ambiguous; this is not a general JSON-path grammar. Bounded output refusals preserve the result schema and retain validated identities when they fit.
 
 The report preserves distinct questions:
 
@@ -55,7 +55,7 @@ In the heterogeneous case the unchanged parent uniform reference is infeasible b
 
 ## Conservative timing precision policy
 
-The bridge leaves the engine and declared arrivals unchanged. After a successful simulation and consistency checks, it applies a conservative first-order precision diagnostic. This is not a mathematical proof, a formal error bound, an event-order guarantee or guaranteed relative accuracy.
+The bridge leaves the engine and declared arrivals unchanged. Before precision evaluation, the bridge requires finite non-negative numeric makespan, served TTFT and served maximum ITL values, excluding booleans. Missing or malformed timing fields are `bridge_consistency_violation` with no partial report; interrupts still propagate. After these consistency checks, it applies a conservative first-order precision diagnostic. This is not a mathematical proof, a formal error bound, an event-order guarantee or guaranteed relative accuracy.
 
 For the declared request count N and aggregate output tokens O, the addition-count bound is A = N + O. From returned makespan and declared arrivals it computes:
 

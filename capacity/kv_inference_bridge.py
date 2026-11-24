@@ -199,6 +199,15 @@ def _validate(data):
     return sorted(missing), parent
 
 
+def _finite_nonnegative(value):
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(value) and value >= 0
+    except OverflowError:
+        return False
+
+
 def _timing_precision(reqs, service, engine):
     """Conservative first-order diagnostic policy, not a formal error proof."""
     additions = len(reqs) + sum(r['output_tokens'] for r in reqs)
@@ -313,6 +322,11 @@ def _compose(data, parent):
             or len(rows) != len(reqs) or [r.get('id') for r in rows] != list(range(len(reqs)))
             or any(r.get('rejected') is not (size > budget) for r, size in zip(rows, vector))):
         raise Refusal('bridge_consistency_violation', '$.service_simulation')
+    if (not _finite_nonnegative(engine.get('makespan_s'))
+            or any(not _finite_nonnegative(row.get(key))
+                   for row in rows if not row['rejected']
+                   for key in ('ttft_s', 'max_itl_s'))):
+        raise Refusal('bridge_consistency_violation', '$.service_simulation')
     result['timing_precision'] = _timing_precision(reqs, service, engine)
     result['simulated_admission'] = {'peak_reserved_bytes': accounting['peak_reserved_bytes'], 'peak_concurrency': engine['peak_concurrency'],
                                     'final_remaining_bytes': accounting['final_remaining_bytes'],
@@ -332,8 +346,9 @@ def _bounded_result(result):
     # Keep only bounded identity fields, never partial simulation results.
     identities = {key: result[key] for key in ('raw_input_sha256', 'canonical_input_sha256')
                   if type(result.get(key)) is str and re.fullmatch('[0-9a-f]{64}', result[key])}
+    identities['schema'] = 'capacity-kv-inference-bridge-result/v1'
     refusal = _refused(code, **identities)
-    return refusal if len(_canonical(refusal)) + 1 <= MAX_OUTPUT_BYTES else _refused(code)
+    return refusal if len(_canonical(refusal)) + 1 <= MAX_OUTPUT_BYTES else _refused(code, schema=identities['schema'])
 
 
 def evaluate_bytes(raw):
