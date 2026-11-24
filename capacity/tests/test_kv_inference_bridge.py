@@ -474,7 +474,10 @@ class BridgeTests(unittest.TestCase):
                 if key=='ttft_s':result['requests'][0]['slo_met']=False
                 return result
             with self.subTest(key=key,value=value),patch.object(bridge.inference,'simulate',side_effect=liar):
-                self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+                result=bridge.evaluate(fixture())
+                self.assertEqual(result['status'],'refused')
+                self.assertIn('code',result)
+                self.assertEqual(result['code'],'bridge_consistency_violation')
         def short_span(*args,**kwargs):
             result=real(*args,**kwargs);result['makespan_s']=1e-9;result['requests'][0]['ttft_s']=.5;return result
         with patch.object(bridge.inference,'simulate',side_effect=short_span):
@@ -486,7 +489,10 @@ class BridgeTests(unittest.TestCase):
             result['requests'][0].update(ttft_s=.4,max_itl_s=.7,slo_met=True)
             return result
         with patch.object(bridge.inference,'simulate',side_effect=impossible_gap):
-            self.assertEqual(bridge.evaluate(data)['code'],'bridge_consistency_violation')
+            result=bridge.evaluate(data)
+            self.assertEqual(result['status'],'refused')
+            self.assertIn('code',result)
+            self.assertEqual(result['code'],'bridge_consistency_violation')
         # I2 contradicts the returned floats at an exact SLO tie; consistency wins.
         def wrong_tie(*args,**kwargs):
             result=real(*args,**kwargs);result['makespan_s']=1
@@ -523,6 +529,7 @@ class BridgeTests(unittest.TestCase):
             with self.subTest(cap=cap),patch.object(bridge,'MAX_OUTPUT_BYTES',cap):
                 result=bridge.evaluate(fixture())
             self.assertEqual(result['code'],'output_size_limit')
+            self.assertIn('schema',result)
             self.assertEqual(result['schema'],bridge.RESULT_SCHEMA)
             self.assertNotIn('raw_input_sha256',result)
             self.assertNotIn('canonical_input_sha256',result)
