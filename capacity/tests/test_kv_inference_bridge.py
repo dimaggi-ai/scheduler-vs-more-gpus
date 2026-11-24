@@ -1,0 +1,282 @@
+"""Bounded synthetic bridge journeys and independent integer/timing oracles."""
+import copy
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch, Mock
+
+from capacity import kv_inference_bridge as bridge, kv_envelope
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def fixture():
+    return json.loads((ROOT / 'examples/kv-inference-bridge.json').read_text())
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode()
+
+
+class BridgeTests(unittest.TestCase):
+    def test_a_exact_fit_and_public_api_calls(self):
+        data = fixture()
+        with patch.object(kv_envelope, 'evaluate', wraps=kv_envelope.evaluate) as envelope:
+            result = bridge.evaluate(data)
+        self.assertEqual(envelope.call_count, 2)  # Parent and one distinct context.
+        self.assertEqual(result['status'], 'simulated')
+        self.assertEqual([r['reservation_bytes'] for r in result['request_mapping']], [78,78])
+        self.assertEqual(result['cohort_simultaneous_fit'], {'feasible':True,'required_kv_bytes':156,'kv_budget_bytes':156,'deficit_bytes':0})
+        self.assertEqual(result['simulated_admission']['peak_reserved_bytes'],156)
+        self.assertEqual(result['simulated_admission']['final_remaining_bytes'],156)
+        for row in result['service_simulation']['requests']:
+            self.assertAlmostEqual(row['ttft_s'], .394, delta=1e-12)
+        self.assertEqual(data,fixture())
+
+    def test_b_one_byte_short_queue_is_not_fit(self):
+        data=fixture(); data['parent_envelope']['device']['usable_hbm_bytes']=215
+        r=bridge.evaluate(data)
+        self.assertFalse(r['cohort_simultaneous_fit']['feasible'])
+        self.assertEqual(r['cohort_simultaneous_fit']['deficit_bytes'],1)
+        self.assertEqual(r['individually_infeasible_ids'],[])
+        self.assertEqual(r['simulated_admission']['completed_ids'],['request-0','request-1'])
+        self.assertEqual(r['simulated_admission']['peak_reserved_bytes'],78)
+        for row, expected in zip(r['service_simulation']['requests'],(.202,.404)):
+            self.assertAlmostEqual(row['ttft_s'],expected,delta=1e-12)
+
+    def test_c_heterogeneous_uniform_parent_and_actual_fit_remain_distinct(self):
+        data=fixture(); data['parent_envelope']['device']['usable_hbm_bytes']=182
+        data['requests'][0].update(input_tokens=15,max_resident_context_tokens=16)
+        r=bridge.evaluate(data)
+        self.assertEqual([x['reservation_bytes'] for x in r['request_mapping']],[44,78])
+        self.assertFalse(r['parent_uniform_reference']['metrics']['feasible'])
+        self.assertEqual(r['parent_uniform_reference']['metrics']['deficit_bytes'],34)
+        self.assertTrue(r['cohort_simultaneous_fit']['feasible'])
+        self.assertEqual(r['simulated_admission']['peak_reserved_bytes'],122)
+        for row in r['service_simulation']['requests']:
+            self.assertAlmostEqual(row['ttft_s'],.382,delta=1e-12)
+
+    def test_d_sorting_identity_and_bound_recovery(self):
+        data=fixture(); data['parent_envelope']['device']['usable_hbm_bytes']=182
+        data['requests'][0].update(arrival_s=2,input_tokens=15,max_resident_context_tokens=16)
+        r=bridge.evaluate(data)
+        self.assertEqual([(m['original_index'],m['request_id'],m['reservation_bytes']) for m in r['request_mapping']],[(0,'request-0',44),(1,'request-1',78)])
+        self.assertEqual([x['id'] for x in r['service_simulation']['requests']],[0,1])
+        for row, expected in zip(r['service_simulation']['requests'],(.19,.202)):
+            self.assertAlmostEqual(row['ttft_s'],expected,delta=1e-12)
+        bad=copy.deepcopy(data);bad['requests'][1]['max_resident_context_tokens']=16
+        with patch.object(bridge.inference,'simulate') as engine:
+            self.assertEqual(bridge.evaluate(bad)['code'],'bound_too_small');engine.assert_not_called()
+        self.assertEqual(bridge.evaluate(data),r)
+
+    def test_e_fixed_deficit_and_zero_budget(self):
+        data=fixture();data['parent_envelope']['device']['usable_hbm_bytes']=59
+        with patch.object(bridge.inference,'simulate') as engine:
+            r=bridge.evaluate(data);engine.assert_not_called()
+        self.assertEqual(r['status'],'infeasible')
+        self.assertEqual(r['fixed_memory_deficit_bytes'],1)
+        self.assertEqual(r['parent_uniform_reference']['metrics']['deficit_bytes'],157)
+        self.assertEqual(r['derived_envelopes'][0]['metrics']['deficit_bytes'],79)
+        self.assertEqual(r['service_simulation']['status'],'not_run_fixed_memory_infeasible')
+        data['parent_envelope']['device']['usable_hbm_bytes']=60
+        r=bridge.evaluate(data)
+        self.assertEqual(r['status'],'simulated')
+        self.assertEqual(r['simulated_admission']['peak_reserved_bytes'],0)
+        self.assertEqual(r['service_simulation']['makespan_s'],0)
+        self.assertEqual(r['individually_infeasible_ids'],['request-0','request-1'])
+
+    def test_missing_sorted_paths_and_syntactic_corruption_precedence(self):
+        cases=[('model','model_revision'),('model','tokenizer_revision'),('service','compute_flops_s'),('service','source_indices')]
+        for section,key in cases:
+            data=fixture();data[section].pop(key)
+            with self.subTest(key=key),patch.object(bridge.inference,'simulate') as engine:
+                r=bridge.evaluate(data);self.assertEqual(r['status'],'insufficient_evidence');self.assertIn('$.'+section+'.'+key,r['missing_paths']);engine.assert_not_called()
+        data=fixture();data['requests'][0].pop('cached_prefix_tokens');data['parent_envelope']['device'].pop('headroom_bytes')
+        r=bridge.evaluate(data)
+        self.assertEqual(r['missing_paths'],['$.parent_envelope.device.headroom_bytes','$.requests.0.cached_prefix_tokens'])
+        self.assertEqual(r['parent_uniform_reference']['status'],'insufficient_evidence')
+        data['service']['efficiency']=True
+        self.assertEqual(bridge.evaluate(data)['status'],'refused')
+        for section in ('model','service','requests','parent_envelope','schema'):
+            data=fixture();data[section]=None
+            self.assertEqual(bridge.evaluate(data)['status'],'insufficient_evidence')
+
+    def test_f_malformed_unsupported_and_no_engine_call(self):
+        changes=[('model','parameters',False),('model','parameters',5.0),('model','parameters',6),('model','model_revision','other'),
+                 ('service','efficiency',2),('service','max_batch',129),('service','policy','other'),('service','source_indices',[1]),
+                 ('service','source_indices',[0,0]),('service','compute_flops_s',0),('service','assumptions',[])]
+        for section,key,value in changes:
+            data=fixture();data[section][key]=value
+            with self.subTest(key=key,value=value),patch.object(bridge.inference,'simulate') as engine:
+                self.assertEqual(bridge.evaluate(data)['status'],'refused');engine.assert_not_called()
+        for section,key,value in [('architecture','kind','unsupported'),('allocation','prefix_sharing','yes'),('device','resident_weights_bytes',0),('demand','requested_concurrency',3),('demand','max_resident_context_tokens',18)]:
+            data=fixture();data['parent_envelope'][section][key]=value
+            with self.subTest(key=key),patch.object(bridge.inference,'simulate') as engine:
+                self.assertEqual(bridge.evaluate(data)['status'],'refused');engine.assert_not_called()
+        for key,value in [('request_id','../private'),('arrival_s',-1),('input_tokens',True),('cached_prefix_tokens',17),('output_tokens',100001)]:
+            data=fixture();data['requests'][0][key]=value
+            self.assertEqual(bridge.evaluate(data)['status'],'refused')
+        data=fixture();data['requests'][1]['request_id']='request-0'
+        self.assertEqual(bridge.evaluate(data)['code'],'duplicate_request_id')
+        data=fixture();data['parent_envelope']['sources'][0]['uri']='https://user:password@example.invalid/'
+        self.assertEqual(bridge.evaluate(data)['code'],'invalid_uri')
+        data=fixture();data['model']['unknown']=1
+        self.assertEqual(bridge.evaluate(data)['code'],'unknown_field')
+        data=fixture();data['service']['hardware_name']='bad\u200bname'
+        self.assertEqual(bridge.evaluate(data)['code'],'invalid_text')
+        self.assertEqual(bridge.evaluate(fixture())['status'],'simulated')
+
+    def test_g_cached_prefix_capacity_invariance(self):
+        data=fixture();plain=bridge.evaluate(data)
+        for r in data['requests']:r['cached_prefix_tokens']=16
+        cached=bridge.evaluate(data)
+        for key in ('cohort_simultaneous_fit','simulated_admission','derived_envelopes'):
+            self.assertEqual(cached[key],plain[key])
+        for r in cached['service_simulation']['requests']:
+            self.assertAlmostEqual(r['ttft_s'],.074,delta=1e-12)
+
+    def test_h_unicode_digest_raw_whitespace_and_child_reconstruction(self):
+        data=fixture();data['service']['hardware_name']='synthetic é device'
+        raw=canonical(data);a=bridge.evaluate_bytes(raw);b=bridge.evaluate_bytes(b' \n'+raw+b'\n')
+        self.assertNotEqual(a['raw_input_sha256'],b['raw_input_sha256'])
+        self.assertEqual(a['canonical_input_sha256'],hashlib.sha256(raw).hexdigest())
+        self.assertEqual(a['canonical_input_sha256'],b['canonical_input_sha256'])
+        self.assertEqual(a['derived_envelopes'],b['derived_envelopes'])
+        self.assertFalse(a['runtime_source_verified']);self.assertFalse(a['source_attribution']['runtime_source_verified'])
+        self.assertEqual(canonical(a),canonical(bridge.evaluate_bytes(raw)))
+        self.assertEqual(a['parent_uniform_reference']['input_sha256'],hashlib.sha256(canonical(data['parent_envelope'])).hexdigest())
+        for child in a['derived_envelopes']:
+            scenario=copy.deepcopy(data['parent_envelope']);scenario['demand']=child['demand_patch']
+            self.assertEqual(child['child_canonical_sha256'],hashlib.sha256(canonical(scenario)).hexdigest())
+        data['requests'].reverse();self.assertNotEqual(bridge.evaluate(data)['canonical_input_sha256'],a['canonical_input_sha256'])
+        self.assertEqual(bridge.evaluate(data)['request_mapping'][0]['request_id'],'request-1')
+
+    def test_i_fictional_domain_success_refusal_recovery(self):
+        for label in ('Synthetic health-service IT continuity','Synthetic defence logistics IT','Synthetic finance reporting'):
+            data=fixture();data['parent_envelope']['scenario_label']=label
+            valid=bridge.evaluate(data);self.assertEqual(valid['status'],'simulated')
+            data['requests'][0]['max_resident_context_tokens']=16
+            self.assertEqual(bridge.evaluate(data)['status'],'refused')
+            data['requests'][0]['max_resident_context_tokens']=17
+            self.assertEqual(bridge.evaluate(data),valid)
+
+    def test_bounded_json_and_object_limits(self):
+        for raw in (b'{"schema":1,"schema":2}',b'{"x":NaN}',b'{"x":1e999}',b'\xff',b'{',b'['*9+b']'*9,b' '*262145):
+            self.assertEqual(bridge.evaluate_bytes(raw)['status'],'refused')
+        self.assertEqual(bridge.evaluate_bytes('not bytes')['code'],'expected_bytes')
+        cyclic=[];cyclic.append(cyclic)
+        self.assertEqual(bridge.evaluate(cyclic)['code'],'structure_limit')
+        for obj in ([0]*8193, {'x':'a'*513}, {1:2}, {'x':2**53}, {'x':object()}):
+            self.assertEqual(bridge.evaluate(obj)['status'],'refused')
+        for count in (0,129):
+            data=fixture();data['requests']=[copy.deepcopy(data['requests'][0]) for _ in range(count)]
+            self.assertEqual(bridge.evaluate(data)['code'],'request_count')
+        data=fixture();data['parent_envelope']['assumptions']=['x'*512]*32
+        data['parent_envelope']['sources']=[dict(data['parent_envelope']['sources'][0],revision='é'*512,license='é'*512) for _ in range(16)]
+        self.assertEqual(bridge.evaluate(data)['status'],'refused')  # Parent's own byte limit remains.
+        with patch.object(bridge,'MAX_OUTPUT_BYTES',100):
+            self.assertEqual(bridge.evaluate(fixture())['code'],'output_size_limit')
+
+    def test_work_bounds_exact_limits_and_derived_overflow(self):
+        data=fixture()
+        data['requests']=[dict(data['requests'][0],request_id='r'+str(i)) for i in range(128)]
+        data['parent_envelope']['demand']['requested_concurrency']=128
+        data['service']['max_batch']=128
+        r=bridge.evaluate(data)
+        self.assertEqual(r['status'],'simulated')
+        self.assertEqual(len(r['simulated_admission']['completed_ids']),128)
+        data=fixture();data['requests']=data['requests'][:1]
+        data['requests'][0].update(input_tokens=1,output_tokens=100000,max_resident_context_tokens=100001)
+        data['parent_envelope']['demand'].update(max_resident_context_tokens=100001,requested_concurrency=1)
+        data['parent_envelope']['device']['usable_hbm_bytes']=60
+        self.assertEqual(bridge.evaluate(data)['status'],'simulated')
+        data['requests'][0].update(output_tokens=100001,max_resident_context_tokens=100002)
+        data['parent_envelope']['demand']['max_resident_context_tokens']=100002
+        with patch.object(bridge.inference,'simulate') as engine:
+            self.assertEqual(bridge.evaluate(data)['code'],'output_token_limit');engine.assert_not_called()
+        data=fixture();data['model']['parameters']=bridge.MAX_INTEGER
+        self.assertEqual(bridge.evaluate(data)['code'],'unsupported_weight_mapping')
+        data=fixture();data['requests'][0].update(input_tokens=bridge.MAX_INTEGER,max_resident_context_tokens=bridge.MAX_INTEGER)
+        self.assertEqual(bridge.evaluate(data)['code'],'derived_integer_limit')
+
+    def test_child_engine_consistency_and_engine_errors(self):
+        real=kv_envelope.evaluate
+        for key,value in [('kv_budget_bytes',155),('feasible',False),('kv_bytes_per_token',4)]:
+            def corrupt(data):
+                r=real(data)
+                if data['demand']['requested_concurrency']==1:r['metrics'][key]=value
+                return r
+            with self.subTest(key=key),patch.object(kv_envelope,'evaluate',side_effect=corrupt),patch.object(bridge.inference,'simulate') as engine:
+                self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation');engine.assert_not_called()
+        for error in (ValueError('private detail'), OverflowError('private detail'), ZeroDivisionError('private detail')):
+            with patch.object(bridge.inference,'simulate',side_effect=error):
+                r=bridge.evaluate(fixture());self.assertEqual(r['code'],'engine_contract_violation');self.assertNotIn('private detail',str(r));self.assertNotIn('service_simulation',r)
+        for invalid in (None, {}, {'memory_accounting':{},'requests':[None]}):
+            with patch.object(bridge.inference,'simulate',return_value=invalid):
+                self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+        real_engine=bridge.inference.simulate
+        def wrong_budget(*args,**kwargs):
+            r=real_engine(*args,**kwargs);r['memory_accounting']['kv_budget_bytes']-=1;return r
+        with patch.object(bridge.inference,'simulate',side_effect=wrong_budget):
+            self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+        data=fixture();data['service']['compute_flops_s']=5e-324
+        self.assertEqual(bridge.evaluate(data)['code'],'engine_contract_violation')
+
+
+class ReaderTests(unittest.TestCase):
+    def test_actual_cli_success_refusal_recovery_and_file_types(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'input.json';path.write_bytes(canonical(fixture()))
+            def cli(p):
+                r=subprocess.run([sys.executable,'-m','capacity.kv_inference_bridge',str(p)],cwd=ROOT,capture_output=True,timeout=10)
+                return r,json.loads(r.stdout)
+            r,valid=cli(path);self.assertEqual(r.returncode,0);self.assertEqual(valid['status'],'simulated');self.assertEqual(r.stderr,b'')
+            path.write_bytes(b'{');r,result=cli(path);self.assertEqual(r.returncode,2);self.assertEqual(result['status'],'refused')
+            path.write_bytes(canonical(fixture()));self.assertEqual(cli(path)[1],valid)
+            link=Path(tmp)/'link';link.symlink_to(path)
+            fifo=Path(tmp)/'fifo';os.mkfifo(fifo)
+            for bad in (link,fifo,Path(tmp),Path(tmp)/'missing'):
+                r,result=cli(bad);self.assertEqual(r.returncode,2);self.assertEqual(result['status'],'refused')
+            path.write_bytes(b' '*262145);self.assertEqual(cli(path)[1]['code'],'input_size_limit')
+            self.assertEqual(bridge.read_scenario('bad\0path')['code'],'input_unreadable')
+
+    def test_reader_descriptor_ownership_and_failure_precedence(self):
+        for stage in ('success','fdopen','read','stream_close','interrupt'):
+            for raw_close_fails in (False,True):
+                with self.subTest(stage=stage,raw_close_fails=raw_close_fails):
+                    stream=Mock();stream.__enter__=Mock(return_value=stream);stream.__exit__=Mock(return_value=False)
+                    stream.read.return_value=canonical(fixture())
+                    if stage=='read':stream.read.side_effect=OSError('read')
+                    if stage=='interrupt':stream.read.side_effect=KeyboardInterrupt()
+                    if stage=='stream_close':stream.__exit__.side_effect=OSError('close stream')
+                    with patch.object(bridge.os,'open',return_value=77),patch.object(bridge.os,'fstat',return_value=Mock(st_mode=stat.S_IFREG)),patch.object(bridge.os,'fdopen',side_effect=OSError('partial') if stage=='fdopen' else None,return_value=stream) as fdopen,patch.object(bridge.os,'close',side_effect=OSError('raw') if raw_close_fails else None) as close:
+                        if stage=='interrupt' and not raw_close_fails:
+                            with self.assertRaises(KeyboardInterrupt):bridge.read_scenario('synthetic')
+                        else:
+                            try:r=bridge.read_scenario('synthetic')
+                            except KeyboardInterrupt:self.fail('raw close failure must replace pending interrupt')
+                            self.assertEqual(r['status'],'simulated' if stage=='success' and not raw_close_fails else 'refused')
+                        close.assert_called_once_with(77);fdopen.assert_called_once_with(77,'rb',closefd=False)
+                        if stage!='fdopen':stream.__exit__.assert_called_once();stream.read.assert_called_once_with(bridge.MAX_BYTES+1)
+
+    def test_preopen_stat_failure_and_unsupported_platform(self):
+        with patch.object(bridge.os,'open',side_effect=OSError()),patch.object(bridge.os,'close') as close:
+            self.assertEqual(bridge.read_scenario('x')['status'],'refused');close.assert_not_called()
+        with patch.object(bridge.os,'open',return_value=77),patch.object(bridge.os,'fstat',side_effect=OSError()),patch.object(bridge.os,'close') as close,patch.object(bridge.os,'fdopen') as stream:
+            self.assertEqual(bridge.read_scenario('x')['status'],'refused');close.assert_called_once_with(77);stream.assert_not_called()
+        with patch.object(bridge,'os',spec=['open']):
+            self.assertEqual(bridge.read_scenario('x')['code'],'unsupported_platform')
+        output=io.StringIO()
+        with patch('sys.stdout',output):self.assertEqual(bridge.main([]),2)
+        self.assertEqual(json.loads(output.getvalue())['code'],'expected_one_input_path')
+
+
+if __name__=='__main__':
+    unittest.main()
