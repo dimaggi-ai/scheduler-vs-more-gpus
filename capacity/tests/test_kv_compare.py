@@ -73,6 +73,58 @@ class ReaderOwnershipCases:
                             with self.assertRaises(OSError):
                                 os.fstat(fd)
 
+    def test_read_interrupt_and_raw_close_error_precedence(self):
+        real_open, real_fdopen, real_close = os.open, os.fdopen, os.close
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'
+            path.write_text(json.dumps(self.data))
+            for close_fails in (False, True):
+                with self.subTest(close_fails=close_fails):
+                    opened, closes, reads, exits = [], [], [], []
+                    def track(*args, **kwargs):
+                        opened.append(real_open(*args, **kwargs))
+                        return opened[-1]
+                    class Stream:
+                        def __init__(self, stream): self.stream = stream
+                        def __enter__(self): return self
+                        def read(self, count):
+                            reads.append(count)
+                            raise KeyboardInterrupt('synthetic read interruption')
+                        def __exit__(self, *args):
+                            exits.append(args[0])
+                            self.stream.close()
+                    def wrap(fd, *args, **kwargs):
+                        return Stream(real_fdopen(fd, *args, **kwargs))
+                    def close(fd):
+                        closes.append(fd)
+                        real_close(fd)
+                        if close_fails:
+                            raise OSError('synthetic raw close error')
+                    output = io.StringIO()
+                    with mock.patch.object(os, 'open', side_effect=track), \
+                         mock.patch.object(os, 'fdopen', side_effect=wrap), \
+                         mock.patch.object(os, 'close', side_effect=close), \
+                         contextlib.redirect_stdout(output):
+                        if close_fails:
+                            self.assertEqual(self.reader.main([str(path)]), 2)
+                        else:
+                            with self.assertRaises(KeyboardInterrupt):
+                                self.reader.main([str(path)])
+                    self.assertEqual(len(opened), 1)
+                    self.assertEqual(closes, opened)
+                    self.assertEqual(reads, [self.reader.MAX_BYTES + 1])
+                    self.assertEqual(exits, [KeyboardInterrupt])
+                    with self.assertRaises(OSError):
+                        os.fstat(opened[0])
+                    if close_fails:
+                        refusal = json.loads(output.getvalue())
+                        self.assertEqual(refusal['status'], 'refused')
+                        expected = 'input_file_refused' if self.reader is compare else 'input_unreadable'
+                        self.assertEqual(refusal['code'], expected)
+                        self.assertEqual(len(output.getvalue().splitlines()), 1)
+                    else:
+                        self.assertEqual(output.getvalue(), '')
+
     def test_read_bound_and_close_failures(self):
         real_open, real_fdopen, real_close = os.open, os.fdopen, os.close
         with tempfile.TemporaryDirectory() as directory:
