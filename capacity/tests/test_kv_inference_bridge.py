@@ -535,6 +535,46 @@ class BridgeTests(unittest.TestCase):
             self.assertNotIn('canonical_input_sha256',result)
             if cap==1:self.assertGreater(len(canonical(result))+1,cap)
 
+    def test_honest_itl_only_slo_miss_remains_simulated(self):
+        data=fixture()
+        data['requests'][1].update(output_tokens=3,max_resident_context_tokens=19,arrival_s=.3)
+        data['parent_envelope']['demand']['max_resident_context_tokens']=19
+        data['parent_envelope']['device']['usable_hbm_bytes']=10**6
+        data['service']['itl_slo_s']=.01
+        result=bridge.evaluate(data)
+        self.assertEqual(result['status'],'simulated')
+        row=result['service_simulation']['requests'][1]
+        self.assertLess(row['ttft_s'],data['service']['ttft_slo_s'])
+        self.assertGreater(row['max_itl_s'],data['service']['itl_slo_s'])
+        self.assertIs(row['slo_met'],False)
+
+    def test_late_arrival_offset_contradiction_precedes_precision(self):
+        data=fixture()
+        data['requests'][1].update(output_tokens=3,max_resident_context_tokens=19,arrival_s=.3)
+        data['parent_envelope']['demand']['max_resident_context_tokens']=19
+        data['parent_envelope']['device']['usable_hbm_bytes']=10**6
+        data['service']['itl_slo_s']=.01
+        real_engine=bridge.inference.simulate;captured={}
+        def liar(*args,**kwargs):
+            result=real_engine(*args,**kwargs)
+            row=result['requests'][1]
+            row.update(ttft_s=result['makespan_s']-.1,max_itl_s=0.0)
+            row['slo_met']=row['ttft_s']<=data['service']['ttft_slo_s'] and row['max_itl_s']<=data['service']['itl_slo_s']
+            captured.update(result)
+            return result
+        with patch.object(bridge.inference,'simulate',side_effect=liar),patch.object(bridge,'_timing_precision',wraps=bridge._timing_precision) as precision:
+            result=bridge.evaluate(data)
+            self.assertEqual(result['status'],'refused')
+            self.assertEqual(result.get('code'),'bridge_consistency_violation')
+            precision.assert_not_called()
+        row=captured['requests'][1]
+        self.assertLess(row['ttft_s'],captured['makespan_s'])
+        self.assertGreater(.3+row['ttft_s'],captured['makespan_s'])
+
+    def test_result_schema_literal_is_stable(self):
+        self.assertEqual(bridge.evaluate(fixture())['schema'],
+                         'capacity-kv-inference-bridge-result/v1')
+
     def test_child_engine_consistency_and_engine_errors(self):
         real=kv_envelope.evaluate
         for key,value in [('kv_budget_bytes',155),('feasible',False),('kv_bytes_per_token',4)]:
