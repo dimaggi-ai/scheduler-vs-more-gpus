@@ -130,6 +130,9 @@ class ReservationTests(unittest.TestCase):
         with self.assertRaises(ValueError): simulate(req,hw(MAX_EXACT_BYTES),**dict(args,parameters=MAX_EXACT_BYTES))
         with self.assertRaises(ValueError): run(req*2,[MAX_EXACT_BYTES]*2,hbm=MAX_EXACT_BYTES,global_bytes=0)
         with self.assertRaises(ValueError): run([Request(0,MAX_EXACT_BYTES,1)],[MAX_EXACT_BYTES],hbm=MAX_EXACT_BYTES,global_bytes=0)
+        for slo in ('ttft_slo_s', 'itl_slo_s'):
+            with self.subTest(slo=slo), self.assertRaises(ValueError):
+                simulate(req, hw(), **dict(args, **{slo: 10**1000}))
         # Legacy float default parameters must not be silently rounded in explicit mode.
         with self.assertRaises(ValueError): simulate(req,hw(80000000000),request_reservations_bytes=[1000000])
 

@@ -288,7 +288,7 @@
       "path": "sim/sensitivity.py"
     },
     {
-      "sha256": "ac6e14c505f0f58d85bb85aa7651e968ce4f956632e70d46ef917fdf82fee414",
+      "sha256": "ee5bbf74aa4de25f961cf8c9f81c817efef8b954cc0333aded45e7afd6f505c8",
       "path": "capacity/inference.py"
     },
     {

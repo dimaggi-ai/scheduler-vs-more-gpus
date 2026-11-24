@@ -121,7 +121,11 @@ def simulate(requests, hardware, *, parameters=7e9, bytes_per_parameter=2,
                 raise ValueError(name)
     for name,value in dict(parameters=parameters,bytes_per_parameter=bytes_per_parameter,
                            kv_bytes_per_token=kv_bytes_per_token,ttft_slo_s=ttft_slo_s,itl_slo_s=itl_slo_s).items():
-        if type(value) not in (int,float) or not math.isfinite(value) or value<=0: raise ValueError(name)
+        try:
+            if type(value) not in (int,float) or not math.isfinite(value) or value<=0: raise ValueError(name)
+        except OverflowError:
+            if explicit: raise ValueError(name) from None
+            raise
     weight=parameters*bytes_per_parameter
     if explicit:
         reservations, global_bytes, weight = _explicit_memory(
