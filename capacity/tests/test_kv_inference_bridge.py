@@ -410,6 +410,124 @@ class BridgeTests(unittest.TestCase):
         self.assertGreater(captured['requests'][0]['ttft_s'],0)
         self.assertEqual(result['code'],'timing_precision_indeterminate')
 
+    def test_phase_specific_dependency_exceptions_and_control_flow(self):
+        real_envelope=kv_envelope.evaluate
+        exceptions=(ValueError,RecursionError,OverflowError,TypeError,KeyError,
+                    ZeroDivisionError,AttributeError,IndexError,RuntimeError)
+        for phase in ('parent','child','engine'):
+            def inject(error):
+                if phase=='engine':
+                    return patch.object(bridge.inference,'simulate',side_effect=error)
+                def envelope(data):
+                    if phase=='parent' or data['demand']['requested_concurrency']==1:
+                        raise error
+                    return real_envelope(data)
+                return patch.object(kv_envelope,'evaluate',side_effect=envelope)
+            for exception in exceptions:
+                with self.subTest(phase=phase,exception=exception.__name__),inject(exception('private exception detail')):
+                    result=bridge.evaluate(fixture())
+                    self.assertEqual(result['code'],'engine_contract_violation' if phase=='engine' else 'bridge_consistency_violation')
+                    self.assertEqual(result['path'],{'parent':'$.parent_envelope','child':'$.derived_envelopes','engine':'$.service_simulation'}[phase])
+                    self.assertEqual(result['schema'],bridge.RESULT_SCHEMA)
+                    self.assertIn('canonical_input_sha256',result)
+                    self.assertNotIn('service_simulation',result)
+                    self.assertNotIn('private exception detail',str(result))
+            for exception in (MemoryError,KeyboardInterrupt,SystemExit):
+                with self.subTest(phase=phase,exception=exception.__name__),inject(exception()):
+                    with self.assertRaises(exception):bridge.evaluate(fixture())
+            with inject(bridge.Refusal('specific_refusal','$.specific')):
+                result=bridge.evaluate(fixture())
+                self.assertEqual((result['code'],result['path']),('specific_refusal','$.specific'))
+        with patch.object(bridge,'_timing_precision',side_effect=bridge.Refusal('timing_precision_indeterminate','$.service_simulation')):
+            self.assertEqual(bridge.evaluate(fixture())['code'],'timing_precision_indeterminate')
+        for error in (TypeError(),ValueError(),KeyError(),OverflowError(),RecursionError()):
+            with patch.object(bridge,'_timing_precision',side_effect=error):
+                self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+        for exception in (MemoryError,KeyboardInterrupt,SystemExit):
+            with patch.object(bridge,'_timing_precision',side_effect=exception()):
+                with self.assertRaises(exception):bridge.evaluate(fixture())
+        for raw,code in ((b'{','invalid_json'),(b'\xff','invalid_json'),
+                         (b'{"x":"\\ud800"}','invalid_text'),
+                         (b'{"x":1,"x":2}','duplicate_key'),
+                         (b'['*9+b']'*9,'depth_limit'),(b'{"x":NaN}','nonfinite_number')):
+            self.assertEqual(bridge.evaluate_bytes(raw)['code'],code)
+
+    def test_phase_specific_cli_refusal_and_recovery(self):
+        for phase in ('parent','child','engine'):
+            output=io.StringIO();stderr=io.StringIO();real=kv_envelope.evaluate
+            def envelope(data):
+                if phase=='parent' or data['demand']['requested_concurrency']==1:raise KeyError('private')
+                return real(data)
+            target=patch.object(bridge.inference,'simulate',side_effect=KeyError('private')) if phase=='engine' else patch.object(kv_envelope,'evaluate',side_effect=envelope)
+            with target,patch('sys.stdout',output),patch('sys.stderr',stderr):
+                self.assertEqual(bridge.main([str(ROOT/'examples/kv-inference-bridge.json')]),2)
+            self.assertEqual(json.loads(output.getvalue())['code'],'engine_contract_violation' if phase=='engine' else 'bridge_consistency_violation')
+            self.assertEqual(stderr.getvalue(),'')
+        self.assertEqual(bridge.evaluate(fixture())['status'],'simulated')
+
+    def test_timing_slo_invariants_precede_precision(self):
+        real=bridge.inference.simulate
+        cases=[('output_tokens',True),('output_tokens',2),('slo_met',1),('slo_met',0),('slo_met',False),('ttft_s',1e300)]
+        for key,value in cases:
+            def liar(*args,**kwargs):
+                result=real(*args,**kwargs);result['requests'][0][key]=value
+                if key=='ttft_s':result['requests'][0]['slo_met']=False
+                return result
+            with self.subTest(key=key,value=value),patch.object(bridge.inference,'simulate',side_effect=liar):
+                self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+        def short_span(*args,**kwargs):
+            result=real(*args,**kwargs);result['makespan_s']=1e-9;result['requests'][0]['ttft_s']=.5;return result
+        with patch.object(bridge.inference,'simulate',side_effect=short_span):
+            self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+        data=fixture();data['requests'][0].update(output_tokens=2,max_resident_context_tokens=18)
+        data['parent_envelope']['demand']['max_resident_context_tokens']=18
+        def impossible_gap(*args,**kwargs):
+            result=real(*args,**kwargs);result['makespan_s']=1
+            result['requests'][0].update(ttft_s=.4,max_itl_s=.7,slo_met=True)
+            return result
+        with patch.object(bridge.inference,'simulate',side_effect=impossible_gap):
+            self.assertEqual(bridge.evaluate(data)['code'],'bridge_consistency_violation')
+        # I2 contradicts the returned floats at an exact SLO tie; consistency wins.
+        def wrong_tie(*args,**kwargs):
+            result=real(*args,**kwargs);result['makespan_s']=1
+            result['requests'][0].update(ttft_s=1,slo_met=False);return result
+        with patch.object(bridge.inference,'simulate',side_effect=wrong_tie):
+            self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+
+    def test_clock_invariant_tolerance_boundary(self):
+        real=bridge.inference.simulate;data=fixture();data['service']['ttft_slo_s']=2
+        # N=2, O=2, S just above 1: tau = (2+2+8)*2^-52 exactly.
+        tolerance=12*2**-52
+        for multiplier,expected in ((1,'simulated'),(2,'refused')):
+            def liar(*args,**kwargs):
+                result=real(*args,**kwargs);result['makespan_s']=1
+                result['requests'][0]['ttft_s']=1+multiplier*tolerance
+                return result
+            with self.subTest(multiplier=multiplier),patch.object(bridge.inference,'simulate',side_effect=liar):
+                result=bridge.evaluate(data);self.assertEqual(result['status'],expected)
+                if expected=='refused':self.assertEqual(result['code'],'bridge_consistency_violation')
+
+    def test_timing_subclasses_and_minimal_refusal_fallback(self):
+        class IntSubclass(int):pass
+        class FloatSubclass(float):pass
+        real=bridge.inference.simulate
+        for field in ('makespan_s','ttft_s','max_itl_s'):
+            for value in (IntSubclass(1),FloatSubclass(.5)):
+                def liar(*args,**kwargs):
+                    result=real(*args,**kwargs)
+                    target=result if field=='makespan_s' else result['requests'][0]
+                    target[field]=value;return result
+                with self.subTest(field=field,value_type=type(value).__name__),patch.object(bridge.inference,'simulate',side_effect=liar):
+                    self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+        for cap in (200,1):
+            with self.subTest(cap=cap),patch.object(bridge,'MAX_OUTPUT_BYTES',cap):
+                result=bridge.evaluate(fixture())
+            self.assertEqual(result['code'],'output_size_limit')
+            self.assertEqual(result['schema'],bridge.RESULT_SCHEMA)
+            self.assertNotIn('raw_input_sha256',result)
+            self.assertNotIn('canonical_input_sha256',result)
+            if cap==1:self.assertGreater(len(canonical(result))+1,cap)
+
     def test_child_engine_consistency_and_engine_errors(self):
         real=kv_envelope.evaluate
         for key,value in [('kv_budget_bytes',155),('feasible',False),('kv_bytes_per_token',4)]:

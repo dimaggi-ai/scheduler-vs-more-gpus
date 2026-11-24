@@ -12,6 +12,7 @@ import unicodedata
 from capacity import inference, kv_envelope
 
 SCHEMA = 'capacity-kv-inference-bridge/v1'
+RESULT_SCHEMA = 'capacity-kv-inference-bridge-result/v1'
 MAX_BYTES = 262144
 MAX_OUTPUT_BYTES = 2 * 1024 * 1024
 MAX_DEPTH = 8
@@ -106,6 +107,15 @@ def _structure(data):
             raise Refusal('integer_limit', path)
 
 
+def _evaluate_envelope(scenario, path):
+    try:
+        return kv_envelope.evaluate(scenario)
+    except (Refusal, MemoryError):
+        raise
+    except Exception:
+        raise Refusal('bridge_consistency_violation', path) from None
+
+
 def _validate(data):
     missing = []
 
@@ -191,7 +201,7 @@ def _validate(data):
             raise Refusal('output_token_limit', '$.requests')
     parent = None
     if data.get('parent_envelope') is not None:
-        parent = kv_envelope.evaluate(data['parent_envelope'])
+        parent = _evaluate_envelope(data['parent_envelope'], '$.parent_envelope')
         if parent['status'] == 'refused':
             raise Refusal(parent['code'], '$.parent_envelope' + parent.get('path', '$')[1:])
         if parent['status'] == 'insufficient_evidence':
@@ -242,6 +252,34 @@ def _timing_precision(reqs, service, engine):
             'event_addition_bound': additions, 'resolution_multiplier': 1000, 'method': method}
 
 
+def _timing_invariants(reqs, service, engine):
+    """Check returned clock relationships; do not recompute service formulas."""
+    served = [row for row in engine['requests'] if not row['rejected']]
+    for row in served:
+        if (type(row.get('output_tokens')) is not int
+                or row['output_tokens'] != reqs[row['id']]['output_tokens']
+                or type(row.get('slo_met')) is not bool
+                or row['slo_met'] is not (row['ttft_s'] <= service['ttft_slo_s']
+                                         and row['max_itl_s'] <= service['itl_slo_s'])):
+            raise Refusal('bridge_consistency_violation', '$.service_simulation')
+    if not served:
+        return
+    arrivals = [req['arrival_s'] for req in reqs]
+    first = min(arrivals)
+    scale = max(max(arrivals), first + engine['makespan_s'],
+                max(reqs[row['id']]['arrival_s'] + row['ttft_s'] + row['max_itl_s']
+                    for row in served)) * (1 + 2**-40)
+    tolerance = (len(reqs) + sum(req['output_tokens'] for req in reqs) + 8) * math.ulp(scale)
+    # The separate precision diagnostic owns nonfinite derived-clock refusals.
+    if not math.isfinite(scale) or not math.isfinite(tolerance):
+        return
+    for row in served:
+        offset = reqs[row['id']]['arrival_s'] - first
+        if (offset + row['ttft_s'] > engine['makespan_s'] + tolerance
+                or offset + row['ttft_s'] + row['max_itl_s'] > engine['makespan_s'] + tolerance):
+            raise Refusal('bridge_consistency_violation', '$.service_simulation')
+
+
 def _compose(data, parent):
     model, service, reqs, scenario = (data[k] for k in ('model', 'service', 'requests', 'parent_envelope'))
     arch, device, demand = (scenario[k] for k in ('architecture', 'device', 'demand'))
@@ -269,7 +307,7 @@ def _compose(data, parent):
             patch = {'max_resident_context_tokens': context, 'requested_concurrency': 1}
             child = copy.deepcopy(scenario)
             child['demand'] = patch
-            report = kv_envelope.evaluate(child)
+            report = _evaluate_envelope(child, '$.derived_envelopes')
             if report['status'] != 'simulated':
                 raise Refusal('bridge_consistency_violation', '$.derived_envelopes')
             metrics = report['metrics']
@@ -307,33 +345,41 @@ def _compose(data, parent):
                                     bytes_per_parameter=model['bytes_per_parameter'], kv_bytes_per_token=parent['metrics']['kv_bytes_per_token'],
                                     ttft_slo_s=service['ttft_slo_s'], itl_slo_s=service['itl_slo_s'], max_batch=service['max_batch'],
                                     policy=service['policy'], request_reservations_bytes=vector, workspace_headroom_bytes=global_bytes)
-    except (ValueError, ArithmeticError, TypeError):
+    except (Refusal, MemoryError):
+        raise
+    except Exception:
         raise Refusal('engine_contract_violation', '$.service_simulation') from None
-    if type(engine) is not dict or type(engine.get('memory_accounting')) is not dict or type(engine.get('requests')) is not list:
-        raise Refusal('bridge_consistency_violation', '$.service_simulation')
-    accounting = engine['memory_accounting']
-    expected = {'usable_hbm_bytes': hbm, 'resident_weights_bytes': weight, 'workspace_headroom_bytes': global_bytes,
-                'kv_budget_bytes': budget, 'request_reservations_bytes': vector, 'final_remaining_bytes': budget}
-    rows = engine.get('requests', [])
-    if (any(accounting.get(k) != v for k, v in expected.items())
-            or type(accounting.get('peak_reserved_bytes')) is not int or not 0 <= accounting['peak_reserved_bytes'] <= budget
-            or type(engine.get('peak_concurrency')) is not int or not 0 <= engine['peak_concurrency'] <= len(reqs)
-            or any(type(r) is not dict for r in rows)
-            or len(rows) != len(reqs) or [r.get('id') for r in rows] != list(range(len(reqs)))
-            or any(r.get('rejected') is not (size > budget) for r, size in zip(rows, vector))):
-        raise Refusal('bridge_consistency_violation', '$.service_simulation')
-    if (not _finite_nonnegative(engine.get('makespan_s'))
-            or any(not _finite_nonnegative(row.get(key))
-                   for row in rows if not row['rejected']
-                   for key in ('ttft_s', 'max_itl_s'))):
-        raise Refusal('bridge_consistency_violation', '$.service_simulation')
-    result['timing_precision'] = _timing_precision(reqs, service, engine)
-    result['simulated_admission'] = {'peak_reserved_bytes': accounting['peak_reserved_bytes'], 'peak_concurrency': engine['peak_concurrency'],
-                                    'final_remaining_bytes': accounting['final_remaining_bytes'],
-                                    'completed_ids': [mapping[r['id']]['request_id'] for r in rows if not r['rejected']],
-                                    'rejected_ids': [mapping[r['id']]['request_id'] for r in rows if r['rejected']]}
-    result['service_simulation'] = dict(engine, status='simulated')
-    return dict(result, status='simulated')
+    try:
+        if type(engine) is not dict or type(engine.get('memory_accounting')) is not dict or type(engine.get('requests')) is not list:
+            raise Refusal('bridge_consistency_violation', '$.service_simulation')
+        accounting = engine['memory_accounting']
+        expected = {'usable_hbm_bytes': hbm, 'resident_weights_bytes': weight, 'workspace_headroom_bytes': global_bytes,
+                    'kv_budget_bytes': budget, 'request_reservations_bytes': vector, 'final_remaining_bytes': budget}
+        rows = engine.get('requests', [])
+        if (any(accounting.get(k) != v for k, v in expected.items())
+                or type(accounting.get('peak_reserved_bytes')) is not int or not 0 <= accounting['peak_reserved_bytes'] <= budget
+                or type(engine.get('peak_concurrency')) is not int or not 0 <= engine['peak_concurrency'] <= len(reqs)
+                or any(type(r) is not dict for r in rows)
+                or len(rows) != len(reqs) or [r.get('id') for r in rows] != list(range(len(reqs)))
+                or any(r.get('rejected') is not (size > budget) for r, size in zip(rows, vector))):
+            raise Refusal('bridge_consistency_violation', '$.service_simulation')
+        if (not _finite_nonnegative(engine.get('makespan_s'))
+                or any(not _finite_nonnegative(row.get(key))
+                       for row in rows if not row['rejected']
+                       for key in ('ttft_s', 'max_itl_s'))):
+            raise Refusal('bridge_consistency_violation', '$.service_simulation')
+        _timing_invariants(reqs, service, engine)
+        result['timing_precision'] = _timing_precision(reqs, service, engine)
+        result['simulated_admission'] = {'peak_reserved_bytes': accounting['peak_reserved_bytes'], 'peak_concurrency': engine['peak_concurrency'],
+                                        'final_remaining_bytes': accounting['final_remaining_bytes'],
+                                        'completed_ids': [mapping[r['id']]['request_id'] for r in rows if not r['rejected']],
+                                        'rejected_ids': [mapping[r['id']]['request_id'] for r in rows if r['rejected']]}
+        result['service_simulation'] = dict(engine, status='simulated')
+        return dict(result, status='simulated')
+    except (Refusal, MemoryError):
+        raise
+    except (TypeError, ValueError, KeyError, OverflowError, RecursionError):
+        raise Refusal('bridge_consistency_violation', '$.service_simulation') from None
 
 
 def _bounded_result(result):
@@ -346,7 +392,7 @@ def _bounded_result(result):
     # Keep only bounded identity fields, never partial simulation results.
     identities = {key: result[key] for key in ('raw_input_sha256', 'canonical_input_sha256')
                   if type(result.get(key)) is str and re.fullmatch('[0-9a-f]{64}', result[key])}
-    identities['schema'] = 'capacity-kv-inference-bridge-result/v1'
+    identities['schema'] = RESULT_SCHEMA
     refusal = _refused(code, **identities)
     return refusal if len(_canonical(refusal)) + 1 <= MAX_OUTPUT_BYTES else _refused(code, schema=identities['schema'])
 
@@ -357,7 +403,7 @@ def evaluate_bytes(raw):
         return _refused('expected_bytes')
     if len(raw) > MAX_BYTES:
         return _refused('input_size_limit')
-    base = {'schema': 'capacity-kv-inference-bridge-result/v1', 'raw_input_sha256': _digest(raw)}
+    base = {'schema': RESULT_SCHEMA, 'raw_input_sha256': _digest(raw)}
     try:
         def pairs(items):
             out = {}
@@ -391,6 +437,11 @@ def evaluate_bytes(raw):
         data = json.loads(text, object_pairs_hook=pairs, parse_constant=constant)
         _structure(data)
         base['canonical_input_sha256'] = _digest(_canonical(data))
+    except Refusal as exc:
+        return _refused(exc.code, exc.path, **base)
+    except (UnicodeError, ValueError, RecursionError, OverflowError):
+        return _refused('invalid_json', **base)
+    try:
         missing, parent = _validate(data)
         if missing:
             return _bounded_result(dict(base, status='insufficient_evidence', missing_paths=missing,
@@ -398,8 +449,6 @@ def evaluate_bytes(raw):
         return _bounded_result(dict(base, **_compose(data, parent)))
     except Refusal as exc:
         return _refused(exc.code, exc.path, **base)
-    except (UnicodeError, ValueError, RecursionError, OverflowError):
-        return _refused('invalid_json', **base)
 
 
 def evaluate(scenario):
