@@ -89,6 +89,30 @@ class ReservationTests(unittest.TestCase):
         self.assertEqual(uncached['memory_accounting'],cached['memory_accounting'])
         self.assertLess(cached['requests'][0]['ttft_s'],uncached['requests'][0]['ttft_s'])
 
+    def test_cached_prefix_does_not_discount_reservation_floor(self):
+        request = Request(0,16,1,16)
+        discounted_bytes = (request.input_tokens - request.cached_prefix_tokens
+                            + request.output_tokens) * 2
+        with self.assertRaisesRegex(ValueError, 'below raw maximum context KV'):
+            run([request], [discounted_bytes])
+        raw_bytes = (request.input_tokens + request.output_tokens) * 2
+        recovered = run([request], [raw_bytes])
+        self.assertFalse(recovered['requests'][0]['rejected'])
+        self.assert_accounting(recovered,156,[raw_bytes])
+
+    def test_explicit_memory_rejection_preserves_legacy_reason_strings(self):
+        immediate = run([Request(0,1,1)], [10], hbm=68)
+        self.assertTrue(immediate['requests'][0]['rejected'])
+        self.assertEqual(immediate['requests'][0]['reason'],
+                         'request exceeds available KV capacity')
+        # The second request arrives while the first owns the entire budget.
+        # It remains pending until service completes, then fails the fit check.
+        pending = run([Request(0,1,3), Request(.001,1,1)], [8,10], hbm=68)
+        self.assertFalse(pending['requests'][0]['rejected'])
+        self.assertTrue(pending['requests'][1]['rejected'])
+        self.assertEqual(pending['requests'][1]['reason'], 'KV capacity')
+        self.assert_accounting(pending,8,[8,10])
+
     def test_random_rejection_equivalence_conservation_both_policies(self):
         rng=random.Random(717)
         for policy in ('decode-first','prefill-first'):
