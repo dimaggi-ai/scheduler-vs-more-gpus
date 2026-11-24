@@ -3,6 +3,7 @@ import copy
 import hashlib
 import io
 import json
+import math
 import os
 from pathlib import Path
 import stat
@@ -108,6 +109,32 @@ class BridgeTests(unittest.TestCase):
             data=fixture();data[section]=None
             self.assertEqual(bridge.evaluate(data)['status'],'insufficient_evidence')
 
+    def test_merged_missing_paths_sorted_across_sections(self):
+        data=fixture()
+        del data['model']['tokenizer_revision']
+        del data['service']['compute_flops_s']
+        del data['parent_envelope']['device']['headroom_bytes']
+        with patch.object(bridge.inference,'simulate') as engine:
+            result=bridge.evaluate(data)
+            engine.assert_not_called()
+        self.assertEqual(result['status'],'insufficient_evidence')
+        self.assertEqual(result['missing_paths'],[
+            '$.model.tokenizer_revision',
+            '$.parent_envelope.device.headroom_bytes',
+            '$.service.compute_flops_s',
+        ])
+
+    def test_exact_individual_budget_is_admitted(self):
+        data=fixture();data['requests']=data['requests'][:1]
+        data['parent_envelope']['demand']['requested_concurrency']=1
+        data['parent_envelope']['device']['usable_hbm_bytes']=138
+        result=bridge.evaluate(data)
+        self.assertEqual(result['cohort_simultaneous_fit']['kv_budget_bytes'],78)
+        self.assertEqual(result['request_mapping'][0]['reservation_bytes'],78)
+        self.assertEqual(result['individually_infeasible_ids'],[])
+        self.assertEqual(result['simulated_admission']['completed_ids'],['request-0'])
+        self.assertEqual(result['simulated_admission']['peak_reserved_bytes'],78)
+
     def test_f_malformed_unsupported_and_no_engine_call(self):
         changes=[('model','parameters',False),('model','parameters',5.0),('model','parameters',6),('model','model_revision','other'),
                  ('service','efficiency',2),('service','max_batch',129),('service','policy','other'),('service','source_indices',[1]),
@@ -206,6 +233,118 @@ class BridgeTests(unittest.TestCase):
         data=fixture();data['requests'][0].update(input_tokens=bridge.MAX_INTEGER,max_resident_context_tokens=bridge.MAX_INTEGER)
         self.assertEqual(bridge.evaluate(data)['code'],'derived_integer_limit')
 
+    def test_refusal_identity_paths_and_signed_zero_declaration(self):
+        data=fixture();expected=bridge.evaluate(data)
+        with patch.object(bridge,'MAX_OUTPUT_BYTES',512):
+            refused=bridge.evaluate(data)
+        self.assertEqual(refused['code'],'output_size_limit')
+        for key in ('raw_input_sha256','canonical_input_sha256'):
+            self.assertEqual(refused[key],expected[key])
+        self.assertNotIn('service_simulation',refused)
+        malformed=dict(expected, unsupported=object())
+        refused=bridge._bounded_result(malformed)
+        self.assertEqual(refused['code'],'bridge_consistency_violation')
+        self.assertEqual(refused['raw_input_sha256'],expected['raw_input_sha256'])
+        data['service']['hardware_name']='x'*513
+        self.assertEqual(bridge.evaluate(data)['path'],'$.service.hardware_name')
+        data=fixture();data['requests'][1]['request_id']='bad\u200bid'
+        self.assertEqual(bridge.evaluate(data)['path'],'$.requests.1.request_id')
+        data=fixture();data['requests'][0]['arrival_s']=-0.0
+        negative_zero=bridge.evaluate(data)
+        self.assertNotEqual(negative_zero['canonical_input_sha256'],expected['canonical_input_sha256'])
+        self.assertEqual(negative_zero['service_simulation'],expected['service_simulation'])
+        self.assertEqual(str(negative_zero['request_mapping'][0]['request_declaration']['arrival_s']),'-0.0')
+
+    def test_precision_large_offsets_and_supported_tiny_service(self):
+        def single(arrival=0, rate=1000):
+            data=fixture();data['requests']=data['requests'][:1]
+            data['requests'][0]['arrival_s']=arrival
+            data['parent_envelope']['demand']['requested_concurrency']=1
+            data['service'].update(compute_flops_s=rate,memory_bandwidth_bytes_s=rate)
+            return data
+        for arrival in (1e17,1e300,sys.float_info.max):
+            data=single(arrival);data['service']['ttft_slo_s']=.1
+            result=bridge.evaluate(data)
+            self.assertEqual(result['code'],'timing_precision_indeterminate')
+            self.assertEqual(result['canonical_input_sha256'],hashlib.sha256(canonical(data)).hexdigest())
+            self.assertNotIn('service_simulation',result)
+        for arrival in (0,2**20,1e9):
+            result=bridge.evaluate(single(arrival))
+            self.assertEqual(result['status'],'simulated')
+            self.assertGreater(result['timing_precision']['estimate_s'],0)
+        result=bridge.evaluate(single(2**20))
+        self.assertEqual(result['timing_precision']['estimate_s'],10*2**-32)
+        for rate in (2**53-1,1e30):  # Supported integer and finite float declarations.
+            data=single(0,rate);data['service']['ttft_slo_s']=1e-30
+            result=bridge.evaluate(data)
+            self.assertEqual(result['status'],'simulated')
+            self.assertFalse(result['service_simulation']['requests'][0]['slo_met'])
+            data['requests'][0]['arrival_s']=1000
+            self.assertEqual(bridge.evaluate(data)['code'],'timing_precision_indeterminate')
+        data=single(0,10**30)
+        self.assertEqual(bridge.evaluate(data)['code'],'integer_limit')
+
+    def test_precision_threshold_margin_single_token_itl_and_count(self):
+        data=fixture();data['requests']=data['requests'][:1]
+        data['parent_envelope']['demand']['requested_concurrency']=1
+        ordinary=bridge.evaluate(data);ttft=ordinary['service_simulation']['requests'][0]['ttft_s']
+        data['service']['ttft_slo_s']=ttft
+        self.assertEqual(bridge.evaluate(data)['code'],'timing_precision_indeterminate')
+        data['service']['ttft_slo_s']=ttft*(1+1e-9)
+        self.assertEqual(bridge.evaluate(data)['status'],'simulated')
+        data['service']['itl_slo_s']=1e-300  # Single-token ITL is an exact default zero.
+        self.assertEqual(bridge.evaluate(data)['status'],'simulated')
+        data['service'].update(ttft_slo_s=1,itl_slo_s=1)
+        data['requests'][0].update(output_tokens=100,max_resident_context_tokens=116)
+        data['parent_envelope']['demand']['max_resident_context_tokens']=116
+        data['parent_envelope']['device']['usable_hbm_bytes']=2000
+        baseline=bridge.evaluate(data)
+        self.assertEqual(baseline['status'],'simulated')
+        self.assertEqual(baseline['timing_precision']['event_addition_bound'],101)
+        data['service']['ttft_slo_s']=baseline['service_simulation']['requests'][0]['ttft_s']+baseline['timing_precision']['estimate_s']/2
+        self.assertEqual(bridge.evaluate(data)['code'],'timing_precision_indeterminate')
+        data['service']['ttft_slo_s']=1
+        data['service']['itl_slo_s']=baseline['service_simulation']['requests'][0]['max_itl_s']
+        self.assertEqual(bridge.evaluate(data)['code'],'timing_precision_indeterminate')
+
+    def test_precision_each_served_duration_not_only_makespan(self):
+        data=fixture()
+        data['requests'][0].update(input_tokens=100000000000,max_resident_context_tokens=100000000001)
+        data['requests'][1]['arrival_s']=1e17
+        data['parent_envelope']['demand']['max_resident_context_tokens']=100000000001
+        data['parent_envelope']['device']['usable_hbm_bytes']=1000000000000
+        data['service'].update(ttft_slo_s=1e20,itl_slo_s=1e20)
+        real_engine=bridge.inference.simulate;captured={}
+        def capture(*args,**kwargs):
+            result=real_engine(*args,**kwargs);captured.update(result);return result
+        with patch.object(bridge.inference,'simulate',side_effect=capture):
+            self.assertEqual(bridge.evaluate(data)['code'],'timing_precision_indeterminate')
+        self.assertEqual(captured['requests'][1]['ttft_s'],0)
+        self.assertGreater(captured['requests'][0]['ttft_s'],1e9)
+        self.assertGreater(captured['makespan_s'],1e16)
+        # A long TTFT can likewise hide an unresolved multi-token ITL.
+        data=fixture();data['requests'][0].update(output_tokens=2,max_resident_context_tokens=18)
+        data['parent_envelope']['demand']['max_resident_context_tokens']=18
+        def unresolved_itl(*args,**kwargs):
+            result=real_engine(*args,**kwargs);result['requests'][0]['max_itl_s']=0;return result
+        with patch.object(bridge.inference,'simulate',side_effect=unresolved_itl):
+            self.assertEqual(bridge.evaluate(data)['code'],'timing_precision_indeterminate')
+
+    def test_precision_no_service_and_ordinary_128_shifted_requests(self):
+        data=fixture();data['parent_envelope']['device']['usable_hbm_bytes']=60
+        for request in data['requests']:request['arrival_s']=sys.float_info.max
+        result=bridge.evaluate(data)
+        self.assertEqual(result['status'],'simulated')
+        self.assertEqual(result['timing_precision']['status'],'not_evaluated')
+        self.assertEqual(result['timing_precision']['reason'],'no_served_requests')
+        data=fixture();data['requests']=[dict(data['requests'][0],request_id='r'+str(i),arrival_s=1e9) for i in range(128)]
+        data['parent_envelope']['demand']['requested_concurrency']=128
+        data['service'].update(ttft_slo_s=1000,itl_slo_s=1)
+        result=bridge.evaluate(data)
+        self.assertEqual(result['status'],'simulated')
+        self.assertEqual(len(result['simulated_admission']['completed_ids']),128)
+        self.assertEqual(result['timing_precision']['event_addition_bound'],256)
+
     def test_child_engine_consistency_and_engine_errors(self):
         real=kv_envelope.evaluate
         for key,value in [('kv_budget_bytes',155),('feasible',False),('kv_bytes_per_token',4)]:
@@ -225,6 +364,10 @@ class BridgeTests(unittest.TestCase):
         def wrong_budget(*args,**kwargs):
             r=real_engine(*args,**kwargs);r['memory_accounting']['kv_budget_bytes']-=1;return r
         with patch.object(bridge.inference,'simulate',side_effect=wrong_budget):
+            self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
+        def lying_engine(*args,**kwargs):
+            r=real_engine(*args,**kwargs);r['requests'][0]['rejected']=True;return r
+        with patch.object(bridge.inference,'simulate',side_effect=lying_engine):
             self.assertEqual(bridge.evaluate(fixture())['code'],'bridge_consistency_violation')
         data=fixture();data['service']['compute_flops_s']=5e-324
         self.assertEqual(bridge.evaluate(data)['code'],'engine_contract_violation')

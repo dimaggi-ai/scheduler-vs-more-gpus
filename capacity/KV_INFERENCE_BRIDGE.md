@@ -30,7 +30,7 @@ Bounds: 262,144 input bytes, nesting depth 8, 8,192 structural nodes, strings up
 | `infeasible` | Complete declarations reserve more fixed memory than available; engine not called | 0 |
 | `simulated` | Valid nonnegative memory budget; engine ran, including scenarios where all requests are rejected | 0 |
 
-Exit zero means a valid scenario conclusion, not readiness or fit. Syntactic corruption takes precedence over missingness. An engine exception after preflight is `engine_contract_violation`, not a fixed-memory infeasibility conclusion. Child/engine budget or feasibility disagreement is `bridge_consistency_violation`; no partial successful simulation is returned.
+Exit zero means a valid scenario conclusion, not readiness or fit. Syntactic corruption takes precedence over missingness. An engine exception after preflight is `engine_contract_violation`, not a fixed-memory infeasibility conclusion. Child/engine budget or feasibility disagreement is `bridge_consistency_violation`; no partial successful simulation is returned. Bounded refusals retain raw and canonical input digests when those validated identity fields fit within the output cap. Structural string refusals identify the offending field or list index.
 
 The report preserves distinct questions:
 
@@ -53,9 +53,26 @@ The example has raw KV 2 bytes/token, blocks of 16 tokens, metadata 2 bytes/bloc
 
 In the heterogeneous case the unchanged parent uniform reference is infeasible by 34 bytes while the actual cohort fits. Full cached prefixes leave reservations unchanged and reduce modeled TTFT in the first case to 0.074 s. Timing assertions use absolute tolerance 1e-12; integer and serialized-identity checks remain exact.
 
+## Conservative timing precision policy
+
+The bridge leaves the engine and declared arrivals unchanged. After a successful simulation and consistency checks, it applies a conservative first-order precision diagnostic. This is not a mathematical proof, a formal error bound, an event-order guarantee or guaranteed relative accuracy.
+
+For the declared request count N and aggregate output tokens O, the addition-count bound is A = N + O. From returned makespan and declared arrivals it computes:
+
+```text
+T = max(max(arrival), min(arrival) + makespan) × (1 + 2^-40)
+delta = (A + 8) × ulp(T)
+```
+
+A served result refuses as `timing_precision_indeterminate` at `$.service_simulation` if derived T/delta is nonfinite, or if makespan, any served TTFT or any served multi-token maximum ITL is at most 1000 × delta. It also refuses if any served TTFT or multi-token maximum ITL is within delta of its declared SLO threshold (including exact ties). Single-token ITL is an exact default zero, so that comparison is skipped. All-rejected scenarios skip precision evaluation and report `timing_precision.status=not_evaluated`, with reason `no_served_requests`; no potentially overflowing clock estimate is needed.
+
+On accepted simulations, `timing_precision` exposes `estimate_s`, `clock_scale_s`, `event_addition_bound`, the resolution multiplier and method `conservative_first_order_estimate_not_proof`. These are diagnostic estimates, not measured error or verified guarantees. A long request cannot mask an absorbed short request: resolution checks apply to each served duration, not only makespan.
+
+This policy has no fixed arrival cap. Ordinary scenarios shifted to 1e9 seconds can remain resolvable; extreme offsets and fine service durations may refuse. Tiny service at zero arrival can remain usable. Near-threshold passes and misses can both refuse, as can some otherwise valid large-duration scenarios. A precision refusal retains input digests without returning partial simulated results. Corrected declarations must state the intended scenario; the bridge never silently shifts, rounds or normalizes arrivals to obtain a pass.
+
 ## Identity and source attribution
 
-Raw bridge input SHA-256 binds exact supplied JSON bytes. Canonical SHA-256 uses sorted keys, compact separators, `ensure_ascii=True`, `allow_nan=False`, encoded UTF-8. Whitespace changes raw identity only. For the object API, input bytes are this canonical serialization; an original upstream file identity is never inferred.
+Raw bridge input SHA-256 binds exact supplied JSON bytes. Canonical SHA-256 uses sorted keys, compact separators, `ensure_ascii=True`, `allow_nan=False`, encoded UTF-8. Whitespace changes raw identity only. For the object API, input bytes are this canonical serialization; an original upstream file identity is never inferred. Declared numeric representations are not silently normalized: for example, `-0.0` arrival is retained in the declaration and has a different canonical identity from `0`, despite the same timing semantics.
 
 The embedded parent's digest identifies its canonical object, not an upstream raw file. Each derived child retains its parent canonical digest, minimal demand patch, canonical child digest, formula version, metrics and original request indices. Request mappings retain IDs, original indices, declared request fields, context bounds and reservations after arrival sorting.
 

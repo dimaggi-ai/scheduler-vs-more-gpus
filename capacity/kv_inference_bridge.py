@@ -79,31 +79,31 @@ def _number(value, path, minimum=0, positive=True):
 
 
 def _structure(data):
-    stack = [(data, 0)]
+    stack = [(data, 0, '$')]
     nodes = 0
     while stack:
-        value, depth = stack.pop()
+        value, depth, path = stack.pop()
         nodes += 1
         if depth > MAX_DEPTH or nodes > MAX_NODES:
-            raise Refusal('structure_limit')
+            raise Refusal('structure_limit', path)
         if type(value) is dict:
             if len(value) > MAX_NODES:
-                raise Refusal('structure_limit')
+                raise Refusal('structure_limit', path)
             for key in value:
-                _text(key, '$')
-            stack.extend((v, depth + 1) for v in value.values())
+                _text(key, path)
+            stack.extend((v, depth + 1, path + '.' + k) for k, v in value.items())
         elif type(value) is list:
             if len(value) > MAX_NODES:
-                raise Refusal('structure_limit')
-            stack.extend((v, depth + 1) for v in value)
+                raise Refusal('structure_limit', path)
+            stack.extend((v, depth + 1, path + '.' + str(i)) for i, v in enumerate(value))
         elif type(value) is str:
-            _text(value, '$')
+            _text(value, path)
         elif type(value) is float and not math.isfinite(value):
-            raise Refusal('nonfinite_number')
+            raise Refusal('nonfinite_number', path)
         elif type(value) not in (str, int, float, bool, type(None)):
-            raise Refusal('unsupported_object')
+            raise Refusal('unsupported_object', path)
         elif type(value) is int and abs(value) > MAX_INTEGER:
-            raise Refusal('integer_limit')
+            raise Refusal('integer_limit', path)
 
 
 def _validate(data):
@@ -199,6 +199,40 @@ def _validate(data):
     return sorted(missing), parent
 
 
+def _timing_precision(reqs, service, engine):
+    """Conservative first-order diagnostic policy, not a formal error proof."""
+    additions = len(reqs) + sum(r['output_tokens'] for r in reqs)
+    method = 'conservative_first_order_estimate_not_proof'
+    served = [r for r in engine['requests'] if not r['rejected']]
+    if not served:
+        return {'status': 'not_evaluated', 'reason': 'no_served_requests',
+                'event_addition_bound': additions, 'method': method}
+    try:
+        arrivals = [r['arrival_s'] for r in reqs]
+        clock_scale = max(max(arrivals), min(arrivals) + engine['makespan_s']) * (1 + 2**-40)
+        estimate = (additions + 8) * math.ulp(clock_scale)
+        if not math.isfinite(clock_scale) or not math.isfinite(estimate):
+            raise Refusal('timing_precision_indeterminate', '$.service_simulation')
+        resolution_floor = 1000 * estimate
+        if engine['makespan_s'] <= resolution_floor:
+            raise Refusal('timing_precision_indeterminate', '$.service_simulation')
+        for row in served:
+            metrics = [('ttft_s', 'ttft_slo_s')]
+            if reqs[row['id']]['output_tokens'] > 1:
+                metrics.append(('max_itl_s', 'itl_slo_s'))
+            for metric, threshold in metrics:
+                value = row[metric]
+                if (not math.isfinite(value) or value <= resolution_floor
+                        or abs(value - service[threshold]) <= estimate):
+                    raise Refusal('timing_precision_indeterminate', '$.service_simulation')
+    except (OverflowError, ValueError) as exc:
+        if isinstance(exc, Refusal):
+            raise
+        raise Refusal('timing_precision_indeterminate', '$.service_simulation') from None
+    return {'status': 'evaluated', 'estimate_s': estimate, 'clock_scale_s': clock_scale,
+            'event_addition_bound': additions, 'resolution_multiplier': 1000, 'method': method}
+
+
 def _compose(data, parent):
     model, service, reqs, scenario = (data[k] for k in ('model', 'service', 'requests', 'parent_envelope'))
     arch, device, demand = (scenario[k] for k in ('architecture', 'device', 'demand'))
@@ -279,6 +313,7 @@ def _compose(data, parent):
             or len(rows) != len(reqs) or [r.get('id') for r in rows] != list(range(len(reqs)))
             or any(r.get('rejected') is not (size > budget) for r, size in zip(rows, vector))):
         raise Refusal('bridge_consistency_violation', '$.service_simulation')
+    result['timing_precision'] = _timing_precision(reqs, service, engine)
     result['simulated_admission'] = {'peak_reserved_bytes': accounting['peak_reserved_bytes'], 'peak_concurrency': engine['peak_concurrency'],
                                     'final_remaining_bytes': accounting['final_remaining_bytes'],
                                     'completed_ids': [mapping[r['id']]['request_id'] for r in rows if not r['rejected']],
@@ -288,12 +323,17 @@ def _compose(data, parent):
 
 
 def _bounded_result(result):
+    code = 'output_size_limit'
     try:
         if len(_canonical(result)) + 1 <= MAX_OUTPUT_BYTES:
             return result
     except (TypeError, ValueError, OverflowError, RecursionError):
-        return _refused('bridge_consistency_violation')
-    return _refused('output_size_limit')
+        code = 'bridge_consistency_violation'
+    # Keep only bounded identity fields, never partial simulation results.
+    identities = {key: result[key] for key in ('raw_input_sha256', 'canonical_input_sha256')
+                  if type(result.get(key)) is str and re.fullmatch('[0-9a-f]{64}', result[key])}
+    refusal = _refused(code, **identities)
+    return refusal if len(_canonical(refusal)) + 1 <= MAX_OUTPUT_BYTES else _refused(code)
 
 
 def evaluate_bytes(raw):
