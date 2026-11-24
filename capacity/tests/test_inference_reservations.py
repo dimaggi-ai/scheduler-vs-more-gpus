@@ -84,6 +84,7 @@ class ReservationTests(unittest.TestCase):
         # FCFS must wait for the next8, then admit it alongside final4.
         out=run(req,[8,8,4],hbm=72)
         self.assertEqual(out['peak_concurrency'],2)
+        self.assertLess(out['requests'][0]['ttft_s'],out['requests'][1]['ttft_s'])
         self.assertLessEqual(out['requests'][1]['ttft_s'],out['requests'][2]['ttft_s'])
         uncached=run([Request(0,16,1)]*2,[78]*2)
         cached=run([Request(0,16,1,16)]*2,[78]*2)
