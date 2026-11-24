@@ -208,6 +208,19 @@ class KVEnvelopeTests(ReaderOwnershipCases, unittest.TestCase):
             self.assertIn('operational_qualification', out['not_evaluated'])
             self.assertIn('latency', out['not_evaluated'])
 
+    def test_nonregular_file_has_specific_diagnostic(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fifo = Path(directory) / 'pipe'
+            os.mkfifo(fifo)
+            for path in (Path(directory), fifo):
+                with self.subTest(path=str(path)):
+                    proc = subprocess.run([sys.executable, '-m', 'capacity.kv_envelope', str(path)],
+                                          cwd=ROOT, capture_output=True, text=True, timeout=10)
+                    self.assertEqual(proc.returncode, 2)
+                    self.assertEqual(proc.stderr, '')
+                    self.assertEqual(json.loads(proc.stdout),
+                                     {'status': 'refused', 'code': 'expected_regular_file', 'path': '$'})
+
     def test_cli_success_refusal_recovery_and_file_guards(self):
         def run(path):
             proc = subprocess.run([sys.executable, '-m', 'capacity.kv_envelope', str(path)], cwd=ROOT,
