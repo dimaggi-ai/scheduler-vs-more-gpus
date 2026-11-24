@@ -91,3 +91,20 @@ Admission is allocation-aware, but service timing remains the existing raw-KV co
 Health-service IT continuity, defence logistics IT and finance reporting tests use fictional labels and the same arithmetic. They exercise success/refusal/recovery, not clinical decisions, weapons, financial transactions, domain certification or consequential operations. No real sensitive records are included.
 
 Agents may evaluate these bounded offline declarations within existing authority. Claude exact-source review, Dmitry's technical qualification and Ronnie's independent verification remain separate gates. This bridge grants no merge, release, deployment, policy or expanded execution authority.
+
+## Dependency failures and returned-result invariants
+
+Input parsing errors remain input errors. Exceptions from the parent or derived envelope evaluator are reported as `bridge_consistency_violation` at that phase's path; returned envelope refusals retain their original codes. Exceptions from the engine call are `engine_contract_violation`. Unexpected type/value/key/overflow/recursion failures during post-engine checks are `bridge_consistency_violation`. Precise bridge refusals are preserved before these handlers. `MemoryError`, `KeyboardInterrupt` and `SystemExit` propagate; they are never relabelled as input or dependency failures. The public CLI returns exit 2 JSON for handled dependency failures, without exception details or partial successful results. Non-Refusal faults in the bridge’s own validate/compose code outside these dependency and post-engine wrappers propagate instead of being mislabeled as input errors; the CLI can then terminate with a traceback. This distinction does not add a broad internal-error handler.
+
+Before the unchanged precision diagnostic, served rows must report an actual integer output-token count equal to the declaration and an actual boolean SLO verdict equal to the comparison of their returned TTFT/ITL against the declared thresholds. The clock also requires, for minimum declared arrival m:
+
+```text
+(arrival_i - m) + TTFT_i <= makespan + tau
+(arrival_i - m) + TTFT_i + max_ITL_i <= makespan + tau
+S = max(max(arrival), m + makespan, max_i(arrival_i + TTFT_i + max_ITL_i)) × (1 + 2^-40)
+tau = (N + sum(output_tokens) + 8) × ulp(S)
+```
+
+Equality at the tolerance boundary is permitted. If derived S/tau is nonfinite, these two clock inequalities are skipped and the precision diagnostic handles the case. Actual contradictions are consistency refusals before precision checks. This separately computed tolerance does not change the reported precision estimate. No service formulas, throughput or attainment aggregates are recomputed.
+
+Timing fields require built-in `int` or `float`; subclasses are refused. One `RESULT_SCHEMA` constant supplies the existing result schema. Pre-parse refusal shapes remain unchanged. In tests that override the fixed output cap to an impossibly small value, the minimal schema/code refusal is still returned even if it exceeds that artificial cap; there is no public cap configuration, and the fixed 2 MiB production cap accommodates this bounded diagnostic.
