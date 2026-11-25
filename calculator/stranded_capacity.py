@@ -121,6 +121,8 @@ def compute(s: Scenario) -> Result:
     a = s.availability()
     try:
         nominal = s.gpus * s.window_hours
+        if not math.isfinite(nominal):
+            raise ValueError("computed values exceed finite numeric range")
     except OverflowError:
         raise ValueError("computed values exceed finite numeric range") from None
     e = s.allocation_efficiency

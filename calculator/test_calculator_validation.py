@@ -121,6 +121,16 @@ class CalculatorValidation(unittest.TestCase):
         self.assertEqual(result.stranded_usd, 0)
         self.assertTrue(math.isfinite(compute(self.scenario(window_hours=5e-324)).nominal_gpu_hours))
 
+    def test_integer_product_overflow_refuses_before_float_arithmetic(self):
+        # Each input is representable, but their arbitrary-precision integer
+        # product cannot enter the floating-point accounting operations.
+        scenario = self.scenario(gpus=10**308, window_hours=10**308)
+        self.assertTrue(math.isfinite(scenario.gpus))
+        self.assertTrue(math.isfinite(scenario.window_hours))
+        with self.assertRaisesRegex(ValueError, "computed values exceed finite numeric range"):
+            compute(scenario)
+        self.assertEqual(compute(self.scenario(gpus=10, window_hours=100)).nominal_gpu_hours, 1000)
+
     def test_cli_refusal_and_corrected_recovery(self):
         cases = [('--window-hours', 'nan'), ('--hard-outage-hours', '-1'),
                  ('--degraded-hours', 'inf'), ('--usd-per-gpu-hour', '-1'),
