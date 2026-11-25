@@ -54,9 +54,14 @@ LP capacity can be reclaimed for HP work; its service terms differ [37, §4.2].
 ```
 python3 calculator/stranded_capacity.py --list-presets
 python3 calculator/stranded_capacity.py --preset typical-composite
+python3 calculator/stranded_capacity.py --preset typical-composite --gpus 2048 --allocation-efficiency 0.5 --json
 ```
 
 An illustrative composite cluster (all assumptions: one 4 h control-plane event, 80% allocation, 0.90 productive ratio) realizes **71.6%** of its nominal month. The control-plane event — the thing that gets a postmortem — contributes 2% of that loss.
+
+Explicit numeric flags override only the supplied values of a selected preset; omitted flags retain its assumptions. Overridden output is labelled as assumption-derived, with the original preset description retained as context rather than a claim about the modified result. Legacy preset aliases still resolve to their canonical examples.
+
+The calculator accepts finite built-in numbers, a positive integral GPU count and positive window, nonnegative duration/price inputs, and fractions in [0, 1]. Weighted lost hours must fit the window; the model does not require raw outage windows to be disjoint. `Scenario` is a data container: `compute` and `Scenario.availability()` revalidate its values, including after mutation. Numeric overflow and invalid CLI inputs return a concise nonzero refusal with no partial JSON report. These are accounting scenarios, not measured recovered capacity or production reliability guarantees.
 
 ## 2. Different measures of utilization
 
