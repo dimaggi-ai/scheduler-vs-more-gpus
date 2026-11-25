@@ -33,6 +33,8 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import math
+import sys
 
 
 @dataclasses.dataclass(frozen=True)
@@ -50,11 +52,42 @@ class Scenario:
     productive_ratio: float = 1.0
     usd_per_gpu_hour: float = 2.00  # assumption; override with --usd-per-gpu-hour
 
+    def validate(self) -> None:
+        # Scenario remains a data container; validate again at each calculation
+        # boundary, including objects modified after construction.
+        for field in NUMERIC_FIELDS:
+            value = getattr(self, field)
+            if type(value) not in (int, float):
+                raise ValueError(f"{field} must be a finite number (not boolean)")
+            try:
+                finite = math.isfinite(value)
+            except OverflowError:
+                finite = False
+            if not finite:
+                raise ValueError(f"{field} must be finite and representable")
+        if self.gpus <= 0 or self.gpus != int(self.gpus):
+            raise ValueError("gpus must be a positive integer")
+        if self.window_hours <= 0:
+            raise ValueError("window_hours must be positive")
+        for field in ("hard_outage_hours", "degraded_hours", "usd_per_gpu_hour"):
+            if getattr(self, field) < 0:
+                raise ValueError(f"{field} must be nonnegative")
+        for field in ("degradation_weight", "allocation_efficiency", "productive_ratio"):
+            if not 0 <= getattr(self, field) <= 1:
+                raise ValueError(f"{field} must be in [0, 1]")
+
     def availability(self) -> float:
+        self.validate()
         lost = self.hard_outage_hours + self.degraded_hours * self.degradation_weight
-        if lost > self.window_hours:
-            raise ValueError("outage hours exceed analysis window")
+        if lost > self.window_hours or not math.isfinite(lost):
+            raise ValueError("weighted outage hours exceed analysis window or numeric range")
         return 1.0 - lost / self.window_hours
+
+
+NUMERIC_FIELDS = (
+    "gpus", "window_hours", "hard_outage_hours", "degraded_hours",
+    "degradation_weight", "allocation_efficiency", "productive_ratio", "usd_per_gpu_hour",
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -83,13 +116,18 @@ class Result:
 
 
 def compute(s: Scenario) -> Result:
-    nominal = s.gpus * s.window_hours
+    if not isinstance(s, Scenario):
+        raise ValueError("compute requires a Scenario")
     a = s.availability()
+    try:
+        nominal = s.gpus * s.window_hours
+    except OverflowError:
+        raise ValueError("computed values exceed finite numeric range") from None
     e = s.allocation_efficiency
     p = s.productive_ratio
     if not (0.0 <= e <= 1.0 and 0.0 <= p <= 1.0):
         raise ValueError("allocation_efficiency and productive_ratio must be in [0, 1]")
-    return Result(
+    result = Result(
         nominal_gpu_hours=nominal,
         availability=a,
         usable_gpu_hours=nominal * a * e * p,
@@ -98,6 +136,12 @@ def compute(s: Scenario) -> Result:
         loss_productivity=nominal * a * e * (1.0 - p),
         usd_per_gpu_hour=s.usd_per_gpu_hour,
     )
+    try:
+        if not all(math.isfinite(value) for value in result.as_dict().values()):
+            raise ValueError("computed values exceed finite numeric range")
+    except OverflowError:
+        raise ValueError("computed values exceed finite numeric range") from None
+    return result
 
 
 # Worked examples. Sources in REFERENCES.md; bracketed numbers are reference ids.
@@ -207,13 +251,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--preset", choices=sorted(PRESETS), help="run a worked example")
     ap.add_argument("--list-presets", action="store_true")
     ap.add_argument("--gpus", type=int)
-    ap.add_argument("--window-hours", type=float, default=720.0)
-    ap.add_argument("--hard-outage-hours", type=float, default=0.0)
-    ap.add_argument("--degraded-hours", type=float, default=0.0)
-    ap.add_argument("--degradation-weight", type=float, default=0.15)
-    ap.add_argument("--allocation-efficiency", type=float, default=1.0)
-    ap.add_argument("--productive-ratio", type=float, default=1.0)
-    ap.add_argument("--usd-per-gpu-hour", type=float, default=2.00)
+    ap.add_argument("--window-hours", type=float)
+    ap.add_argument("--hard-outage-hours", type=float)
+    ap.add_argument("--degraded-hours", type=float)
+    ap.add_argument("--degradation-weight", type=float)
+    ap.add_argument("--allocation-efficiency", type=float)
+    ap.add_argument("--productive-ratio", type=float)
+    ap.add_argument("--usd-per-gpu-hour", type=float)
     ap.add_argument("--json", action="store_true", help="emit JSON instead of text")
     args = ap.parse_args(argv)
 
@@ -222,31 +266,35 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{name}: {sc.description}")
         return 0
 
-    if args.preset:
-        s = PRESETS[args.preset]
-        if args.usd_per_gpu_hour != 2.00:
-            s = dataclasses.replace(s, usd_per_gpu_hour=args.usd_per_gpu_hour)
-    elif args.gpus:
-        s = Scenario(
-            name="custom",
-            description="custom scenario from CLI flags",
-            gpus=args.gpus,
-            window_hours=args.window_hours,
-            hard_outage_hours=args.hard_outage_hours,
-            degraded_hours=args.degraded_hours,
-            degradation_weight=args.degradation_weight,
-            allocation_efficiency=args.allocation_efficiency,
-            productive_ratio=args.productive_ratio,
-            usd_per_gpu_hour=args.usd_per_gpu_hour,
-        )
-    else:
-        ap.error("provide --preset or --gpus (or --list-presets)")
+    overrides = {field: getattr(args, field) for field in NUMERIC_FIELDS
+                 if getattr(args, field) is not None}
+    try:
+        if args.preset:
+            s = PRESETS[args.preset]
+            if overrides:
+                s = dataclasses.replace(
+                    s, **overrides, name=s.name + "-overridden",
+                    description=("Assumption-derived overrides of preset " + s.name +
+                                 " (" + ", ".join(overrides) + "). These inputs are not the "
+                                 "cited preset measurements. Original context: " + s.description),
+                )
+        elif args.gpus is not None:
+            values = dict(window_hours=720.0)
+            values.update(overrides)
+            s = Scenario(name="custom", description="custom scenario from CLI flags", **values)
+        else:
+            ap.error("provide --preset or --gpus (or --list-presets)")
 
-    r = compute(s)
-    if args.json:
-        print(json.dumps({"scenario": dataclasses.asdict(s), "result": r.as_dict()}, indent=2))
-    else:
-        print(format_result(s, r))
+        r = compute(s)
+        if args.json:
+            output = json.dumps({"scenario": dataclasses.asdict(s), "result": r.as_dict()},
+                                indent=2, allow_nan=False)
+        else:
+            output = format_result(s, r)
+    except (ValueError, OverflowError) as exc:
+        print("REFUSE: " + str(exc), file=sys.stderr)
+        return 2
+    print(output)
     return 0
 
 

@@ -15,7 +15,9 @@ jobs:
           python-version: "3.12"
       - run: pip install -r sim/requirements.txt
       - name: Calculator tests
-        run: python3 calculator/test_stranded_capacity.py
+        run: |
+          python3 calculator/test_stranded_capacity.py
+          python3 calculator/test_calculator_validation.py -v
       - name: Capacity interface and existing placement contracts
         run: |
           pip install -r capacity/requirements.txt -r capacity/integration-requirements.txt pytest
