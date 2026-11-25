@@ -17,3 +17,7 @@ Hosted CI: the branch adds `Orbital coupled-state contracts` with `python3 -m un
 Visual browser verification is blocked by the desktop browser's local preview security restriction. No alternate browser/server workaround or screenshot claim. Static HTML tests verify escaping and source binding; report source includes responsive layout, unit labels and table header scope. Manual visual review remains open.
 
 Claude cross-tool review, Dmitry physical-model acceptance, Ronnie reproduction, and integration with future platform modules remain open. This report does not establish flight readiness, actual authority enforcement, automatic electrical/thermal coupling or hardware performance.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

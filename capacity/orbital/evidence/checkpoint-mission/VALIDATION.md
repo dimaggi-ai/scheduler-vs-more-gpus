@@ -45,3 +45,7 @@ Deeply nested and surrogate inventory forms refuse as SOURCE_UNAVAILABLE at the 
 Focused22 tests passed12.577s; two inventory/root-race/deadline methods passed CPython3.14 (0.634s) and3.9 (0.585s). These deterministic filesystem race injections are not concurrent filesystem qualification. Parent production remains unchanged; technical acceptance stays separate.
 
 Composed discovery passed195 tests in32.996s on CPython3.12.6.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

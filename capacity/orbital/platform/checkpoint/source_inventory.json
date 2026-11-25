@@ -29,6 +29,8 @@
   "orbital/dynamics/kernel.py",
   "orbital/dynamics/physics.py",
   "orbital/dynamics/report.py",
+  "orbital/economics.py",
+  "orbital/evidence_record.py",
   "orbital/network/__init__.py",
   "orbital/network/__main__.py",
   "orbital/network/adapter.py",

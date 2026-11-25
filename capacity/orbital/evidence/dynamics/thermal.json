@@ -2,7 +2,7 @@
   "schema": "capacity-orbital/dynamics-report-v1",
   "proposal_id": "demo-thermal",
   "input_sha256": "43841e1997bf99b2d7177f4342853a09ae74c031b1db0ef6122c47a308e8f687",
-  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "source_sha256": "dec9f1831d780ca856608d9a60f35a4ac31e7ecf16869478a1a490ae0a531e83",
   "source_binding": "caller-supplied",
   "classification": "synthetic predicted feasibility; no observed or executed outcomes",
   "authority": {
@@ -48,5 +48,5 @@
       "at_s": 69.31471805599453
     }
   ],
-  "receipt_id": "d8b27ddb83ea08424fb3dbdb5efc40e9c59af389a4d11f99a6522c4390ac7856"
+  "receipt_id": "c056eada35ce065b1d5ba6dc0191dfa4c383920797e273b524614dc24bfbaea3"
 }

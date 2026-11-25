@@ -27,3 +27,7 @@ The 8,000,000-byte cap limits serialized intermediate-receipt size, not process 
 No runtime code changed. Added complete hand-written faulted and deadline trace rows, including all progress/state/reason fields, and an explicit comparison result source-hash assertion. Missing/directory input paths are tested through fresh CLI processes; a portable injected publication OSError checks the IO handler without relying on OS/root-specific chmod behavior. Denominator256-digit boundary is tested independently. Token lengths48/49 test the distinct rejection stages (fractional-place versus lexical-length); both are invalid by other limits, so this is error-priority coverage, not an invented valid48-character value.
 
 17 focused methods passed in 3.056 s; 159 composed tests passed in 8.329 s. Five targeted disposable-copy mutations (deadline reason, outage reason, restart reason, lost-work row field, comparison source hash) were all caught. The working source and committed receipts stayed unchanged. These checks strengthen regression coverage, not physical qualification or acceptance.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

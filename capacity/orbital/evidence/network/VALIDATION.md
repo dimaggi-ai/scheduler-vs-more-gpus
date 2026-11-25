@@ -15,3 +15,7 @@ Pre-freeze defects corrected with regressions: positive transfer durations/propa
 Hosted CI workflow `orbital-network.yml` adds only read-only test execution; actual hosted status is recorded on the PR and is not inferred from local tests. All source inputs are synthetic. No live connections, actual command permissions, flight authority, measured hardware, probabilistic reliability or compliance certification is claimed.
 
 Browser visual QA remains blocked by the existing local-preview security restriction. Static HTML escaping, units and responsive layout are checked; no screenshot or visual-readiness claim. Independent Claude source review, Dmitry isolated failure qualification, Ronnie reproduction and integrated platform acceptance remain open. Timing/cost/human intervention not measured is unknown.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

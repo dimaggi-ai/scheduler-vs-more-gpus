@@ -2,7 +2,7 @@
   "schema": "capacity-orbital/bundle-verification-v1",
   "valid": true,
   "errors": [],
-  "sha256": "9136e2b2e8d65ab89bf8c304ae76f1df4114802d139abecc66241029747e484f",
+  "sha256": "1012171a8784087120b9be56f06a0629680be0131322174572bf59fc469817d9",
   "admissible_routes": [
     "ground",
     "onboard",

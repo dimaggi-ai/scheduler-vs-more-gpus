@@ -24,8 +24,19 @@ fresh paths for reruns; this preserves evidence rather than silently overwriting
 it. `--jobs` is valid only with `--demo`. Invalid input exits 2 with `REFUSE:`.
 All output parents and destinations are checked before any write. Output files
 are staged in temporary siblings, then published without overwrite. On ordinary
-write/publish errors, only files created by this run are removed; concurrent
-foreign files are preserved. No successful report is printed to stdout until
+write/publish errors, only files created by this run are removed. Rollback
+first checks the file identity at each of its paths and leaves a path that no
+longer holds this run's file. Otherwise it renames the path into a private
+`.rollback` directory, checks the identity again there and unlinks the file
+only on a match, so a foreign file that replaced a destination is not
+deleted. A foreign file found there is linked back without overwrite; if that fails, it stays in the
+`.rollback` directory and the error names it. Rollback then continues with the
+other paths of this run and reports every such error at the end. A foreign file can be absent from
+its path for a moment during this step, so use an output directory that no
+other writer shares. Publication needs a filesystem that supports hard links,
+because a hard link is how a file is published without overwrite. Where hard
+links are not supported, the run exits 2 with `REFUSE:` and the operating
+system error, and leaves no output or staged file. No successful report is printed to stdout until
 file publication succeeds. This is **not** a multi-file atomic transaction under
 process death, power loss or cleanup failure; inspect exit status and the complete
 expected artifact set. Cleanup failures surface as errors rather than a success.
@@ -41,6 +52,17 @@ if omitted, reports explicitly mark receipts **unbound to code**, not verified.
 Caller-provided fingerprints are not authenticated. Identical input, source and
 outcome replay to the same ID; changes to any binding change it. A planning
 receipt is not an execution-idempotency key or authorization to charge a bill.
+
+Saved exports are labelled. `--save-scenario` writes a
+`capacity-orbital/scenario-export-v1` file: the scenario plus its classification,
+the assumption list, the model version, `input_sha256` and `source_sha256`.
+`--scenario` accepts this export or a bare v1 scenario. An export whose
+`input_sha256` does not match its embedded scenario is refused. Benchmark JSON
+(`capacity-orbital/benchmark-v1`) carries the same assumption list, the source
+fingerprint and one `input_sha256` per measurement. Saved exports require a
+source fingerprint, and the CLI and the benchmark always supply it. Only a
+direct API call may omit it, and its report is then marked unbound. Do not use
+an unbound report as qualification evidence.
 
 ## A concrete hand calculation
 
@@ -66,6 +88,8 @@ completed jobs is not an economic advantage; inspect counts before costs.
 | `contacts.py` | Shared downlink reservation, decimal GB/Gbps, transfers split across windows |
 | `resources.py` | Serial compute, memory/power/heat envelopes and cumulative compute-energy budget |
 | `planner.py` | Pure route composition and transactional admission; no filesystem/network IO |
+| `economics.py` | Partial cost formulas (compute time, compute electricity, transfer GB) and route summaries |
+| `evidence_record.py` | Classification and assumption labels, source-digest check and receipt-v2 IDs |
 | `report.py` | Escaped self-contained responsive HTML |
 | `__main__.py`, `output.py` | CLI IO, source binding, staged no-overwrite artifact publication and ordinary-error rollback |
 | `benchmark.py` | Reproducible scaling measurement, separate from planning results |
@@ -75,7 +99,10 @@ versions refuse; there are no implicit unit conversions or migrations. A new
 schema needs an explicit adapter and compatibility tests. `horizon_s` is seconds
 from scenario start, at most one year; job and contact lists are bounded at
 10,000 each. This is a validation cap, not a guaranteed latency bound; review-fix
-benchmarks include the cap for two declared fixture shapes only. IDs are unique. Contact windows are ordered and nonoverlapping for
+benchmarks include the cap for two declared fixture shapes only. IDs are unique.
+`result_gb` and `compressed_gb` must be greater than zero. A zero-size output
+is refused at validation, so no route is planned without a contact check.
+Contact windows are ordered and nonoverlapping for
 **one shared terminal**. Both nodes have **one serial compute lane**. Jobs are
 scheduled by `(release_s, id)`, deterministically and greedily. There is no
 optimality claim, backfill optimization, multiple satellite routing or DAG

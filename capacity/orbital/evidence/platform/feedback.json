@@ -1,8 +1,8 @@
 {
   "schema": "capacity-orbital/feedback-result-v1",
   "classification": "supplied synthetic replay diagnostics, not measured telemetry",
-  "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
-  "suite_sha256": "44b4fdac9f2b33c71ebbdd0d1907ec55a4287316f1567a91c1ad29849aab51b6",
+  "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+  "suite_sha256": "0640a50a8b88fb8a72712e1e8ebc464bc0fb9c9fbf2a8e83f27851db00ad1b40",
   "baseline": "identity",
   "registered_candidates": {
     "identity": 1.0,
@@ -16,8 +16,8 @@
       {
         "mission_id": "synthetic-EO",
         "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-        "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
-        "proposal_receipt_id": "6aa6cc1a0a4be14186ba688e3e9724e70067f75989f0eacede71cc040b08e785",
+        "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+        "proposal_receipt_id": "2c80a510ce7ba62d0485e9b754afe575a6530a3564617884f29a2854711d6cb6",
         "classification": "supplied synthetic replay",
         "jobs": [
           {
@@ -71,8 +71,8 @@
       {
         "mission_id": "heldout-EO",
         "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-        "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
-        "proposal_receipt_id": "0bade83ecaee0dc978516ba29c47d65162b67f855d1d04f383cbb1de7161775a",
+        "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+        "proposal_receipt_id": "d59d94765051cc6a7424a63c0a07a5bfee5a036be06317279d3264df976ea55c",
         "classification": "supplied synthetic replay",
         "jobs": [
           {

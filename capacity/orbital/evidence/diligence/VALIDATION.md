@@ -20,3 +20,7 @@ All four example JSON results reproduce exactly with source/input/outcome hashes
 Scaling observations retain Python/platform, elapsed seconds, traced Python peak allocations and byte sizes. Largest measured case is1000cashflows/200cohorts/100years, the declared list/horizon caps, within1MBrequest. Tracemalloc is not total process RSS; one observation is not a production SLO. The new read-only test workflow runs the inherited and diligence suites, without installs/secrets/deploy.
 
 Pre-commit review defects and failure-triggering inputs are retained in history/early-review.md and regression tests. No claim that initial tests caught them. Claude exact-source review, Dmitry technical acceptance, Ronnie independent reproduction, browser QA and tested multi-module composition remain open. No merge, release, physical qualification, investment recommendation or automatic promotion.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

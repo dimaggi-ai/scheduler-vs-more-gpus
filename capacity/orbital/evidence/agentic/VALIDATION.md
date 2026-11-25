@@ -20,3 +20,7 @@ Tests cover agent-only plan/compare, hand arithmetic, immutable requests and res
 Failed evidence: first agentic suite run had25passes/1failure in test_budgets. Test reused a session after an intentionally refused request, which correctly consumed one idempotency record, then incorrectly expected32additional records. The test now uses a fresh session for the32-record boundary. Product behavior was correct; do not present this as a fixed product defect. A subsequent self-review unified the cache-exhaustion refusal message so an uncached budget refusal and identical retry produce identical envelopes; covered by regression.
 
 Remaining gates: other-tool exact-source review, designated technical acceptance by dimaggi-cto, independent reproduction by mutebironald and tested composition with future dynamics/network modules. No hardware execution, native Tool Guard authorization, sandbox qualification, acceptance, merge or release is claimed. Heldout confidentiality/reuse acrosssessions is not enforced; independent sealed evaluation is still required for promotion decisions.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

@@ -2,6 +2,8 @@
 import math
 from .contracts import validate, digest
 from .contacts import transfer
+from .economics import summarize
+from .evidence_record import ASSUMPTIONS, CLASSIFICATION, RECEIPT_SCHEMA, receipt_id, validate_source as _validate_source
 from .resources import Refusal, compute, empty_state, trial
 from . import VERSION
 
@@ -12,17 +14,6 @@ def plan_route(scenario, route, *, source_sha256=None):
     validate(scenario)
     _validate_source(source_sha256)
     return _plan_route(scenario, route, source_sha256)
-
-
-def _validate_source(value):
-    if value is not None and (not isinstance(value, str) or len(value) != 64 or any(c not in '0123456789abcdef' for c in value)):
-        raise ValueError('source_sha256 must be lowercase hex SHA-256 or None (unbound API call)')
-
-
-def receipt_id(input_sha256, source_sha256, row, events):
-    return digest({'schema': 'capacity-orbital/receipt-v2', 'input_sha256': input_sha256,
-                   'source_sha256': source_sha256, 'version': VERSION,
-                   'outcome': {k: v for k, v in row.items() if k != 'receipt_id'}, 'events': events})
 
 
 def _plan_route(scenario, route, source_sha256):
@@ -67,14 +58,7 @@ def _plan_route(scenario, route, source_sha256):
         except Refusal as exc:
             row['reason'] = str(exc)
         outcomes.append(row)
-    count = sum(r['status'] == 'planned' for r in outcomes)
-    cost = sum(r['cost_usd'] for r in outcomes)
-    if not all(math.isfinite(v) for v in (cost, sum(r['energy_kwh'] for r in outcomes), sum(r['downlink_gb'] for r in outcomes))):
-        raise ValueError('aggregate result is not finite')
-    return dict(route=route, jobs=outcomes, events=state['events'], summary=dict(
-        planned=count, refused=len(outcomes)-count, downlink_gb=sum(r['downlink_gb'] for r in outcomes),
-        energy_kwh=sum(r['energy_kwh'] for r in outcomes), cost_usd=cost,
-        cost_per_planned_result_usd=cost/count if count else None))
+    return dict(route=route, jobs=outcomes, events=state['events'], summary=summarize(outcomes))
 
 
 def compare(scenario, *, source_sha256=None):
@@ -82,18 +66,9 @@ def compare(scenario, *, source_sha256=None):
     _validate_source(source_sha256)
     return dict(schema='capacity-orbital/report-v1', version=VERSION, name=scenario['name'],
                 input_sha256=digest(scenario), source_sha256=source_sha256,
-                receipt_schema='capacity-orbital/receipt-v2',
+                receipt_schema=RECEIPT_SCHEMA,
                 source_binding='caller-supplied' if source_sha256 else 'unbound: no code digest supplied',
                 provenance=scenario['provenance'],
-                classification='synthetic offline plan; not measured execution or flight qualification',
-                assumptions=['All jobs originate in space and results terminate on the ground.',
-                             'Ground quality 1.0 is a synthetic reference assumption, not measured perfect AI accuracy.',
-                             'Each route is a separate counterfactual with the same workload and resource inputs.',
-                             'One serial compute lane per node; one shared downlink terminal.',
-                             'One assumed job power_kw applies on both nodes; hardware-specific power profiles are not modeled.',
-                             'Release-time then job-id greedy planning; no optimality guarantee.',
-                             'Static power and heat rejection envelopes, total compute-energy budgets; no orbital/thermal dynamics.',
-                             'Transfer energy, lifecycle capex, qualification, radiation and unplanned runtime failures excluded.',
-                             'Refused plans reserve nothing; no claim that failed execution is free.',
-                             'Receipts are deterministic planning IDs, not signatures or production metering.'],
+                classification=CLASSIFICATION,
+                assumptions=list(ASSUMPTIONS),
                 comparisons=[_plan_route(scenario, r, source_sha256) for r in ROUTES])

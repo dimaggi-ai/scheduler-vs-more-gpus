@@ -24,7 +24,8 @@ class CheckpointMission(unittest.TestCase):
         return str(cm.exception)
 
     def test_required_source_missing_or_unreadable_refuses(self):
-        from .platform.checkpoint import REQUIRED_SOURCE
+        from .platform.checkpoint import required_source
+        REQUIRED_SOURCE=required_source()
         root=Path(__file__).resolve().parent.parent
         original=Path.read_bytes
         s=demo();report=plan(s,'hybrid');pin=digest(enc(normalized(s)))
@@ -96,7 +97,8 @@ class CheckpointMission(unittest.TestCase):
 
     def test_source_inventory_import_coverage_and_guarded_startup(self):
         import shutil
-        from .platform.checkpoint import REQUIRED_SOURCE
+        from .platform.checkpoint import required_source
+        REQUIRED_SOURCE=required_source()
         root=Path(__file__).resolve().parent.parent
         code="""import json,sys
 from pathlib import Path
@@ -207,18 +209,27 @@ print(json.dumps(sorted(str(Path(m.__file__).resolve().relative_to(root)) for m 
             shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
             launcher=capacity/'orbital/platform/checkpoint/cli.py'
             manifest=launcher.with_name('source_inventory.json');original=manifest.read_bytes()
-            for invalid in ({},[],['../escape'],['/absolute'],[3],['\ud800']):
+            for invalid in ({},[],['../escape'],['/absolute'],[3],['\ud800'],['__init__.py']*1001):
                 manifest.write_text(json.dumps(invalid))
                 run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
                 self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
-            for invalid in (b'['*45000+b']'*45000,b'['*2000+b']'*2000):
+            for invalid in (b'['*45000+b']'*45000,b'['*2000+b']'*2000,b' '*100001+original):
                 manifest.write_bytes(invalid)
                 run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
                 self.assertEqual(run.returncode,2);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+            manifest.write_text(json.dumps(['__init__.py']*1001))
+            probe="import capacity.orbital.platform.checkpoint as c; print('imported');\ntry: c.source_digest()\nexcept c.Refuse as e: print(e.code)"
+            run=subprocess.run([sys.executable,'-c',probe],cwd=root,capture_output=True,text=True,timeout=20)
+            self.assertEqual(run.returncode,0,run.stderr);self.assertEqual(run.stdout,'imported\nSOURCE_UNAVAILABLE\n')
             manifest.write_bytes(original)
             # Missing a non-eager source must refuse before any project import.
             initializer=capacity/'__init__.py';saved=initializer.read_bytes();marker=root/'imported'
             initializer.write_text("from pathlib import Path\nPath("+repr(str(marker))+").write_text('imported')\n")
+            manifest.write_text(json.dumps(['__init__.py']*1001))
+            run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
+            self.assertEqual(run.returncode,2,run.stderr);self.assertFalse(marker.exists(),'oversized inventory must refuse before project import')
+            self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
+            manifest.write_bytes(original)
             unused=capacity/'orbital/benchmark.py';hidden=unused.with_suffix('.hidden');unused.rename(hidden)
             run=subprocess.run([sys.executable,str(launcher),'--request','unused'],capture_output=True,text=True,timeout=20)
             self.assertEqual(run.returncode,2);self.assertFalse(marker.exists())
@@ -235,17 +246,18 @@ def intercept(name,*args,**kwargs):
   ACTION
  return real(name,*args,**kwargs)
 builtins.__import__=intercept
-sys.argv=['cli.py','--request','unused']
+sys.argv=['cli.py','--request',REQUEST]
 raise SystemExit(ns['main']())
 """
             target=capacity/'orbital/dynamics/__init__.py';hidden=target.with_suffix('.hidden')
-            for action,refuses in [("Path("+repr(str(initializer))+").rename("+repr(str(initializer.with_suffix('.hidden')))+")",True),("Path("+repr(str(target))+").rename("+repr(str(hidden))+")",True),("raise ImportError('synthetic programmer error')",False),("raise RuntimeError('synthetic programmer error')",False)]:
-                wrapper.write_text(template.replace('LAUNCHER',repr(str(launcher))).replace('ACTION',action))
+            for action,refuses in [("Path("+repr(str(manifest))+").write_text('{}')",True),("Path("+repr(str(initializer))+").rename("+repr(str(initializer.with_suffix('.hidden')))+")",True),("Path("+repr(str(target))+").rename("+repr(str(hidden))+")",True),("raise ImportError('synthetic programmer error')",False),("raise RuntimeError('synthetic programmer error')",False)]:
+                wrapper.write_text(template.replace('LAUNCHER',repr(str(launcher))).replace('ACTION',action).replace('REQUEST',repr(str(capacity/'orbital/examples/checkpoint-mission-plan.json'))))
                 run=subprocess.run([sys.executable,str(wrapper)],capture_output=True,text=True,timeout=20)
                 if refuses:
                     self.assertEqual(run.returncode,2,run.stderr);self.assertEqual(json.loads(run.stdout)['code'],'SOURCE_UNAVAILABLE')
                     if hidden.exists():hidden.rename(target)
                     if initializer.with_suffix('.hidden').exists():initializer.with_suffix('.hidden').rename(initializer)
+                    manifest.write_bytes(original)
                 else:self.assertNotEqual(run.returncode,0);self.assertIn('synthetic programmer error',run.stderr);self.assertEqual(run.stdout,'')
 
     def test_parent_and_nominal_routes(self):

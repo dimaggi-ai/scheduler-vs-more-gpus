@@ -37,3 +37,7 @@ The baseline label now states only that it matched the supplied digest; the tool
 At `a7f65de5645cf2e3a2a4ea9e12f037c0589e553f`, the coordinator reported all 10 hosted checks passing. Claude193 closed H1–H3, reproduced 43 focused / 142 composed tests, and caught all 19 tested mutations; no blocking finding remained. This is dated source review, not designated acceptance or a new-head CI claim. Documentation-only follow-up changes no Python, fixture, receipt or workflow bytes.
 
 Committed receipt reproduction was byte-identical under CPython 3.12.6 in the reviewed Mac environment; pin that interpreter/source/input environment when byte identity is required. The inherited lifecycle summation produced a 1.6e-16 relative total difference under Python 3.9.6, altering the economics receipt despite identical source/input digests. Cross-version and cross-platform byte identity are not guaranteed; hosted tests check numeric behavior, not every committed receipt byte. Direct compare(..., None) remains explicitly unbound; dispatch refuses an explicitly null pin. No parent arithmetic or model change is included.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

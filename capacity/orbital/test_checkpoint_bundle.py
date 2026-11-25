@@ -204,7 +204,7 @@ except Refuse as e: print(e.code)
             missing.parent.mkdir();p,v=run('export','--request',src,'--output',missing);self.assertEqual(p.returncode,0)
             src.write_text('{}');p,v=run('export','--request',src,'--output',root/'bad.json');self.assertEqual(p.returncode,2);self.assertFalse((root/'bad.json').exists())
             src.write_bytes(before);p,v=run('export','--request',src,'--output',root/'recovered.json');self.assertEqual(p.returncode,0)
-        self.assertEqual(checkpoint_source(),CHECKPOINT_SOURCE);self.assertEqual(parent_source(),'dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e')
+        self.assertEqual(checkpoint_source(),CHECKPOINT_SOURCE);self.assertEqual(parent_source(),'fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b')
 
     def test_reserved_subtree_identity_and_permitted_evidence(self):
         with tempfile.TemporaryDirectory() as td:
@@ -284,6 +284,41 @@ raise SystemExit(ns['main']())
                 finally:hidden.rename(path)
             p=subprocess.run([sys.executable,str(launcher),'export','--request',str(src),'--output',str(Path(td)/'recovered.json')],capture_output=True,text=True,timeout=20)
             self.assertEqual(p.returncode,0,p.stderr)
+
+    def test_first_parent_import_inventory_race_refuses_and_recovers(self):
+        # Fresh processes matter: an already imported parent misses this window.
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);capacity=root/'capacity'
+            shutil.copytree(Path(__file__).resolve().parent.parent,capacity,ignore=shutil.ignore_patterns('__pycache__'))
+            parent=capacity/'orbital/platform/checkpoint/source_inventory.json'
+            original=parent.read_bytes()
+            script="""import json,sys
+from pathlib import Path
+import capacity.orbital.checkpoint_bundle as bundle
+from capacity.orbital.checkpoint_bundle.tools import dispatch_json
+assert 'capacity.orbital.platform.checkpoint' not in sys.modules
+real=bundle.required_sources
+def race():
+ result=real()
+ Path(MANIFEST).write_text(BAD)
+ return result
+bundle.required_sources=race
+print(json.dumps(dispatch_json(REQUEST)))
+"""
+            req=canonical(self.tool('export',dict(request_json=self.inner())))
+            for bad in ('{}',json.dumps(['__init__.py']*1001),'['*2000+']'*2000,json.dumps(['\ud800'])):
+                with self.subTest(inventory=bad[:40]):
+                    parent.write_bytes(original)
+                    code=script.replace('MANIFEST',repr(str(parent))).replace('BAD',repr(bad)).replace('REQUEST',repr(req))
+                    run=subprocess.run([sys.executable,'-c',code],cwd=root,capture_output=True,text=True,timeout=20)
+                    self.assertEqual(run.returncode,0,run.stderr)
+                    result=json.loads(run.stdout)
+                    self.assertEqual(result['status'],'refused');self.assertEqual(result['code'],'SOURCE_UNAVAILABLE')
+            parent.write_bytes(original)
+            code="from capacity.orbital.checkpoint_bundle.tools import dispatch_json; import json; print(json.dumps(dispatch_json("+repr(req)+")))"
+            run=subprocess.run([sys.executable,'-c',code],cwd=root,capture_output=True,text=True,timeout=20)
+            self.assertEqual(run.returncode,0,run.stderr)
+            self.assertEqual(json.loads(run.stdout)['status'],'ok')
 
     def test_deep_and_surrogate_inventory_api(self):
         for data in (b'['*45000+b']'*45000,json.dumps(['\ud800']).encode()):

@@ -2,7 +2,7 @@
   "schema": "capacity-orbital/agent-response-v1",
   "request_id": "demo-evaluate",
   "request_sha256": "2afb77f1de335530b82724f0250c5396cf91419c9e48935884ca87e608dfcb9c",
-  "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+  "source_sha256": "a730649e76f784deb54e20f7be9c78534b1acca84a9c360adbc18b4542c259ec",
   "status": "proposed",
   "code": "PROPOSAL_ONLY",
   "message": "no action executed; baseline and permissions unchanged",
@@ -13,7 +13,7 @@
     "schema": "capacity-orbital/evaluation-result-v1",
     "evaluator": "capacity-orbital/static-planner-v1",
     "classification": "synthetic replay proposals; not measured execution or production improvement",
-    "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+    "source_sha256": "a730649e76f784deb54e20f7be9c78534b1acca84a9c360adbc18b4542c259ec",
     "suite_sha256": "9a666d941b6d18378011b3fc71843f889cf76e68670c0c84bb9563d847844de8",
     "specification": {
       "schema": "capacity-orbital/evaluation-suite-v1",
@@ -56,7 +56,7 @@
           {
             "scenario_id": "train-1",
             "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
-            "outcome_sha256": "9cb02abf86148a2666dd1dcc40460e7a65d2f8b61930853b0543cd9e1c39aae6",
+            "outcome_sha256": "c65ed79b5c4ad63696ba2bb8feac9c2ae2a939f2acc156ef521ba6cc03c5a547",
             "report": {
               "route": "ground",
               "jobs": [
@@ -72,7 +72,7 @@
                   "downlink_gb": 10,
                   "energy_kwh": 0.005555555555555556,
                   "cost_usd": 2.0122222222222224,
-                  "receipt_id": "b49a4fd8a642b419b58d2612604c3b963474980c77a2a06ff6d963bdb625b76a"
+                  "receipt_id": "ea43e880d9431a0abf79483bbafbd46e25d2d739890252ec44b589357eced3dc"
                 }
               ],
               "events": [
@@ -136,7 +136,7 @@
           {
             "scenario_id": "train-1",
             "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
-            "outcome_sha256": "25ab473c1d4473bd50ce06dc22214ff069a290a2dabb8b07264cdedee39c05ab",
+            "outcome_sha256": "e4398c48e787c94a31f4ed38faf1764f1ce5228828f49605aea519f3bdf15287",
             "report": {
               "route": "hybrid",
               "jobs": [
@@ -152,7 +152,7 @@
                   "downlink_gb": 1,
                   "energy_kwh": 0.005555555555555556,
                   "cost_usd": 0.21222222222222223,
-                  "receipt_id": "17a8dd09f260a701521e5efaeee489c4ddda34acb2788008d13293efa5ec1a53"
+                  "receipt_id": "1ebb878ef8b6c8dc6cb4a72b9b3a94a645a1065ef30f6d5cdf3d4413636a939a"
                 }
               ],
               "events": [
@@ -225,7 +225,7 @@
           {
             "scenario_id": "train-1",
             "input_sha256": "7f4d24a2715220fcc95c294745a772945c40b86e93874309c4e750ad7f1f29a1",
-            "outcome_sha256": "c45824ce6db135bad08d4d1c36a1005744ee7a365d4478c89fadabbc347b8e07",
+            "outcome_sha256": "13d72fcd3ef5ba36bb1fa27e8111b49b90115192c7b00c9f305acf9d350a90f6",
             "report": {
               "route": "onboard",
               "jobs": [
@@ -241,7 +241,7 @@
                   "downlink_gb": 0.1,
                   "energy_kwh": 0.008333333333333333,
                   "cost_usd": 0.03833333333333334,
-                  "receipt_id": "b35ed4f5f78c66a361d1d28f5ddc7193e9c5b8690b15dc0a20b20d84eebef49a"
+                  "receipt_id": "7fd62e0097e99ae6f9d430ad47fa0507fe3f0174ebe247c7bb20c2922f4062ac"
                 }
               ],
               "events": [
@@ -307,7 +307,7 @@
           {
             "scenario_id": "heldout-1",
             "input_sha256": "17bf54728e231afa619a0d25f138b0369aa285b072c3b0fbe959518463374a76",
-            "outcome_sha256": "3ea7902526713ffe49a0d0f12d86244267c092ab7899a36b72f448773cdbf771",
+            "outcome_sha256": "10f0f7c629f8c735a357c77323a7e9e1a494a11d4f3506acef8b0f54eca793dc",
             "report": {
               "route": "ground",
               "jobs": [
@@ -323,7 +323,7 @@
                   "downlink_gb": 10,
                   "energy_kwh": 0.005555555555555556,
                   "cost_usd": 2.0122222222222224,
-                  "receipt_id": "29a7819236db899a0ad0bea7c82d9100b0b876086a42759684977c438cc315ba"
+                  "receipt_id": "6984fc53e3bead2016c301a5f89d3b97695208c46bbc75a939b0340f8295fc1a"
                 }
               ],
               "events": [
@@ -387,7 +387,7 @@
           {
             "scenario_id": "heldout-1",
             "input_sha256": "17bf54728e231afa619a0d25f138b0369aa285b072c3b0fbe959518463374a76",
-            "outcome_sha256": "16813e4bbf3bcd6670ac0b8a4b397ee33915730a26eb5432069cbd4796f8c27e",
+            "outcome_sha256": "1985d51d39918c514ae0a30c841c71dccda22f64900179f30984cae5a0c33406",
             "report": {
               "route": "onboard",
               "jobs": [
@@ -403,7 +403,7 @@
                   "downlink_gb": 0.1,
                   "energy_kwh": 0.008333333333333333,
                   "cost_usd": 0.03833333333333334,
-                  "receipt_id": "f6c460cd0213d7f021154ecd3227a027b40a2ad6c3e612dcd652570b22affb69"
+                  "receipt_id": "2e685c0cbd7ff40c9060deed1d7cc5c2d5d9a3102d5e8f8f15443830684d6796"
                 }
               ],
               "events": [
@@ -456,5 +456,5 @@
       "Static planner only; task106 dynamic-state composition is not implemented or claimed."
     ]
   },
-  "outcome_sha256": "030304d49548ec387127ca82e7252eaa0e4bc588f70a1f4d1004590b061ab772"
+  "outcome_sha256": "79b9d377be48e049a03221de2184538f3adbcc0efdbb5a0c5fe8df05e89e12d9"
 }

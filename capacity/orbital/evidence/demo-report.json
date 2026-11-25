@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "name": "Synthetic intermittent EO comparison",
   "input_sha256": "4f06c4fcec0943a35b33e9469f494c3509790dfad420d9bf279e0cb78755e085",
-  "source_sha256": "6493bb6986a2c2c3cc263c71cae3bc54ca1f9f71ca95449258a02115db73bc2f",
+  "source_sha256": "2927931198690a09f79741cd49a152681eded764aacf98107a8c969ad0d1a6d1",
   "receipt_schema": "capacity-orbital/receipt-v2",
   "source_binding": "caller-supplied",
   "provenance": {
@@ -41,7 +41,7 @@
           "downlink_gb": 10,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 2.0122222222222224,
-          "receipt_id": "0be8de514a5e1bee250f3e0f168a3d43645cb91a77426e4b882d5729649a7f78"
+          "receipt_id": "f248d065f053179d6c11b4e4d5ba9fb0af3ff6ac932a3062d2c581495ab988d9"
         },
         {
           "job_id": "image-00001",
@@ -55,7 +55,7 @@
           "downlink_gb": 10,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 2.0122222222222224,
-          "receipt_id": "c39050ce9f2c6dd008a88b810923c2f7aa457b185174eaf387a5cb1495cfd7bd"
+          "receipt_id": "3d5e6f577c1fcf665dbaa3d87c43c04edad0502f853c5ab48961e609645def24"
         },
         {
           "job_id": "image-00002",
@@ -69,7 +69,7 @@
           "downlink_gb": 10,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 2.0122222222222224,
-          "receipt_id": "a09182de5069ba8fa41c2295d75dbf928d87de40c926e323b5e15900abcd90c4"
+          "receipt_id": "16d48cbf93751cc8a6c3ceeff96043cab2e76696351ba605de201def4d410979"
         }
       ],
       "events": [
@@ -152,7 +152,7 @@
           "downlink_gb": 0.1,
           "energy_kwh": 0.008333333333333333,
           "cost_usd": 0.03833333333333334,
-          "receipt_id": "a566517b17661bf67f92596f4ba3cd5d94e0f4aec5c05578f5148818d5c4f6fa"
+          "receipt_id": "7666ff4d4cdf0597467200df3d496545ed6185af9f08403e1290d589ea20d09a"
         },
         {
           "job_id": "image-00001",
@@ -166,7 +166,7 @@
           "downlink_gb": 0.1,
           "energy_kwh": 0.008333333333333333,
           "cost_usd": 0.03833333333333334,
-          "receipt_id": "696696abd844b2b6dc2b7daa7e69bbf4ac16c3f0d56720b95d56a5e26c97eec4"
+          "receipt_id": "5885c05447bdc51d9f65b55d26c442c8b43ba7e41fb125b8361bd25872de985f"
         },
         {
           "job_id": "image-00002",
@@ -180,7 +180,7 @@
           "downlink_gb": 0.1,
           "energy_kwh": 0.008333333333333333,
           "cost_usd": 0.03833333333333334,
-          "receipt_id": "eacc86388c23d412c26bf3b93ee712b7488417031573aad0c167e910445932c2"
+          "receipt_id": "4008b468a1e9273318b1d57b07c4132cdba0538cb1e8435381a4225fd47185d4"
         }
       ],
       "events": [
@@ -263,7 +263,7 @@
           "downlink_gb": 1,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 0.21222222222222223,
-          "receipt_id": "01d3caa255ce7707bc44786f33289750e764e85e9c7dbead7667cc9d9554f3b3"
+          "receipt_id": "c53622df7de8260ee894637c79c9e4e28a093bb44476b393118610f32bfd75cf"
         },
         {
           "job_id": "image-00001",
@@ -277,7 +277,7 @@
           "downlink_gb": 1,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 0.21222222222222223,
-          "receipt_id": "7f98d3c244d4ff995de31bf77c0d2d851237aabacb9bdc1ae0b92b5c57f0fa28"
+          "receipt_id": "e59701916ad6a1c3bb63fe6a5dcae7fc9ab3037123a12f19ec4c1fce2fbd35e7"
         },
         {
           "job_id": "image-00002",
@@ -291,7 +291,7 @@
           "downlink_gb": 1,
           "energy_kwh": 0.005555555555555556,
           "cost_usd": 0.21222222222222223,
-          "receipt_id": "810be120473a207f42da5143badb2140fbd95502c6f4ff1abfc7fc5d313b54ab"
+          "receipt_id": "4f45e43be5916738a5730dce28cd92955d94c0b5487a260b1353b6bb74c783e8"
         }
       ],
       "events": [

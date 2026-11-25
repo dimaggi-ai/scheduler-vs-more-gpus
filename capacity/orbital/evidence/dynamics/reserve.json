@@ -2,7 +2,7 @@
   "schema": "capacity-orbital/dynamics-report-v1",
   "proposal_id": "demo-reserve",
   "input_sha256": "0f653e48f1202712247d5faf3ac3c724f675dbfdfb571a48630745869c364c82",
-  "source_sha256": "b6952f1cb6ce30cceff44e4c8cf400fb48c6a3b0a4cb6f2858fd75418db1b78a",
+  "source_sha256": "dec9f1831d780ca856608d9a60f35a4ac31e7ecf16869478a1a490ae0a531e83",
   "source_binding": "caller-supplied",
   "classification": "synthetic predicted feasibility; no observed or executed outcomes",
   "authority": {
@@ -48,5 +48,5 @@
       "at_s": 720.0
     }
   ],
-  "receipt_id": "7ccb5c2f080d82f4a16ecd96c6735017c52e53da41dc6398e9157ff7ae0d9dfe"
+  "receipt_id": "64678593a9b8a8f4a6e82e5530c2d07249f89377d3d92d6d20b555e0315accc8"
 }

@@ -2,7 +2,7 @@
   "schema": "capacity-orbital/diligence-response-v1",
   "request_id": "lifecycle",
   "input_sha256": "37cae57f2dd700f128ed141bf784e263d78d9b91687752250a55db69cf38bb67",
-  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
   "status": "screened",
   "reason_code": "COMPUTED_SYNTHETIC",
   "reason": "synthetic assumption-bound result",
@@ -146,5 +146,5 @@
   "authority_disposition": "no_authorization_granted",
   "execution_performed": false,
   "promoted": false,
-  "outcome_sha256": "bc38c6006525518b67f4d42d3ab71fb71c1201134045846d5b5cfd11cc6a8da4"
+  "outcome_sha256": "5a1f559edea44ac774ea5587d6fd6e3db96960a3a6950892ebc27c4d06c150e6"
 }

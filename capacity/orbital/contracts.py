@@ -85,6 +85,9 @@ def validate(s):
             number(j, key, positive=key in ('raw_gb', 'memory_gb', 'power_kw', 'ground_s', 'onboard_s', 'preprocess_s', 'hybrid_ground_s'), upper=1 if 'quality' in key else None)
         if not 0 <= j['release_s'] < j['deadline_s'] <= horizon:
             raise ValueError('release < deadline <= horizon required')
+        for key in ('result_gb', 'compressed_gb'):
+            if j[key] == 0:
+                raise ValueError(key + ': zero-size output is not supported in v1; every route must deliver a positive size through a contact')
         if not j['result_gb'] <= j['compressed_gb'] <= j['raw_gb']:
             raise ValueError('result <= compressed <= raw GB required')
     # Refuse overflow in derived quantities, before planning or JSON output.

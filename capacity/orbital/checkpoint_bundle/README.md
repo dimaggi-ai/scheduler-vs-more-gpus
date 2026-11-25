@@ -2,7 +2,7 @@
 
 This additive offline module exports one selected ground/onboard/hybrid checkpoint-aware mission and verifies it in a same-source checkout. It preserves the original request JSON text, including exact numeric lexemes and request ID. It does not choose the best route, execute a mission, establish authenticity, promote a policy or activate Tool Guard.
 
-Development is provisionally pinned to checkpoint PR17 source169bd8a. Its re-review and integrated technical acceptance remain separate. Changes to that dependency require an explicit source update and regenerated portable evidence before final delivery; earlier private-runtime qualification does not qualify this package.
+This cumulative candidate composes PR18 with accepted planner PR19 `00f7a419`, corrected checkpoint startup, and the exact checkpoint source digest declared in `CHECKPOINT_SOURCE`. Its exact-commit review and cumulative technical acceptance remain separate. Changes to that dependency require an explicit source update and regenerated portable evidence before final delivery; earlier private-runtime qualification does not qualify this package.
 
 ## Agent journey
 
