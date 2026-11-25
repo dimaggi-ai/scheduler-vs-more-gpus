@@ -75,3 +75,13 @@ must be checked on the new PR head; earlier green runs do not prove its executio
   103tests and11subtests pass in9.16s. Original pre-review reports and initial scaling results
   retained. Source/report hashes regenerated; no claim that receipts stayed equal.
 - Visual rendering gate remains blocked; static escaped HTML reviewed only.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+This candidate composes PR18 `358aaf1` with accepted planner PR19 `00f7a419`. All twelve changed PR19 files retain exact accepted bytes. Current report receipts were regenerated from the cumulative source; historical review/mutation records and earlier validation sections remain evidence of their original commits, not claims about this candidate. Independent exact-commit review and designated cumulative qualification remain pending. No flight, physical reliability, execution authority or private runtime qualification is implied.
+
+The checkpoint import-time inventory failure (T1) and first-parent-import bundle API failure (U1) were reproduced before correction. The parent now checks its manifest when evaluating source rather than importing; the standalone launcher rejects 1,001 names before project imports. Existing programmer-error propagation is retained. The two targeted removals fail named regression assertions in finite, CPU/time-bounded disposable copies; this is not a mutation-coverage score.
+
+Current runnable composition receipts are the regenerated demo/layer reports and both portable nominal bundles with expected hashes. Old `review*`, mutation-control files, test-run logs, scaling-review-fixes, fleet near-zero diagnostic, and fleet/checkpoint scaling files remain historical observations unless explicitly regenerated. Their old timing values are not measurements of this candidate. Source hashing establishes consistency only, not authenticity or acceptance.
+
+The final twelve-module local suite passed 220 tests in 42.082 seconds on Python 3.12.6. The existing evidence validator passed. This is supplementary Codex validation; hosted CI and other-tool review are separately observed delivery gates.

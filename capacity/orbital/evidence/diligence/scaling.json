@@ -1,6 +1,6 @@
 {
   "schema": "capacity-orbital/diligence-scaling-v1",
-  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
   "environment": {
     "python": "3.12.6",
     "platform": "macOS-27.0.1-arm64-arm-64bit"
@@ -11,8 +11,8 @@
       "flows": 3,
       "cohorts": 1,
       "years": 2,
-      "elapsed_s": 0.004254583967849612,
-      "peak_traced_python_bytes": 34577,
+      "elapsed_s": 0.002472707999913837,
+      "peak_traced_python_bytes": 29533,
       "request_bytes": 782,
       "response_bytes": 3945,
       "status": "screened"
@@ -21,8 +21,8 @@
       "flows": 100,
       "cohorts": 20,
       "years": 20,
-      "elapsed_s": 0.013378625037148595,
-      "peak_traced_python_bytes": 335803,
+      "elapsed_s": 0.012561249999635038,
+      "peak_traced_python_bytes": 335859,
       "request_bytes": 10726,
       "response_bytes": 71902,
       "status": "screened"
@@ -31,7 +31,7 @@
       "flows": 1000,
       "cohorts": 200,
       "years": 100,
-      "elapsed_s": 0.3601778328884393,
+      "elapsed_s": 0.3632884170001489,
       "peak_traced_python_bytes": 11249177,
       "request_bytes": 105132,
       "response_bytes": 2786654,

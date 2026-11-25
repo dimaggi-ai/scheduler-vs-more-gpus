@@ -7,7 +7,7 @@ from .contracts import Refuse,fields,raw,parse,wire,text,pin,INNER,REPORT,BUNDLE
 
 SCHEMA='capacity-orbital/checkpoint-evidence-bundle-v1'
 CLASSIFICATION='selected-route synthetic checkpoint evidence; consistency not authenticity or acceptance'
-CHECKPOINT_SOURCE='78bc6436df27b94a15c1b93a2a296f183f32449be091e9bdcf00dd2d4ac2b958'
+CHECKPOINT_SOURCE='be217a9911f5e81812e875d3e2aaf0d14b2e3a749def0185dcd8d297695c9e72'
 
 def required_sources():
     root=Path(__file__).resolve().parents[1];capacity=root.parent

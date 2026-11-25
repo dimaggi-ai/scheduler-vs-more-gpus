@@ -40,3 +40,7 @@ The earlier conservative scan-product budget rejected honest large-profile repor
 24 platform methods / 132 composed tests passed in 11.822 s. A maximum legal 10,000-profile mission (shared grid with one extra split) generates an admissible report under4MB and verifies. An initial test used different node grids and produced a7.88MB report; the existing4MB report refusal was correct, so this was a fixture-design failure, not bypassed or represented as passing. A directed three-job case confirms a memory refusal cannot reset the cursor backward, and2,000 nonmatching job rows refuse early without nested lookup. The existing highly overlapping buffer test still exercises safe work-budget refusal.
 
 Isolated PR14 composition passed138 tests in13.839s after scratch-only fixture refresh, including a successful export/verify at1,000 profiles per node. Current source and scratch bundle hashes are in cto-correction/composition-indexed.txt. Original downstream branches remain unchanged; source-bound integration/runtime pins still require explicit owner refresh and review. No acceptance or release is implied.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

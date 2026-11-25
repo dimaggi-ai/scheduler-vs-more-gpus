@@ -13,8 +13,9 @@ def main():
         manifest=(here/'source_inventory.json').read_bytes()
         if len(manifest)>100_000:raise ValueError('inventory budget')
         names=json.loads(manifest)
-        if type(names) is not list or not names or any(type(n) is not str or Path(n).is_absolute() or '..' in Path(n).parts for n in names):raise ValueError('inventory shape')
-        for name in names:(capacity/name).read_bytes()
+        if type(names) is not list or not names or len(names)>1000 or any(type(n) is not str or Path(n).is_absolute() or '..' in Path(n).parts for n in names):raise ValueError('inventory shape')
+        for name in names:
+            name.encode('utf-8');(capacity/name).read_bytes()
     except (OSError,ValueError,RecursionError):
         return unavailable()
     sys.path.insert(0,str(capacity.parent))

@@ -315,7 +315,7 @@
             "mission_id": "synthetic-EO",
             "route": "onboard",
             "input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-            "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
+            "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
             "classification": "synthetic coupled prediction; no execution or billing",
             "execution_performed": false,
             "promoted": false,
@@ -453,7 +453,7 @@
             "network": {
               "schema": "capacity-orbital/network-report-v1",
               "input_sha256": "f13ef07cac4c15cae90b14556c0f485657ebac90fddec247237fc8366bebd803",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
               "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
               "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
               "jobs": [
@@ -693,7 +693,7 @@
                 }
               ],
               "operations": 137,
-              "receipt_id": "725c2aaeacec1f35ac0c6cd07e63bbaabdd015982b77a412497dc5f791ae9db7"
+              "receipt_id": "a0f9d46642b553c73ec41c2fd2f7acf10ac9d808966393e565fbff2a53dee342"
             },
             "proposal": {
               "schema": "capacity-orbital/proposal-v1",
@@ -802,7 +802,7 @@
               "schema": "capacity-orbital/dynamics-report-v1",
               "proposal_id": "synthetic-EO:onboard",
               "input_sha256": "20bab3d553e102083c0661c3c716cf96d17c921322c7c0a766e2aea9cd7e5778",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
               "source_binding": "caller-supplied",
               "classification": "synthetic predicted feasibility; no observed or executed outcomes",
               "authority": {
@@ -1258,7 +1258,7 @@
                 }
               },
               "violations": [],
-              "receipt_id": "8f251d1fc6546696fc141858da8f91a0ea4102e9204485f1060ba12b7859178f"
+              "receipt_id": "4384d29d9d760a0670efcce464442b320ecd5759498fb7e0bf0b0906908f4e14"
             },
             "processing_buffers": [
               {
@@ -1296,12 +1296,12 @@
             "diligence": {
               "mission_id": "synthetic-EO",
               "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-              "network_receipt_id": "725c2aaeacec1f35ac0c6cd07e63bbaabdd015982b77a412497dc5f791ae9db7",
+              "network_receipt_id": "a0f9d46642b553c73ec41c2fd2f7acf10ac9d808966393e565fbff2a53dee342",
               "lifecycle": {
                 "schema": "capacity-orbital/diligence-response-v1",
                 "request_id": "synthetic-EO:lifecycle",
                 "input_sha256": "5b4b4d809d676540eb4bd3503448f247078ca96588a60b05aaf3d4e60a42946e",
-                "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                 "status": "screened",
                 "reason_code": "COMPUTED_SYNTHETIC",
                 "reason": "synthetic assumption-bound result",
@@ -1445,7 +1445,7 @@
                 "authority_disposition": "no_authorization_granted",
                 "execution_performed": false,
                 "promoted": false,
-                "outcome_sha256": "174f670892a20935d45340379a58f5c386ddda0e4029ba83a0a8bea0ad6f03ae"
+                "outcome_sha256": "e8abd1c33f912532ca3dfe94ea7db8baadd1e0477af8c245a9c231933c8bf537"
               },
               "lifecycle_status": "separate sensitivity",
               "lifecycle_horizon_years": 2,
@@ -1456,7 +1456,7 @@
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-0:0",
                   "input_sha256": "1db804bec6a04f15c13c3d94c480814cee4a0ad803b7e48fb1632fdbfc09d3f2",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -1495,13 +1495,13 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "26a3ece1187915fa2fab8aa4a66e6566e357b74c3eb5416d079a438b8ad16804"
+                  "outcome_sha256": "4de02e97f2a0ee1b57dfed91f967fcf8c8c7525f7bd9541dd8d8c6891fa6f3d9"
                 },
                 {
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-0:1",
                   "input_sha256": "a32e1eee589873ec8a06eea2e3aa324a537d2b9ce0d95eb6b048240512e33748",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -1540,13 +1540,13 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "a2bb8b436b1ca39025a7432b3ea2f7fce0d35c71f233488173cdfc00132f2d84"
+                  "outcome_sha256": "524571dc7cb8f386e9321410208d732657e42a41ebba35c60d5dd4f44bb6ac5d"
                 },
                 {
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-1:0",
                   "input_sha256": "3d77b344ec273285f5395f94c179716dd44dd6e41d088d4abfc1cfb7bc74ff8a",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -1585,13 +1585,13 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "1f43489dc9b4c03f4aa290c9c2401cb0f47fd21da4034ed2e6daafe5fabbb877"
+                  "outcome_sha256": "fa1df28d6610d46261bf53c36165710c6469d613da199b90361c674c7d507556"
                 },
                 {
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-1:1",
                   "input_sha256": "03e37737e07eb776cdba9051629efc20b9748eab60610c6939870d3677e82e5a",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -1630,7 +1630,7 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "2c9081ffd04868a27d785b862afb0a75675beeefe3f3946dcd63c6ff3f33fcb5"
+                  "outcome_sha256": "8a756bf7a4e8b1d40bbdacb9cee58d4014dec78cb5a3e548940a6385ecec720d"
                 }
               ],
               "static_agent_tools": {
@@ -1640,7 +1640,7 @@
                 "request_schema_file": "request.schema.json",
                 "response_schema": "capacity-orbital/agent-response-v1",
                 "evaluator": "capacity-orbital/static-planner-v1",
-                "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+                "source_sha256": "a730649e76f784deb54e20f7be9c78534b1acca84a9c360adbc18b4542c259ec",
                 "tools": {
                   "plan": {
                     "arguments": [
@@ -1694,7 +1694,7 @@
                 "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
               ]
             },
-            "receipt_id": "6aa6cc1a0a4be14186ba688e3e9724e70067f75989f0eacede71cc040b08e785"
+            "receipt_id": "2c80a510ce7ba62d0485e9b754afe575a6530a3564617884f29a2854711d6cb6"
           },
           "records": [
             {
@@ -1702,8 +1702,8 @@
               "id": "train:job-0",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
-              "proposal_receipt_id": "6aa6cc1a0a4be14186ba688e3e9724e70067f75989f0eacede71cc040b08e785",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+              "proposal_receipt_id": "2c80a510ce7ba62d0485e9b754afe575a6530a3564617884f29a2854711d6cb6",
               "job_id": "job-0",
               "completion_s": 7.2600000000000025,
               "energy_kwh": 0.002505555555555557,
@@ -1715,8 +1715,8 @@
               "id": "train:job-1",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "8b97306c223bd032a32546aa4995f6b336a83e775b48fd56a789e318719015b7",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
-              "proposal_receipt_id": "6aa6cc1a0a4be14186ba688e3e9724e70067f75989f0eacede71cc040b08e785",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+              "proposal_receipt_id": "2c80a510ce7ba62d0485e9b754afe575a6530a3564617884f29a2854711d6cb6",
               "job_id": "job-1",
               "completion_s": 12.760000000000003,
               "energy_kwh": 0.002505555555555557,
@@ -2036,7 +2036,7 @@
             "mission_id": "heldout-EO",
             "route": "onboard",
             "input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-            "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
+            "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
             "classification": "synthetic coupled prediction; no execution or billing",
             "execution_performed": false,
             "promoted": false,
@@ -2174,7 +2174,7 @@
             "network": {
               "schema": "capacity-orbital/network-report-v1",
               "input_sha256": "c634e6a2732e0d0a921d60b5e125f2f08c9b3feaddec17a2d44355fd1ed4bb45",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
               "classification": "synthetic predicted store-and-forward; no execution or compliance certification",
               "policy": "greedy earliest-arrival simple paths; jobs ordered by release and ID",
               "jobs": [
@@ -2414,7 +2414,7 @@
                 }
               ],
               "operations": 137,
-              "receipt_id": "f090dd81c8f6a67ee2e4b79fc640e7cb2376c0e62958ecd79a7c1914f4da8067"
+              "receipt_id": "ce3c1f8b86ecbf72c687bed699b7fdc147f11ce07484df277db2a595a4e0685e"
             },
             "proposal": {
               "schema": "capacity-orbital/proposal-v1",
@@ -2523,7 +2523,7 @@
               "schema": "capacity-orbital/dynamics-report-v1",
               "proposal_id": "heldout-EO:onboard",
               "input_sha256": "2498a20c374a268ec1cb5eecf5b62312c61ff223aa54caf0398d809582880ea9",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
               "source_binding": "caller-supplied",
               "classification": "synthetic predicted feasibility; no observed or executed outcomes",
               "authority": {
@@ -3039,7 +3039,7 @@
                 }
               },
               "violations": [],
-              "receipt_id": "90477181622f2bafe615ca510360539e369bfd151111f2fea09e8798b7f2370a"
+              "receipt_id": "4c6146a8c02ecaafe1cb38499b9fb204de27e0d2bd9425e50f9d3d6b00be195e"
             },
             "processing_buffers": [
               {
@@ -3077,12 +3077,12 @@
             "diligence": {
               "mission_id": "heldout-EO",
               "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-              "network_receipt_id": "f090dd81c8f6a67ee2e4b79fc640e7cb2376c0e62958ecd79a7c1914f4da8067",
+              "network_receipt_id": "ce3c1f8b86ecbf72c687bed699b7fdc147f11ce07484df277db2a595a4e0685e",
               "lifecycle": {
                 "schema": "capacity-orbital/diligence-response-v1",
                 "request_id": "heldout-EO:lifecycle",
                 "input_sha256": "a193279a81342124009f63f252ecb9bc148960f75f41c9cb508cab64d2f119bd",
-                "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                 "status": "screened",
                 "reason_code": "COMPUTED_SYNTHETIC",
                 "reason": "synthetic assumption-bound result",
@@ -3226,7 +3226,7 @@
                 "authority_disposition": "no_authorization_granted",
                 "execution_performed": false,
                 "promoted": false,
-                "outcome_sha256": "f379f70c2c383d2a850e6c9525e1ff16789725ffddd9fa434d9c676844197925"
+                "outcome_sha256": "e491b9dacfe611ac590c1a60838526435c77934aa2cd7842d227403fe1ca76b1"
               },
               "lifecycle_status": "separate sensitivity",
               "lifecycle_horizon_years": 2,
@@ -3237,7 +3237,7 @@
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-0:0",
                   "input_sha256": "1db804bec6a04f15c13c3d94c480814cee4a0ad803b7e48fb1632fdbfc09d3f2",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -3276,13 +3276,13 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "26a3ece1187915fa2fab8aa4a66e6566e357b74c3eb5416d079a438b8ad16804"
+                  "outcome_sha256": "4de02e97f2a0ee1b57dfed91f967fcf8c8c7525f7bd9541dd8d8c6891fa6f3d9"
                 },
                 {
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-0:1",
                   "input_sha256": "a32e1eee589873ec8a06eea2e3aa324a537d2b9ce0d95eb6b048240512e33748",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -3321,13 +3321,13 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "a2bb8b436b1ca39025a7432b3ea2f7fce0d35c71f233488173cdfc00132f2d84"
+                  "outcome_sha256": "524571dc7cb8f386e9321410208d732657e42a41ebba35c60d5dd4f44bb6ac5d"
                 },
                 {
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-1:0",
                   "input_sha256": "3d77b344ec273285f5395f94c179716dd44dd6e41d088d4abfc1cfb7bc74ff8a",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -3366,13 +3366,13 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "1f43489dc9b4c03f4aa290c9c2401cb0f47fd21da4034ed2e6daafe5fabbb877"
+                  "outcome_sha256": "fa1df28d6610d46261bf53c36165710c6469d613da199b90361c674c7d507556"
                 },
                 {
                   "schema": "capacity-orbital/diligence-response-v1",
                   "request_id": "job-1:1",
                   "input_sha256": "03e37737e07eb776cdba9051629efc20b9748eab60610c6939870d3677e82e5a",
-                  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+                  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
                   "status": "screened",
                   "reason_code": "WITHIN_STATED_MODEL",
                   "reason": "synthetic assumption-bound result",
@@ -3411,7 +3411,7 @@
                   "authority_disposition": "no_authorization_granted",
                   "execution_performed": false,
                   "promoted": false,
-                  "outcome_sha256": "2c9081ffd04868a27d785b862afb0a75675beeefe3f3946dcd63c6ff3f33fcb5"
+                  "outcome_sha256": "8a756bf7a4e8b1d40bbdacb9cee58d4014dec78cb5a3e548940a6385ecec720d"
                 }
               ],
               "static_agent_tools": {
@@ -3421,7 +3421,7 @@
                 "request_schema_file": "request.schema.json",
                 "response_schema": "capacity-orbital/agent-response-v1",
                 "evaluator": "capacity-orbital/static-planner-v1",
-                "source_sha256": "54df8adb032971201ae30891540bf2501bcfa5d9ecf77c2432bfae23a45a31d2",
+                "source_sha256": "a730649e76f784deb54e20f7be9c78534b1acca84a9c360adbc18b4542c259ec",
                 "tools": {
                   "plan": {
                     "arguments": [
@@ -3475,7 +3475,7 @@
                 "Static agentic evaluator remains available separately; it does not gate this coupled mission evaluator."
               ]
             },
-            "receipt_id": "0bade83ecaee0dc978516ba29c47d65162b67f855d1d04f383cbb1de7161775a"
+            "receipt_id": "d59d94765051cc6a7424a63c0a07a5bfee5a036be06317279d3264df976ea55c"
           },
           "records": [
             {
@@ -3483,8 +3483,8 @@
               "id": "heldout:job-0",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
-              "proposal_receipt_id": "0bade83ecaee0dc978516ba29c47d65162b67f855d1d04f383cbb1de7161775a",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+              "proposal_receipt_id": "d59d94765051cc6a7424a63c0a07a5bfee5a036be06317279d3264df976ea55c",
               "job_id": "job-0",
               "completion_s": 8.940000000000001,
               "energy_kwh": 0.002050000000000001,
@@ -3496,8 +3496,8 @@
               "id": "heldout:job-1",
               "classification": "supplied synthetic replay",
               "mission_input_sha256": "f4c2f108da66a96c8692e2287ede07a2771b8fbf232938a03e67d97533dc873c",
-              "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
-              "proposal_receipt_id": "0bade83ecaee0dc978516ba29c47d65162b67f855d1d04f383cbb1de7161775a",
+              "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+              "proposal_receipt_id": "d59d94765051cc6a7424a63c0a07a5bfee5a036be06317279d3264df976ea55c",
               "job_id": "job-1",
               "completion_s": 13.440000000000001,
               "energy_kwh": 0.002050000000000001,

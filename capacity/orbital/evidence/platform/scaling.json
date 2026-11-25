@@ -1,5 +1,5 @@
 {
-  "source_sha256": "dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e",
+  "source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
   "python": "3.12.6",
   "platform": "macOS-27.0.1-arm64-arm-64bit",
   "workload": "one traced compare call per size; includes source hashing and diligence, excludes CLI/HTML IO",
@@ -8,8 +8,8 @@
       "jobs": 1,
       "nodes": 3,
       "contacts": 2,
-      "seconds": 0.08771649980917573,
-      "peak_traced_bytes": 232671,
+      "seconds": 0.06905612499940617,
+      "peak_traced_bytes": 218714,
       "refusal": null,
       "admissible_routes": [
         "ground",
@@ -23,8 +23,8 @@
       "jobs": 5,
       "nodes": 3,
       "contacts": 2,
-      "seconds": 0.17934870906174183,
-      "peak_traced_bytes": 484954,
+      "seconds": 0.14152629199998046,
+      "peak_traced_bytes": 484786,
       "refusal": null,
       "admissible_routes": [
         "ground",
@@ -38,8 +38,8 @@
       "jobs": 10,
       "nodes": 3,
       "contacts": 2,
-      "seconds": 0.291344708064571,
-      "peak_traced_bytes": 887622,
+      "seconds": 0.2328008749991568,
+      "peak_traced_bytes": 887454,
       "refusal": null,
       "admissible_routes": [
         "ground",
@@ -53,8 +53,8 @@
       "jobs": 20,
       "nodes": 3,
       "contacts": 2,
-      "seconds": 0.5481513750273734,
-      "peak_traced_bytes": 1694306,
+      "seconds": 0.46204854200004775,
+      "peak_traced_bytes": 1694138,
       "refusal": null,
       "admissible_routes": [
         "ground",

@@ -1,20 +1,43 @@
 {
-  "classification": "synthetic two-process export/verify, not physical qualification",
-  "provisional_base": "169bd8ae081d4393f8555c8fc28ad8628a1611b0",
-  "bundle_source_sha256": "4b022c45721a8c05406d5d28bf0cabc9b8a3f6080551aee6cbc27de030f3e73c",
-  "checkpoint_source_sha256": "78bc6436df27b94a15c1b93a2a296f183f32449be091e9bdcf00dd2d4ac2b958",
-  "envelope_sha256": "c8c2cb270c1ad601862c29097969800d5472665ea719d2bd42113f324f97e559",
-  "request_bytes": 5103,
-  "bundle_bytes": 37222,
-  "elapsed_s": 0.25549920788034797,
-  "python": "3.12.6",
-  "verification": {
-    "admissible": true,
-    "authenticity_established": false,
-    "binding_mode": "expected-pin",
-    "errors": [],
-    "execution_performed": false,
-    "valid": true
+  "prior_receipt": {
+    "classification": "synthetic two-process export/verify, not physical qualification",
+    "provisional_base": "169bd8ae081d4393f8555c8fc28ad8628a1611b0",
+    "bundle_source_sha256": "4b022c45721a8c05406d5d28bf0cabc9b8a3f6080551aee6cbc27de030f3e73c",
+    "checkpoint_source_sha256": "78bc6436df27b94a15c1b93a2a296f183f32449be091e9bdcf00dd2d4ac2b958",
+    "envelope_sha256": "c8c2cb270c1ad601862c29097969800d5472665ea719d2bd42113f324f97e559",
+    "request_bytes": 5103,
+    "bundle_bytes": 37222,
+    "elapsed_s": 0.25549920788034797,
+    "python": "3.12.6",
+    "verification": {
+      "admissible": true,
+      "authenticity_established": false,
+      "binding_mode": "expected-pin",
+      "errors": [],
+      "execution_performed": false,
+      "valid": true
+    },
+    "correction": "review208 startup and inventory residuals"
   },
-  "correction": "review208 startup and inventory residuals"
+  "classification": "synthetic two-process export/verify, not physical qualification",
+  "base": "358aaf1af22fedd723ca8d0373b6c6698483ffee",
+  "accepted_planner": "00f7a41954cc50f2bb99757b8dabec42440e9074",
+  "checkpoint_source_sha256": "be217a9911f5e81812e875d3e2aaf0d14b2e3a749def0185dcd8d297695c9e72",
+  "bundle_source_sha256": "a6b239f90679632cd25c248b9358d350429395eb5d03d987168a91d9556054f2",
+  "envelope_sha256": "8de1f03e68c30d952d96031cfa1614f988aa4f90718ecb7110dc85df6e887a59",
+  "verification": {
+    "execution_performed": false,
+    "id": null,
+    "result": {
+      "admissible": true,
+      "authenticity_established": false,
+      "binding_mode": "expected-pin",
+      "errors": [],
+      "execution_performed": false,
+      "valid": true
+    },
+    "schema": "capacity-orbital/checkpoint-bundle-tool-result-v1",
+    "status": "ok"
+  },
+  "acceptance": "pending cumulative qualification"
 }

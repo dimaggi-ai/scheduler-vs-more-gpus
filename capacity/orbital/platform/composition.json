@@ -8,5 +8,7 @@
   "task107_local_cherry_pick": "81d668b3806334308f394d2c56a8584b3cdebe58",
   "task109_source": "b179d5c444c879cf65ffbfd570b744f3c62509a6",
   "task109_local_cherry_pick": "1fd25633aa5ef3d58a0e9c35fcf2195b34a0e93a",
-  "acceptance": "none inferred; local source composition only; no upstream PR merge"
+  "acceptance": "candidate only; accepted planner source does not confer cumulative acceptance",
+  "planner_fixed_source": "00f7a41954cc50f2bb99757b8dabec42440e9074",
+  "cumulative_base": "358aaf1af22fedd723ca8d0373b6c6698483ffee"
 }

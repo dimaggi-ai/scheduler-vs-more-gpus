@@ -12,3 +12,7 @@ Fresh CLI export of `examples/bundle-mission.json` produced `nominal.json`; sepa
 - The corrected composed suite passed 131 tests in 4.813 s before the final explicit fresh-process tampered-contact assertions were added. The final focused six-test result and subsequent hosted run are stated above. The workflow runs both Ubuntu and macOS; no parent planner or physics module was edited.
 
 The documentation clarification after `2e3e538` changes only this record and the bundle README. Product Python source, tests, fixtures and workflow remain byte-identical to that reviewed implementation; no test rerun is claimed for prose alone.
+
+## Cumulative fixed-planner integration — 25 November 2026
+
+The dated cumulative composition and historical-evidence boundaries are recorded in [the parent validation note](../VALIDATION.md#cumulative-fixed-planner-integration--25-november-2026). Current reports were regenerated; older review and timing records remain historical. Independent review and cumulative qualification are pending.

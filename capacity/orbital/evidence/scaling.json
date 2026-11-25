@@ -1,4 +1,20 @@
 {
+  "schema": "capacity-orbital/benchmark-v1",
+  "classification": "single-run timing and traced Python peak memory on one host; not a production or flight benchmark",
+  "version": "0.1.1",
+  "source_sha256": "2927931198690a09f79741cd49a152681eded764aacf98107a8c969ad0d1a6d1",
+  "assumptions": [
+    "All jobs originate in space and results terminate on the ground.",
+    "Ground quality 1.0 is a synthetic reference assumption, not measured perfect AI accuracy.",
+    "Each route is a separate counterfactual with the same workload and resource inputs.",
+    "One serial compute lane per node; one shared downlink terminal.",
+    "One assumed job power_kw applies on both nodes; hardware-specific power profiles are not modeled.",
+    "Release-time then job-id greedy planning; no optimality guarantee.",
+    "Static power and heat rejection envelopes, total compute-energy budgets; no orbital/thermal dynamics.",
+    "Transfer energy, lifecycle capex, qualification, radiation and unplanned runtime failures excluded.",
+    "Refused plans reserve nothing; no claim that failed execution is free.",
+    "Receipts are deterministic planning IDs, not signatures or production metering."
+  ],
   "python": "3.12.6",
   "platform": "macOS-27.0.1-arm64-arm-64bit",
   "scope": "Two fixed compute nodes; continuous and intermittent contacts. Serial greedy planner, not distributed execution.",
@@ -7,73 +23,113 @@
       "jobs": 10,
       "contacts": 1,
       "routes": 3,
-      "seconds": 0.004148,
-      "peak_bytes": 47434,
+      "seconds": 0.005094,
+      "peak_bytes": 49309,
       "planned": [
         10,
         10,
         10
-      ]
+      ],
+      "adapter": "continuous",
+      "input_sha256": "f059761aa13719117f086fcd63ae982fe521e0cd3bd7bc83614ed67215fca210"
     },
     {
       "jobs": 100,
       "contacts": 1,
       "routes": 3,
-      "seconds": 0.034721,
-      "peak_bytes": 441540,
+      "seconds": 0.047662,
+      "peak_bytes": 440401,
       "planned": [
         100,
         100,
         100
-      ]
+      ],
+      "adapter": "continuous",
+      "input_sha256": "f2fd5fe37ff3d6f08f8638800fb99054f1e8b3bfc5bdd1b36a6faa7acae143be"
     },
     {
       "jobs": 1000,
       "contacts": 1,
       "routes": 3,
-      "seconds": 0.345843,
-      "peak_bytes": 4371184,
+      "seconds": 0.467831,
+      "peak_bytes": 4372669,
       "planned": [
         1000,
         1000,
         1000
-      ]
+      ],
+      "adapter": "continuous",
+      "input_sha256": "4259b668507e1e9b4c090db0b13bb669a5ea6c69c0d287599945b43e4f0246f2"
+    },
+    {
+      "jobs": 10000,
+      "contacts": 1,
+      "routes": 3,
+      "seconds": 4.833321,
+      "peak_bytes": 43318511,
+      "planned": [
+        10000,
+        10000,
+        10000
+      ],
+      "adapter": "continuous",
+      "input_sha256": "56854189f01a258e1c119c7a4ace62ff5ebd001f4ab38ec2330aa0600b837d59"
     },
     {
       "jobs": 10,
       "contacts": 10,
       "routes": 3,
-      "seconds": 0.005931,
-      "peak_bytes": 44082,
+      "seconds": 0.021354,
+      "peak_bytes": 46362,
       "planned": [
         10,
         10,
         10
-      ]
+      ],
+      "adapter": "intermittent",
+      "input_sha256": "7ad389cfee5d1d6de1a420f05e7ae685cb31b8d22998513d21e8d62231c85c0c"
     },
     {
       "jobs": 100,
       "contacts": 100,
       "routes": 3,
-      "seconds": 0.066355,
-      "peak_bytes": 434348,
+      "seconds": 0.049296,
+      "peak_bytes": 435653,
       "planned": [
         100,
         100,
         100
-      ]
+      ],
+      "adapter": "intermittent",
+      "input_sha256": "38ba0cd517af8657522418effa12bc37dd257ebc0b96e5998978411afa4d9658"
     },
     {
       "jobs": 1000,
       "contacts": 1000,
       "routes": 3,
-      "seconds": 3.305842,
-      "peak_bytes": 4336752,
+      "seconds": 0.49355,
+      "peak_bytes": 4338912,
       "planned": [
         1000,
         1000,
         1000
-      ]
+      ],
+      "adapter": "intermittent",
+      "input_sha256": "433e1333c664d23f14e93168e447e1c069ce09c33cd71aed1580a32eb3352f47"
+    },
+    {
+      "jobs": 10000,
+      "contacts": 10000,
+      "routes": 3,
+      "seconds": 4.940143,
+      "peak_bytes": 43370293,
+      "planned": [
+        10000,
+        10000,
+        10000
+      ],
+      "adapter": "intermittent",
+      "input_sha256": "3a5f29f7002b3785eddd0bcd1de9b074786b30008f8b769efec8d68977894481"
     }
   ]
 }

@@ -2,7 +2,7 @@
   "schema": "capacity-orbital/diligence-response-v1",
   "request_id": "thermal",
   "input_sha256": "3d710fb24db9e40a1041946894d5a7958eedb6ab34e72402ef36d2e7a6fdf20c",
-  "source_sha256": "20ede9fcfeeda4a854bb3c96ef58fece539b0554c031eb7f360575ab566702a8",
+  "source_sha256": "0b03c94690cbaccf9870315a6479975d719f1b40429c87792c549b63a2cf9191",
   "status": "screened",
   "reason_code": "WITHIN_STATED_MODEL",
   "reason": "synthetic assumption-bound result",
@@ -46,5 +46,5 @@
   "authority_disposition": "no_authorization_granted",
   "execution_performed": false,
   "promoted": false,
-  "outcome_sha256": "8ac537af41ddb0a40f981e329c56c0a30df5b0ee195443246b5b5179ef293e70"
+  "outcome_sha256": "d8733b97d2ca9bfa9c2d36a1eb1220b2c99a6f2fc82f6bd99268b1c02dac858d"
 }

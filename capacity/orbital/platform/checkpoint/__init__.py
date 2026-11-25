@@ -13,7 +13,7 @@ from ..mission import source_digest as parent_source_digest
 from .contracts import (Refuse,validate,normalized,enc,fraction,selected,decimal,exact,
                         GRID,finish,MAX_REPORT,size)
 
-PARENT_SOURCE='dc7420c8d4be3466d1036eadf39206567d37d2b0bc11ddd8d9f3c00040e0593e'
+PARENT_SOURCE='fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b'
 NUMERIC={
  'network':{'nonfinite derived network arithmetic','positive transfer duration below numeric resolution','positive transfer/propagation below timestamp resolution'},
  'dynamics':{'nonfinite or undefined derived arithmetic','nonfinite derived state'},
@@ -33,7 +33,6 @@ def required_source():
         return tuple(names)
     except (OSError,ValueError,RecursionError):
         raise Refuse('SOURCE_UNAVAILABLE','required local inventory missing/unreadable/invalid') from None
-REQUIRED_SOURCE = required_source()
 
 def source_digest():
     root=Path(__file__).resolve().parents[2]

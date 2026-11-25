@@ -79,6 +79,30 @@ class OrbitalTests(unittest.TestCase):
         s['jobs'][0]['result_gb']=1e-15
         self.assertEqual(plan_route(s,'onboard')['summary']['planned'],0)
 
+    def test_zero_size_output_refused_at_validation(self):
+        # Finding 1: zero-size outputs were planned on onboard and hybrid without any contact.
+        for sizes in (dict(result_gb=0), dict(result_gb=0, compressed_gb=0), dict(result_gb=0.0, compressed_gb=0.0)):
+            for contacts in ('none', 'open'):
+                with self.subTest(sizes=sizes, contacts=contacts):
+                    s = synthetic(jobs=1); s['jobs'][0].update(sizes)
+                    if contacts == 'none':
+                        s['contacts'] = []
+                    with self.assertRaisesRegex(ValueError, 'result_gb: zero-size output is not supported'):
+                        validate(s)
+                    for route in ('onboard', 'hybrid'):
+                        with self.assertRaisesRegex(ValueError, 'zero-size output'):
+                            plan_route(s, route)
+                    with self.assertRaisesRegex(ValueError, 'zero-size output'):
+                        compare(s)
+        with tempfile.TemporaryDirectory() as tmp:
+            s = synthetic(jobs=1); s['contacts'] = []; s['jobs'][0].update(result_gb=0, compressed_gb=0)
+            path = Path(tmp)/'zero.json'; path.write_text(json.dumps(s)); out = Path(tmp)/'report.json'
+            result = subprocess.run([sys.executable, '-m', 'capacity.orbital', '--scenario', str(path), '--output', str(out)],
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('REFUSE: result_gb: zero-size output is not supported', result.stderr)
+            self.assertFalse(out.exists())
+
     def test_nonfinite_and_wrong_types_refuse(self):
         for val in [None,True,'1',float('nan'),float('inf'),-1,10**1000]:
             with self.subTest(value=str(val)[:20]):
@@ -128,6 +152,22 @@ class OrbitalTests(unittest.TestCase):
         self.assertIn('viewport',html)
         self.assertNotIn('https://',html)
 
+    def test_html_escapes_crafted_report_values(self):
+        # Finding 3: a caller-built report dictionary could inject an attribute through `status`.
+        s=synthetic(jobs=1);clean=html_report(compare(s))
+        report=compare(s);payload='planned" onmouseover="alert(1)'
+        report['comparisons'][0]['jobs'][0]['status']=payload
+        html=html_report(report)
+        self.assertNotIn('onmouseover="',html)
+        self.assertIn('class="planned&quot; onmouseover=&quot;alert(1)"',html)
+        report=compare(s)
+        report['comparisons'][0]['summary'].update(planned='<img src=x onerror=alert(1)>',refused='<b>')
+        html=html_report(report)
+        self.assertNotIn('<img',html);self.assertNotIn('<b>',html)
+        # A report from the planner renders with the same class names and counts as before.
+        self.assertIn('<td class="planned">planned</td>',clean)
+        self.assertIn('<p class="count">1 planned <span>/ 1 jobs</span></p>',clean)
+
     def test_cli_success_error_recovery_and_no_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);scenario=root/'scenario.json';out=root/'report.json';html=root/'report.html'
@@ -172,6 +212,109 @@ class OrbitalTests(unittest.TestCase):
             self.assertEqual(b.read_text(),'another writer')
             self.assertEqual(list(root.iterdir()),[b])
 
+    def test_rollback_keeps_file_placed_after_identity_check(self):
+        # Finding 2: a file that replaced a destination between the identity check and the unlink was deleted.
+        from . import output
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);a=root/'a';b=root/'b';foreign=root/'foreign';link=os.link;real=output._identity;raced=[]
+            def failing(src,dst,**kwargs):
+                if Path(dst)==b:
+                    raise OSError('publish failure')
+                link(src,dst,**kwargs)
+            def racing(path):
+                result=real(path)
+                if Path(path)==a and not raced:
+                    raced.append(path)
+                    foreign.write_text('another writer');os.replace(foreign,a)
+                return result
+            with patch('capacity.orbital.output.os.link',side_effect=failing), \
+                 patch('capacity.orbital.output._identity',side_effect=racing):
+                with self.assertRaises(OSError):
+                    publish([(a,'first'),(b,'second')])
+            self.assertEqual(len(raced),1)
+            self.assertEqual(a.read_text(),'another writer')
+            self.assertEqual(list(root.iterdir()),[a])
+        with tempfile.TemporaryDirectory() as tmp:
+            # The foreign file cannot be put back: it is preserved and the error names where.
+            root=Path(tmp);a=root/'a';foreign=root/'foreign';a.write_text('ours');owned=real(a);raced=[]
+            os.link(a,root/'staged')  # as in publish: the staged link keeps the inode in use
+            def racing(path):
+                result=real(path)
+                if Path(path)==a and not raced:
+                    raced.append(path)
+                    foreign.write_text('another writer');os.replace(foreign,a)
+                return result
+            with patch('capacity.orbital.output.os.link',side_effect=FileExistsError('taken')), \
+                 patch('capacity.orbital.output._identity',side_effect=racing):
+                with self.assertRaisesRegex(OSError,'preserved at'):
+                    output._remove_owned(a,owned)
+            kept=[p for p in root.rglob('a') if p.is_file()]
+            self.assertEqual([p.read_text() for p in kept],['another writer'])
+
+    def test_rollback_continues_after_one_entry_cannot_be_put_back(self):
+        # Review finding 2: one rollback error stopped the loop and left this run's other outputs published.
+        from . import output
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);a=root/'a';b=root/'b';c=root/'c';foreign=root/'foreign'
+            link=os.link;real=output._identity;raced=[]
+            def failing(src,dst,**kwargs):
+                if Path(dst)==c:
+                    raise OSError('publish failure')
+                if Path(dst)==b and raced:
+                    raise FileExistsError('taken')  # the foreign file cannot be put back
+                link(src,dst,**kwargs)
+            def racing(path):
+                result=real(path)
+                if Path(path)==b and not raced:
+                    raced.append(path)
+                    foreign.write_text('another writer');os.replace(foreign,b)
+                return result
+            with patch('capacity.orbital.output.os.link',side_effect=failing), \
+                 patch('capacity.orbital.output._identity',side_effect=racing):
+                with self.assertRaisesRegex(OSError,'preserved at') as caught:
+                    publish([(a,'first'),(b,'second'),(c,'third')])
+            self.assertEqual(len(raced),1)
+            self.assertFalse(a.exists())  # the earlier published output is still rolled back
+            self.assertFalse(b.exists());self.assertFalse(c.exists())
+            left=list(root.iterdir())
+            self.assertEqual(len(left),1)  # no staged temporary file remains
+            self.assertTrue(left[0].name.endswith('.rollback'))
+            self.assertEqual((left[0]/'b').read_text(),'another writer')
+            self.assertIn(str(left[0]/'b'),str(caught.exception))
+        with tempfile.TemporaryDirectory() as tmp:
+            # Two entries fail: both are reported and the third staged file is still removed.
+            root=Path(tmp);a=root/'a';b=root/'b';c=root/'c';remove=output._remove_owned;seen=[]
+            def failing(src,dst,**kwargs):
+                raise OSError('publish failure')
+            def broken(path,identity):
+                seen.append(Path(path).name)
+                if len(seen)<3:
+                    raise OSError('cannot remove entry %d'%len(seen))
+                remove(path,identity)
+            with patch('capacity.orbital.output.os.link',side_effect=failing), \
+                 patch('capacity.orbital.output._remove_owned',side_effect=broken):
+                with self.assertRaisesRegex(OSError,'cannot remove entry 1; cannot remove entry 2'):
+                    publish([(a,'first'),(b,'second'),(c,'third')])
+            self.assertEqual(len(seen),3)
+            self.assertEqual(len(list(root.iterdir())),2)
+
+    def test_no_hard_link_support_refuses_and_leaves_nothing(self):
+        # Finding 5: the hard-link requirement is documented; this pins the documented refusal.
+        import contextlib, errno, io
+        from .__main__ import main
+        unsupported=OSError(errno.EOPNOTSUPP,os.strerror(errno.EOPNOTSUPP))
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);stderr=io.StringIO();stdout=io.StringIO()
+            with patch('capacity.orbital.output.os.link',side_effect=unsupported), \
+                 contextlib.redirect_stderr(stderr),contextlib.redirect_stdout(stdout):
+                code=main(['--demo','continuous','--output',str(root/'r.json'),'--html',str(root/'r.html')])
+            self.assertEqual(code,2)
+            self.assertIn('REFUSE: ',stderr.getvalue());self.assertIn(os.strerror(errno.EOPNOTSUPP),stderr.getvalue())
+            self.assertEqual(stdout.getvalue(),'')
+            self.assertEqual(list(root.iterdir()),[])
+        readme=(Path(__file__).parent/'README.md').read_text()
+        self.assertIn('needs a filesystem that supports hard links',readme)
+
     def test_publish_preflight_and_staging_failure_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);a=root/'a';b=root/'b'
@@ -196,6 +339,89 @@ class OrbitalTests(unittest.TestCase):
         self.assertIsNone(compare(s)['source_sha256'])
         self.assertIn('unbound',compare(s)['source_binding'])
         with self.assertRaises(ValueError):compare(s,source_sha256='invalid')
+
+    def test_economics_and_evidence_are_separate_modules(self):
+        # Finding 6: cost formulas and evidence labels/receipts live in their own modules.
+        from . import economics, evidence_record, planner
+        node=dict(compute_usd_per_hour=2,electricity_usd_per_kwh=0.2)
+        self.assertEqual(economics.compute_cost_usd(node,20,20/3600),20/3600*2+20/3600*0.2)
+        self.assertEqual(economics.transfer_cost_usd(dict(usd_per_gb=0.2),10),2)
+        r=compare(synthetic(jobs=1))
+        ground=r['comparisons'][0]
+        self.assertEqual([e['cost_usd'] for e in ground['events']],[2,20/3600*2+20/3600*0.2])
+        self.assertEqual(ground['summary'],economics.summarize(ground['jobs']))
+        self.assertIs(planner.receipt_id,evidence_record.receipt_id)
+        self.assertEqual(r['assumptions'],list(evidence_record.ASSUMPTIONS))
+        self.assertEqual(r['classification'],evidence_record.CLASSIFICATION)
+        self.assertEqual(r['receipt_schema'],evidence_record.RECEIPT_SCHEMA)
+        root=Path(__file__).parent
+        for name in ('planner.py','resources.py','contacts.py'):
+            self.assertNotIn('usd_per',(root/name).read_text(),name)
+
+    def test_saved_exports_carry_assumptions_and_hashes(self):
+        # Finding 4: saved scenarios and benchmark JSON lacked assumptions and input/source hashes.
+        from . import benchmark, evidence_record
+        from .__main__ import source_digest
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);saved=root/'scenario.json';out=root/'report.json';again=root/'again.json'
+            cli=[sys.executable,'-m','capacity.orbital']
+            first=subprocess.run(cli+['--demo','intermittent','--save-scenario',str(saved),'--output',str(out)],capture_output=True,text=True)
+            self.assertEqual(first.returncode,0,first.stderr)
+            export=json.loads(saved.read_text());report=json.loads(out.read_text())
+            self.assertEqual(export['schema'],evidence_record.EXPORT_SCHEMA)
+            self.assertEqual(export['scenario'],synthetic('intermittent'))
+            self.assertEqual(export['assumptions'],report['assumptions'])
+            self.assertTrue(export['assumptions'])
+            self.assertEqual(export['input_sha256'],report['input_sha256'])
+            self.assertEqual(export['input_sha256'],digest(export['scenario']))
+            self.assertEqual(export['source_sha256'],report['source_sha256'])
+            self.assertEqual(export['source_sha256'],source_digest())
+            self.assertIn('synthetic',export['classification'])
+            # The export is accepted as input and replays to the same report.
+            replay=subprocess.run(cli+['--scenario',str(saved),'--output',str(again)],capture_output=True,text=True)
+            self.assertEqual(replay.returncode,0,replay.stderr)
+            self.assertEqual(again.read_bytes(),out.read_bytes())
+            # An export whose scenario no longer matches its hash is refused.
+            export['scenario']['jobs'][0]['raw_gb']=11;saved.write_text(json.dumps(export));third=root/'third.json'
+            bad=subprocess.run(cli+['--scenario',str(saved),'--output',str(third)],capture_output=True,text=True)
+            self.assertEqual(bad.returncode,2);self.assertIn('input_sha256 does not match',bad.stderr);self.assertFalse(third.exists())
+        # Saved evidence must be bound to a code digest; the pure API stays optional and labelled.
+        with self.assertRaisesRegex(ValueError,'required for saved evidence exports'):
+            evidence_record.scenario_export(synthetic(jobs=1),None)
+        with self.assertRaises(ValueError):
+            evidence_record.evidence_labels('invalid')
+        result=benchmark.run(sizes=((2,'continuous'),(2,'intermittent')))
+        self.assertEqual(result['schema'],evidence_record.BENCHMARK_SCHEMA)
+        self.assertEqual(result['assumptions'],list(evidence_record.ASSUMPTIONS))
+        self.assertEqual(result['source_sha256'],source_digest())
+        self.assertIn('not a production',result['classification'])
+        self.assertEqual([m['input_sha256'] for m in result['measurements']],
+                         [digest(synthetic('continuous',2)),digest(synthetic('intermittent',2))])
+        self.assertEqual([m['planned'] for m in result['measurements']],[[2,2,2],[2,2,2]])
+
+    def test_deeply_nested_json_refuses_with_exit_2(self):
+        # Finding 7: JSON nested 200,000 levels deep exited 1 with an uncaught RecursionError.
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'deep.json';path.write_text('['*200000+']'*200000);out=Path(tmp)/'report.json'
+            result=subprocess.run([sys.executable,'-m','capacity.orbital','--scenario',str(path),'--output',str(out)],
+                                  capture_output=True,text=True)
+            self.assertEqual(result.returncode,2,result.stderr[-300:])
+            self.assertEqual(result.stderr.strip(),'REFUSE: JSON nesting is too deep')
+            self.assertFalse(out.exists())
+
+    def test_transfer_end_is_clamped_to_window_and_deadline(self):
+        # Finding 8: a transfer sized to the exact window capacity ended after the window by float rounding.
+        start,stop,goodput=1.4,7.7,3.0
+        exact=(stop-start)*goodput/8
+        self.assertGreater(start+exact*8/goodput,stop)  # the unclamped arithmetic overshoots for these values
+        s=synthetic(jobs=1)
+        s['contacts']=[dict(id='only',start_s=start,end_s=stop,goodput_gbps=goodput,usd_per_gb=.2)]
+        s['jobs'][0].update(release_s=0,deadline_s=stop,onboard_s=1,result_gb=exact,compressed_gb=5)
+        r=plan_route(s,'onboard')
+        self.assertEqual(r['jobs'][0]['status'],'planned')
+        self.assertEqual(r['jobs'][0]['completion_s'],stop)
+        downlink=[e for e in r['events'] if e['kind']=='downlink']
+        self.assertEqual([(e['start_s'],e['end_s'],e['gb']) for e in downlink],[(start,stop,exact)])
 
     def test_scenario_with_jobs_refused(self):
         with tempfile.TemporaryDirectory() as tmp:

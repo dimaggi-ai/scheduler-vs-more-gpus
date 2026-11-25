@@ -13,8 +13,8 @@ def html_report(report):
         quality_range = f'{min(qualities):.3f}–{max(qualities):.3f}'
         unit_cost = 'undefined (no planned results)' if s['cost_per_planned_result_usd'] is None else f"${s['cost_per_planned_result_usd']:.3f}"
         summaries.append(f'''<article><h2>{esc(comparison['route'].title())}</h2>
-<p class="count">{s['planned']} planned <span>/ {s['planned']+s['refused']} jobs</span></p>
-<p>{s['refused']} refused · {s['downlink_gb']:.3f} GB downlinked</p>
+<p class="count">{esc(s['planned'])} planned <span>/ {esc(s['planned']+s['refused'])} jobs</span></p>
+<p>{esc(s['refused'])} refused · {s['downlink_gb']:.3f} GB downlinked</p>
 <p>Assumed quality: {quality_range} (not measured accuracy)</p>
 <p>{unit_cost} per planned result · compare quality and counts</p>
 <p>{s['energy_kwh']:.4f} kWh compute energy · ${s['cost_usd']:.3f} modeled cost</p>
@@ -22,7 +22,7 @@ def html_report(report):
         for j in comparison['jobs']:
             completion = '—' if j['completion_s'] is None else f"{j['completion_s']:.3f}"
             rows.append(f'''<tr><th scope="row">{esc(j['job_id'])}</th><td>{esc(j['route'])}</td>
-<td class="{j['status']}">{esc(j['status'])}</td><td>{completion}</td><td>{j['deadline_s']:.3f}</td>
+<td class="{esc(j['status'])}">{esc(j['status'])}</td><td>{completion}</td><td>{j['deadline_s']:.3f}</td>
 <td>{j['quality']:.3f} / {j['required_quality']:.3f}</td><td>{esc(j['reason'] or 'Within stated envelopes')}</td></tr>''')
     return '''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Capacity Orbital — scenario comparison</title><style>

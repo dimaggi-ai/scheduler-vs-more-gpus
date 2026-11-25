@@ -1,0 +1,51 @@
+{
+  "schema": "orbital-integration-receipt-v1",
+  "classification": "synthetic offline candidate; not cumulative acceptance",
+  "base": "358aaf1af22fedd723ca8d0373b6c6698483ffee",
+  "accepted_planner": "00f7a41954cc50f2bb99757b8dabec42440e9074",
+  "planner_files_exact": 12,
+  "parent_source_sha256": "fae891c2f05c10ec03649eb0cda0de974a595b73f60126f2c07d7f37240dc66b",
+  "checkpoint_source_sha256": "be217a9911f5e81812e875d3e2aaf0d14b2e3a749def0185dcd8d297695c9e72",
+  "bundle_source_sha256": "a6b239f90679632cd25c248b9358d350429395eb5d03d987168a91d9556054f2",
+  "manifest_added_paths": [
+    "orbital/economics.py",
+    "orbital/evidence_record.py"
+  ],
+  "startup_corrections": [
+    "T1 defer manifest check until evaluation and reject 1001 names before imports",
+    "U1 first-parent-import API race now returns structured SOURCE_UNAVAILABLE"
+  ],
+  "mutants": [
+    {
+      "name": "restore import-time check",
+      "test": "CheckpointBundle.test_first_parent_import_inventory_race_refuses_and_recovers",
+      "outcome": "named assertion failures"
+    },
+    {
+      "name": "remove launcher name cap",
+      "test": "CheckpointMission.test_startup_preflight_manifest_and_import_race",
+      "outcome": "named assertion failure"
+    }
+  ],
+  "gates": [
+    "actual exact-head CI",
+    "Claude exact-commit review",
+    "designated cumulative qualification"
+  ],
+  "historical_failures": [
+    "baseline T1/U1 assertions",
+    "initial full suite stale fixtures and manifest omissions",
+    "second full suite remaining economics manifest omission",
+    "runner expected JSON on quiet planner success",
+    "macOS runner address-space limit unsupported before test execution"
+  ],
+  "timing_cost": "cost and human intervention duration unknown",
+  "local_validation": {
+    "tests": 220,
+    "seconds": 42.082,
+    "python": "3.12.6",
+    "result": "passed",
+    "suite": "twelve existing orbital test modules plus new regression",
+    "provenance_validator": "passed"
+  }
+}
