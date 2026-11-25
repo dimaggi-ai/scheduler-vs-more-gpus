@@ -174,7 +174,7 @@ may take precedence over another. Missing/null declarations instead return
 | `input_unreadable` | Open/read/stat/wrap/close `OSError`, or embedded-NUL path rejected by open | `$` |
 | `input_size_limit` | Supplied bytes exceed 65,536 | `$` |
 | `depth_limit` | JSON text scanner sees nesting beyond 8 | `$` |
-| `structure_limit` | Parsed value traversal exceeds 1,024 values or depth 8 | `$` |
+| `structure_limit` | Parsed value traversal exceeds 1,024 values | `$` |
 | `duplicate_key` | Duplicate JSON object key, including nested keys | `$` |
 | `nonfinite_number` | JSON NaN/Infinity/-Infinity token | `$` |
 | `invalid_json` | UTF-8/JSON decoding or caught value/recursion error | `$` |

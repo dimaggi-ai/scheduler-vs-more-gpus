@@ -199,8 +199,9 @@ is text rather than structured result JSON.
 | `delta_integer_limit` | Signed delta magnitude exceeds 2^53−1 | `$.deltas.candidate_minus_baseline` or `$.deltas.candidate_minus_active` (intended output group) |
 
 For float diagnostics, arrays use `[index]`; ASCII identifier keys use `.key`;
-other keys use JSON-escaped bracket notation. Other table entries intentionally
-report `$` rather than inventing a more precise location.
+other keys use JSON-escaped bracket notation. Apart from `unsupported_schema` (`$.schema`) and `delta_integer_limit`
+(the intended `$.deltas.candidate_minus_*` output group), other table entries
+intentionally report `$` rather than inventing a more precise location.
 
 Scenario errors use the envelope **object API** and the codes in
 [KV_ENVELOPE.md](KV_ENVELOPE.md#refusal-diagnostics), including
