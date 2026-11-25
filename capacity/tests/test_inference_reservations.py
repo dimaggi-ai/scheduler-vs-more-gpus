@@ -181,6 +181,63 @@ class ReservationTests(unittest.TestCase):
         out=run([Request(0,1,1)]*128,[4]*128,hbm=60)
         self.assertEqual(len(out['requests']),128)
 
+    def test_literal_exact_byte_boundary_and_one_over(self):
+        # Literal contract boundary, independent of the implementation constant.
+        limit = 9007199254740991
+        request = [Request(0,1,1)]
+        args = dict(parameters=1, bytes_per_parameter=1, kv_bytes_per_token=1)
+        try:
+            exact = simulate(request, hw(limit), request_reservations_bytes=[limit], **args)
+        except ValueError as exc:
+            self.fail(f'valid literal byte boundary and unit parameters refused: {exc}')
+        self.assertTrue(exact['requests'][0]['rejected'])
+        self.assertEqual(exact['memory_accounting']['request_reservations_bytes'], [limit])
+        self.assertEqual(exact['memory_accounting']['kv_budget_bytes'], limit - 1)
+        with self.assertRaises(ValueError):
+            simulate(request, hw(limit), request_reservations_bytes=[limit + 1], **args)
+        recovered = simulate(request, hw(3), request_reservations_bytes=[2], **args)
+        self.assertFalse(recovered['requests'][0]['rejected'])
+        self.assertEqual(recovered['memory_accounting']['workspace_headroom_bytes'], 0)
+
+    def test_reservation_integer_subclass_is_refused(self):
+        class ByteCount(int):
+            pass
+        # Its sum is a plain int: aggregate validation must not hide a missing
+        # per-reservation type check.
+        self.assertIs(type(sum([ByteCount(4)])), int)
+        with self.assertRaisesRegex(ValueError, '^request reservation bytes$'):
+            run([Request(0,1,1)], [ByteCount(4)])
+        self.assertFalse(run([Request(0,1,1)], [4])['requests'][0]['rejected'])
+
+    def test_raw_floor_has_both_token_counts_and_exact_boundary(self):
+        request = [Request(0,7,3,4)]
+        # (7 input + 3 output) * 2 bytes, regardless of the 4 cached tokens.
+        with self.assertRaisesRegex(ValueError, '^request reservation below raw maximum context KV$'):
+            run(request, [19], hbm=80)
+        exact = run(request, [20], hbm=80)
+        self.assertFalse(exact['requests'][0]['rejected'])
+        self.assertEqual(exact['memory_accounting']['peak_reserved_bytes'], 20)
+
+    def test_coherent_request_count_boundary(self):
+        # Matching vectors prevent a count mismatch from masking this limit.
+        exact = run([Request(0,1,1)] * 128, [4] * 128, hbm=60)
+        self.assertEqual(len(exact['requests']), 128)
+        with self.assertRaisesRegex(ValueError, '^explicit request count bound$'):
+            run([Request(0,1,1)] * 129, [4] * 129, hbm=60)
+
+    def test_explicit_overflow_is_named_value_error_and_recovers(self):
+        for field in ('ttft_slo_s', 'itl_slo_s'):
+            with self.subTest(field=field):
+                try:
+                    run([Request(0,1,1)], [4], **{field: 10**400})
+                except Exception as exc:
+                    self.assertIs(type(exc), ValueError)
+                    self.assertEqual(str(exc), field)
+                    self.assertIsNone(exc.__cause__)
+                else:
+                    self.fail('overflow must refuse rather than return a report')
+        self.assertFalse(run([Request(0,1,1)], [4])['requests'][0]['rejected'])
+
     def test_nonfinite_service_arithmetic_refused(self):
         args=dict(parameters=5,bytes_per_parameter=2,kv_bytes_per_token=2,request_reservations_bytes=[4])
         for hardware in (hw(compute=5e-324),hw(bandwidth=5e-324),hw(efficiency=5e-324)):
