@@ -248,21 +248,23 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Offline declared single-device KV memory envelope; no cluster access')
     parser.add_argument('scenario')
     args = parser.parse_args(argv)
-    fd = None
     try:
         if not hasattr(os, 'O_NOFOLLOW'):
             raise Refusal('unsupported_platform')
-        fd = os.open(args.scenario, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-        if not stat.S_ISREG(os.fstat(fd).st_mode):
-            raise Refusal('expected_regular_file')
-        with os.fdopen(fd, 'rb') as stream:
-            fd = None
-            result = evaluate_bytes(stream.read(MAX_BYTES + 1))
+        try:
+            fd = os.open(args.scenario, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        except ValueError as exc:
+            raise Refusal('input_unreadable') from exc
+        try:
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                raise Refusal('expected_regular_file')
+            # Never transfer raw descriptor ownership to a partially built stream.
+            with os.fdopen(fd, 'rb', closefd=False) as stream:
+                result = evaluate_bytes(stream.read(MAX_BYTES + 1))
+        finally:
+            os.close(fd)
     except (OSError, Refusal) as exc:
         result = {'status': 'refused', 'code': exc.code if isinstance(exc, Refusal) else 'input_unreadable', 'path': '$'}
-    finally:
-        if fd is not None:
-            os.close(fd)
     print(json.dumps(result, sort_keys=True, allow_nan=False))
     return 0 if result['status'] == 'simulated' else 2
 
