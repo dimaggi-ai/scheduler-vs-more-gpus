@@ -22,6 +22,29 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class ReaderOwnershipCases:
     """Same lifecycle contract for both readers, using real scratch descriptors."""
+    def test_cli_output_is_sorted_on_success_refusal_and_recovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'
+            path.write_text(json.dumps(self.data))
+            for target, expected_status in ((path, 'success'),
+                                             (Path(directory) / 'absent', 'refused'),
+                                             (path, 'success')):
+                with self.subTest(target=str(target), status=expected_status):
+                    proc = subprocess.run([sys.executable, '-m', self.reader.__name__, str(target)],
+                                          cwd=ROOT, capture_output=True, text=True, timeout=10)
+                    self.assertEqual(proc.stderr, '')
+                    self.assertEqual(proc.returncode, 2 if expected_status == 'refused' else 0)
+                    result = json.loads(proc.stdout)
+                    self.assertEqual(proc.stdout, json.dumps(result, sort_keys=True, allow_nan=False) + '\n')
+                    if expected_status == 'refused':
+                        self.assertEqual(result['status'], 'refused')
+                        if self.reader is compare:
+                            self.assertEqual(result['code'], 'input_file_refused')
+                            digest = result.pop('result_sha256')
+                            raw = json.dumps(result, sort_keys=True, separators=(',', ':'),
+                                             ensure_ascii=False, allow_nan=False).encode('utf-8')
+                            self.assertEqual(digest, hashlib.sha256(raw).hexdigest())
+
     def test_after_construction_failure_preserves_unrelated_descriptor(self):
         real_fdopen = os.fdopen
         for exception in (OSError, MemoryError):
@@ -300,6 +323,92 @@ class KVCompareTests(ReaderOwnershipCases, unittest.TestCase):
                           'candidate': 'Synthetic logistics only'})
         self.data['active']['demand']['requested_concurrency'] += 1
         self.assertEqual(compare.evaluate(self.data)['comparison_reference'], 'baseline')
+
+    def test_container_width_boundary_both_apis(self):
+        # Root + 3073 scalars is below the separate 3080 total-value cap.
+        # Only the per-container width cap should distinguish these inputs.
+        for kind in ('object', 'array'):
+            for count in (3071, 3072, 3073):
+                value = {str(i): 0 for i in range(count)} if kind == 'object' else [0] * count
+                expected = 'structure_limit' if count == 3073 else (
+                    'unknown_field' if kind == 'object' else 'expected_object')
+                raw = json.dumps(value).encode('utf-8')
+                for api, result in (('object', compare.evaluate(value)),
+                                    ('bytes', compare.evaluate_bytes(raw))):
+                    with self.subTest(kind=kind, count=count, api=api):
+                        self.assertEqual((result['status'], result['code']), ('refused', expected))
+
+    def test_depth_scanner_ignores_quoted_delimiters_and_handles_escapes(self):
+        labels = ['[' * 20, ']' * 20, '{' * 20, '}' * 20,
+                  'quoted "' + '[' * 20, 'slash \\', 'slash quote \\"' + '{' * 20]
+        for label in labels:
+            with self.subTest(label=label):
+                value = copy.deepcopy(self.data)
+                value['candidate']['scenario_label'] = label
+                raw = json.dumps(value).encode('utf-8')
+                self.assertEqual(json.loads(raw), value)
+                result = compare.evaluate_bytes(raw)
+                self.assertEqual(result['status'], 'compared')
+                self.assertEqual(result['changed_declarations_vs_baseline']['candidate']['scenario_label']['candidate'], label)
+        # Escaped slashes must not swallow the following closing quote and
+        # hide a genuinely over-depth sibling. Quoted closing brackets must
+        # not reduce the structural depth either.
+        for prefix in ('\\', ']' * 20, '\\"'):
+            for nesting, expected in ((8, 'expected_object'), (9, 'depth_limit')):
+                raw = (b'[' + json.dumps(prefix).encode() + b',' + b'[' * nesting
+                       + b'0' + b']' * nesting + b']')
+                with self.subTest(prefix=prefix, nesting=nesting):
+                    json.loads(raw)  # fixture is valid JSON, independent of scanner
+                    self.assertEqual(compare.evaluate_bytes(raw)['code'], expected)
+
+    def test_object_depth_boundary_for_dict_array_and_mixed_edges(self):
+        # Root is depth zero; a scalar beneath nine containers is still depth9.
+        # The object traversal must stop depth10 before the text scanner runs.
+        for kind in ('dict', 'array', 'mixed'):
+            for depth in (8, 9, 10):
+                value = 0
+                for index in range(depth):
+                    value = ({'x': value} if kind == 'dict' or
+                             (kind == 'mixed' and index % 2 == 0) else [value])
+                shape_code = 'unknown_field' if isinstance(value, dict) else 'expected_object'
+                with self.subTest(kind=kind, depth=depth):
+                    obj = compare.evaluate(value)
+                    raw = compare.evaluate_bytes(json.dumps(value).encode('utf-8'))
+                    self.assertEqual((obj['status'], obj['code'], obj['path']),
+                                     ('refused', 'structure_limit' if depth == 10 else shape_code, '$'))
+                    self.assertEqual((raw['status'], raw['code'], raw['path']),
+                                     ('refused', 'depth_limit' if depth == 10 else shape_code, '$'))
+        self.assertEqual(compare.evaluate(self.data)['status'], 'compared')
+
+    def test_text_depth_closes_siblings_once_and_cli_recovers(self):
+        # The first empty sibling must restore root depth1, not leave depth2
+        # or subtract to depth0 before the nested second sibling is scanned.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'siblings.json'
+            for sibling in ([], {}):
+                for nested_depth, expected in ((8, 'expected_object'), (9, 'depth_limit')):
+                    nested = 0
+                    for _ in range(nested_depth):
+                        nested = [nested]
+                    raw = json.dumps([sibling, nested]).encode('utf-8')
+                    self.assertEqual(json.loads(raw), [sibling, nested])
+                    with self.subTest(sibling=sibling, nested_depth=nested_depth):
+                        out = compare.evaluate_bytes(raw)
+                        self.assertEqual((out['status'], out['code'], out['path']),
+                                         ('refused', expected, '$'))
+                        path.write_bytes(raw)
+                        proc = subprocess.run([sys.executable, '-m', 'capacity.kv_compare', str(path)],
+                                              cwd=ROOT, capture_output=True, text=True, timeout=10)
+                        self.assertEqual(proc.returncode, 2)
+                        self.assertEqual(proc.stderr, '')
+                        result = json.loads(proc.stdout)
+                        self.assertEqual((result['code'], result['path']), (expected, '$'))
+            path.write_text(json.dumps(self.data))
+            recovered = subprocess.run([sys.executable, '-m', 'capacity.kv_compare', str(path)],
+                                       cwd=ROOT, capture_output=True, text=True, timeout=10)
+            self.assertEqual(recovered.returncode, 0)
+            self.assertEqual(recovered.stderr, '')
+            self.assertEqual(json.loads(recovered.stdout)['status'], 'compared')
 
     def test_exact_comparator_bounds_and_whitespace_compaction(self):
         raw = compare._canonical(self.data)
