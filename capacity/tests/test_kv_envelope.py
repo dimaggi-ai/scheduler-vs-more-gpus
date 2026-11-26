@@ -1,5 +1,9 @@
 """Independent arithmetic oracles and bounded CLI journeys (synthetic only)."""
+from capacity import kv_envelope
+from capacity.tests.test_kv_compare import ReaderOwnershipCases
 import copy
+import contextlib
+import io
 import hashlib
 import json
 import os
@@ -15,9 +19,21 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLE = ROOT / 'examples/kv-envelope.json'
 
 
-class KVEnvelopeTests(unittest.TestCase):
+class KVEnvelopeTests(ReaderOwnershipCases, unittest.TestCase):
+    reader = kv_envelope
     def setUp(self):
         self.data = json.loads(EXAMPLE.read_text())
+
+    def test_embedded_nul_path_refusal_and_recovery(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(kv_envelope.main(['synthetic\x00path']), 2)
+        self.assertEqual(json.loads(output.getvalue()),
+                         {'status': 'refused', 'code': 'input_unreadable', 'path': '$'})
+        recovered = io.StringIO()
+        with contextlib.redirect_stdout(recovered):
+            self.assertEqual(kv_envelope.main([str(EXAMPLE)]), 0)
+        self.assertEqual(json.loads(recovered.getvalue()), evaluate_bytes(EXAMPLE.read_bytes()))
 
     def test_oracle_exact_fit_and_concurrency(self):
         out = evaluate(self.data)
@@ -191,6 +207,19 @@ class KVEnvelopeTests(unittest.TestCase):
             self.assertEqual(out['status'], 'simulated')
             self.assertIn('operational_qualification', out['not_evaluated'])
             self.assertIn('latency', out['not_evaluated'])
+
+    def test_nonregular_file_has_specific_diagnostic(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fifo = Path(directory) / 'pipe'
+            os.mkfifo(fifo)
+            for path in (Path(directory), fifo):
+                with self.subTest(path=str(path)):
+                    proc = subprocess.run([sys.executable, '-m', 'capacity.kv_envelope', str(path)],
+                                          cwd=ROOT, capture_output=True, text=True, timeout=10)
+                    self.assertEqual(proc.returncode, 2)
+                    self.assertEqual(proc.stderr, '')
+                    self.assertEqual(json.loads(proc.stdout),
+                                     {'status': 'refused', 'code': 'expected_regular_file', 'path': '$'})
 
     def test_cli_success_refusal_recovery_and_file_guards(self):
         def run(path):
