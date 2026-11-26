@@ -361,6 +361,55 @@ class KVCompareTests(ReaderOwnershipCases, unittest.TestCase):
                     json.loads(raw)  # fixture is valid JSON, independent of scanner
                     self.assertEqual(compare.evaluate_bytes(raw)['code'], expected)
 
+    def test_object_depth_boundary_for_dict_array_and_mixed_edges(self):
+        # Root is depth zero; a scalar beneath nine containers is still depth9.
+        # The object traversal must stop depth10 before the text scanner runs.
+        for kind in ('dict', 'array', 'mixed'):
+            for depth in (8, 9, 10):
+                value = 0
+                for index in range(depth):
+                    value = ({'x': value} if kind == 'dict' or
+                             (kind == 'mixed' and index % 2 == 0) else [value])
+                shape_code = 'unknown_field' if isinstance(value, dict) else 'expected_object'
+                with self.subTest(kind=kind, depth=depth):
+                    obj = compare.evaluate(value)
+                    raw = compare.evaluate_bytes(json.dumps(value).encode('utf-8'))
+                    self.assertEqual((obj['status'], obj['code'], obj['path']),
+                                     ('refused', 'structure_limit' if depth == 10 else shape_code, '$'))
+                    self.assertEqual((raw['status'], raw['code'], raw['path']),
+                                     ('refused', 'depth_limit' if depth == 10 else shape_code, '$'))
+        self.assertEqual(compare.evaluate(self.data)['status'], 'compared')
+
+    def test_text_depth_closes_siblings_once_and_cli_recovers(self):
+        # The first empty sibling must restore root depth1, not leave depth2
+        # or subtract to depth0 before the nested second sibling is scanned.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'siblings.json'
+            for sibling in ([], {}):
+                for nested_depth, expected in ((8, 'expected_object'), (9, 'depth_limit')):
+                    nested = 0
+                    for _ in range(nested_depth):
+                        nested = [nested]
+                    raw = json.dumps([sibling, nested]).encode('utf-8')
+                    self.assertEqual(json.loads(raw), [sibling, nested])
+                    with self.subTest(sibling=sibling, nested_depth=nested_depth):
+                        out = compare.evaluate_bytes(raw)
+                        self.assertEqual((out['status'], out['code'], out['path']),
+                                         ('refused', expected, '$'))
+                        path.write_bytes(raw)
+                        proc = subprocess.run([sys.executable, '-m', 'capacity.kv_compare', str(path)],
+                                              cwd=ROOT, capture_output=True, text=True, timeout=10)
+                        self.assertEqual(proc.returncode, 2)
+                        self.assertEqual(proc.stderr, '')
+                        result = json.loads(proc.stdout)
+                        self.assertEqual((result['code'], result['path']), (expected, '$'))
+            path.write_text(json.dumps(self.data))
+            recovered = subprocess.run([sys.executable, '-m', 'capacity.kv_compare', str(path)],
+                                       cwd=ROOT, capture_output=True, text=True, timeout=10)
+            self.assertEqual(recovered.returncode, 0)
+            self.assertEqual(recovered.stderr, '')
+            self.assertEqual(json.loads(recovered.stdout)['status'], 'compared')
+
     def test_exact_comparator_bounds_and_whitespace_compaction(self):
         raw = compare._canonical(self.data)
         self.assertEqual(compare.MAX_BYTES, 197632)
