@@ -139,8 +139,10 @@ The mode consumes at most 129 requests before refusing more than 128; it accepts
 at most 100,000 aggregate output tokens and a `max_batch` of at most 128. Every
 reservation, fixed-memory sum, raw maximum-context KV footprint and aggregate
 reservation sum is bounded by `2**53 - 1`. Empty requests with an empty vector
-are valid. Malformed declarations raise `ValueError` without a partial report;
-service-rate and conservative elapsed-time bounds are checked before the loop,
+are valid. With a valid `Hardware` and an iterable of requests, malformed
+reservation values, request elements and numeric parameters raise `ValueError`
+without a partial report, but an exception raised by the iterable while it is
+consumed propagates unchanged. Service-rate and conservative elapsed-time bounds are checked before the loop,
 and nonfinite result metrics are refused.
 
 Admission acquires the exact declared request reservation; completion releases
